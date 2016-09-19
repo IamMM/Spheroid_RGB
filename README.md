@@ -1,3 +1,24 @@
+Spheroid RGB Statistic Plugin for ImageJ
+========================================
+
+This Plugin is developed for ImageJ or Fiji.
+
+Input: RGB image of double or triple stained confocal image of an cancer spheroid.
+
+Output:
+- ratio between number of cells with particular features and all cells
+- area of spheroid
+- number of cells
+- intensity of cells
+
+It is possible to select the color channel which color stained all cells
+and which color stained cells with certain features (for example cells in S-phase).
+
+
+Started from template minimal Maven project implementing an ImageJ 1.x plugin
+--> https://github.com/imagej/minimal-ij1-plugin/archive/master.zip
+
+--------------------------------------------------------------------
 This is a minimal Maven project implementing an ImageJ 1.x plugin
 
 It is intended as an ideal starting point to develop new ImageJ 1.x plugins
@@ -56,7 +77,7 @@ Then:
        [here](http://fiji.sc/Maven#How_to_find_a_dependency.27s_groupId.2FartifactId.2Fversion_.28GAV.29.3F))
     5. the *developer* information
     6. the *scm* information
-2. Remove the ```Process_Pixels.java``` file and add your own ```.java``` files
+2. Remove the ```Spheroid_RGB.java``` file and add your own ```.java``` files
    to ```src/main/java/<package>/``` (if you need supporting files -- like icons
    -- in the resulting ```.jar``` file, put them into ```src/main/resources/```)
 3. Edit ```src/main/resources/plugins.config```

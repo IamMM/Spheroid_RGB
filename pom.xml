@@ -13,37 +13,35 @@
 	</parent>
 
 	<groupId>sc.fiji</groupId>
-	<artifactId>Process_Pixels</artifactId>
+	<artifactId>Spheroid_RGB</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
 
-	<name>plugins/Process_Pixels.jar</name>
+	<name>plugins/Spheroid_RGB.jar</name>
 	<description>A Maven project implementing an ImageJ 1.x plugin</description>
 
 	<developers>
 		<developer>
 			<id>dscho</id>
-			<name>Johannes Schindelin</name>
-			<email>johannes.schindelin@gmx.de</email>
-			<url>http://loci.wisc.edu/people/johannes-schindelin</url>
-			<organization>UW-Madison LOCI</organization>
-			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<name>Maximilian Maske</name>
+			<email>m.maske@auckland.ac.nz</email>
+			<organization>ACSRC</organization>
+			<organizationUrl>https://www.fmhs.auckland.ac.nz/en/sms/about/our-departments/auckland-cancer-society-research-centre.html</organizationUrl>
 			<roles>
-				<role>architect</role>
 				<role>developer</role>
 			</roles>
-			<timezone>-6</timezone>
+			<timezone>+11</timezone>
 		</developer>
 	</developers>
 
 	<scm>
-		<connection>scm:git:git://github.com/imagej/minimal-ij1-plugin</connection>
-		<developerConnection>scm:git:git@github.com:imagej/minimal-ij1-plugin</developerConnection>
+		<connection>scm:git:git:github.com/IamMM/Spheroid_RGB</connection>
+		<developerConnection>scm:git:git@github.com:IamMM/Spheroid_RGB</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/imagej/minimal-ij1-plugin</url>
+		<url>https://github.com/IamMM/Spheroid_RGB</url>
 	</scm>
 
 	<properties>
-		<main-class>Process_Pixels</main-class>
+		<main-class>Spheroid_RGB</main-class>
 	</properties>
 
 	<dependencies>
