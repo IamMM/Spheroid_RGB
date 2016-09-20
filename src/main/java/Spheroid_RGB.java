@@ -10,8 +10,11 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
-import ij.plugin.filter.PlugInFilter;
+import ij.plugin.ChannelSplitter;
 import ij.process.ImageProcessor;
+import ij.WindowManager;
+import ij.gui.Roi;
+import ij.plugin.PlugIn;
 
 /**
  * ProcessPixels
@@ -21,63 +24,73 @@ import ij.process.ImageProcessor;
  *
  * @author The Fiji Team
  */
-public class Spheroid_RGB implements PlugInFilter {
-	protected ImagePlus image;
+public class Spheroid_RGB implements PlugIn {
+    private final String version = " v1.0 ";
+
+    // imageJ components
+    private ImagePlus image;
 
 	// image property members
 	private int width;
 	private int height;
 
 	// plugin parameters
-	public double value;
-	public String name;
-
-	/**
-	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
-	 */
-	@Override
-	public int setup(String arg, ImagePlus imp) {
-		if (arg.equals("about")) {
-			showAbout();
-			return DONE;
-		}
-
-		image = imp;
-		return DOES_8G | DOES_16 | DOES_32 | DOES_RGB;
-	}
+	private boolean takeR;
+	private boolean takeG;
+	private boolean takeB;
 
 	/**
 	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
 	@Override
-	public void run(ImageProcessor ip) {
-		// get width and height
-		width = ip.getWidth();
-		height = ip.getHeight();
+    public void run(String arg) {
+        if (IJ.versionLessThan("1.36b")) return;
 
-		if (showDialog()) {
-			process(ip);
-			image.updateAndDraw();
-		}
+        image = WindowManager.getCurrentImage();
+        ImageProcessor ip = image.getProcessor();
+
+        if (image!=null) {
+            Roi roi = image.getRoi();
+        }
+
+        if (showDialog()) {
+            process(ip);
+            image.updateAndDraw();
+        }
+
+        runApplication(image.getTitle());
 	}
 
 	private boolean showDialog() {
-		GenericDialog gd = new GenericDialog("Process pixels");
+		GenericDialog gd = new GenericDialog("Spheroid RGB");
 
 		// default value is 0.00, 2 digits right of the decimal point
-		gd.addNumericField("value", 0.00, 2);
-		gd.addStringField("name", "John");
+//		gd.addNumericField("value", 0.00, 2);
+//		gd.addStringField("name", "John");
+
+		String[] lables = new String[]{"R", "G", "B"};
+		boolean[] defaultValues = new boolean[]{true, true, true};
+
+		gd.addMessage("Choose Color Channels");
+		gd.addCheckboxGroup(3, 1, lables, defaultValues);
 
 		gd.showDialog();
-		if (gd.wasCanceled())
+		if (gd.wasCanceled() )
 			return false;
 
 		// get entered values
-		value = gd.getNextNumber();
-		name = gd.getNextString();
+		takeR = gd.getNextBoolean();
+		takeG = gd.getNextBoolean();
+		takeB = gd.getNextBoolean();
 
 		return true;
 	}
+
+    private void runApplication(String name) {
+        // create window/frame
+        String strFrame = "Spheroid RGB " + version + " (" + name +")";
+
+    }
 
 	/**
 	 * Process an image.
@@ -107,9 +120,10 @@ public class Spheroid_RGB implements PlugInFilter {
 			process( (short[]) ip.getPixels() );
 		else if (type == ImagePlus.GRAY32)
 			process( (float[]) ip.getPixels() );
-		else if (type == ImagePlus.COLOR_RGB)
-			process( (int[]) ip.getPixels() );
-		else {
+		else if (type == ImagePlus.COLOR_RGB) {
+            splitChannels(image);
+//            process((int[]) ip.getPixels());
+        } else {
 			throw new RuntimeException("not supported");
 		}
 	}
@@ -120,7 +134,7 @@ public class Spheroid_RGB implements PlugInFilter {
 			for (int x=0; x < width; x++) {
 				// process each pixel of the line
 				// example: add 'number' to each pixel
-				pixels[x + y * width] += (byte)value;
+				pixels[x + y * width] += 0;
 			}
 		}
 	}
@@ -131,7 +145,7 @@ public class Spheroid_RGB implements PlugInFilter {
 			for (int x=0; x < width; x++) {
 				// process each pixel of the line
 				// example: add 'number' to each pixel
-				pixels[x + y * width] += (short)value;
+				pixels[x + y * width] += 0;
 			}
 		}
 	}
@@ -142,7 +156,7 @@ public class Spheroid_RGB implements PlugInFilter {
 			for (int x=0; x < width; x++) {
 				// process each pixel of the line
 				// example: add 'number' to each pixel
-				pixels[x + y * width] += (float)value;
+				pixels[x + y * width] += 0;
 			}
 		}
 	}
@@ -153,14 +167,29 @@ public class Spheroid_RGB implements PlugInFilter {
 			for (int x=0; x < width; x++) {
 				// process each pixel of the line
 				// example: add 'number' to each pixel
-				pixels[x + y * width] += (int)value;
+				pixels[x + y * width] += 0;
 			}
 		}
 	}
 
+	//split channels
+	public void splitChannels(ImagePlus imp){
+        ChannelSplitter splitter = new ChannelSplitter();
+        ImagePlus[] rgb = splitter.split(imp);
+
+        if(takeR){
+            rgb[0].show();
+        }if(takeG){
+            rgb[1].show();
+        }if(takeB){
+            rgb[2].show();
+        }
+
+	}
+
 	public void showAbout() {
-		IJ.showMessage("ProcessPixels",
-			"a template for processing each pixel of an image"
+		IJ.showMessage("Spheroid RGB",
+			"a plugin for analysing a stained image of an spheroid"
 		);
 	}
 
@@ -182,8 +211,8 @@ public class Spheroid_RGB implements PlugInFilter {
 		// start ImageJ
 		new ImageJ();
 
-		// open the Clown sample
-		ImagePlus image = IJ.openImage("http://imagej.net/images/clown.jpg");
+		// open the Spheroid sample
+		ImagePlus image = IJ.openImage("P:/image analysis/cell count/EdU_slide2.2.tif");
 		image.show();
 
 		// run the plugin
