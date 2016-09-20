@@ -1,9 +1,7 @@
-/*
- * To the extent possible under law, the Fiji developers have waived
- * all copyright and related or neighboring rights to this tutorial code.
+/**
+ * Created on September 20, 2016
  *
- * See the CC0 1.0 Universal license for details:
- *     http://creativecommons.org/publicdomain/zero/1.0/
+ * @author Maximilian Maske
  */
 
 import ij.IJ;
@@ -17,10 +15,9 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
 /**
- * ProcessPixels
- * <p>
- * A template for processing each pixel of either
- * GRAY8, GRAY16, GRAY32 or COLOR_RGB images.
+ * Spheroid_RGB
+ *
+ * A plugin for analysing each channel of RGB Image
  *
  * @author The Fiji Team
  */
@@ -35,7 +32,7 @@ public class Spheroid_RGB implements PlugIn {
     private int height;
 
     //ITCN values
-    private double cellWidth;
+    private int cellWidth;
     private double threshold;
 
     // what channels to take
@@ -47,8 +44,6 @@ public class Spheroid_RGB implements PlugIn {
     private ImagePlus rChannel;
     private ImagePlus gChannel;
     private ImagePlus bChannel;
-
-
 
     /**
      * Main method for debugging.
@@ -81,30 +76,29 @@ public class Spheroid_RGB implements PlugIn {
      */
     @Override
     public void run(String arg) {
-        if (IJ.versionLessThan("1.36b")) return;
+//        if (IJ.versionLessThan("1.36b")) return;
 
         image = WindowManager.getCurrentImage();
         ImageProcessor ip = image.getProcessor();
 
+        //TODO use ROI
         if (image != null) {
             Roi roi = image.getRoi();
         }
 
         if (showDialog()) {
             process(ip);
-            image.updateAndDraw();
+            runApplication(image.getTitle());
         }
-
-        runApplication(image.getTitle());
     }
 
     private boolean showDialog() {
         GenericDialog gd = new GenericDialog("Spheroid RGB");
 
         // default value is 0.00, 2 digits right of the decimal point
-		gd.addMessage("Parameter for Automated Cell Count");
-        gd.addNumericField("cell width", 15.00, 2);
-        gd.addSlider("threshold", 0.0, 10.0, 0.2);
+        gd.addMessage("Parameter for Automated Cell Count");
+        gd.addNumericField("cell width", 15.00, 0);
+        gd.addSlider("threshold", 0.0, 1.0, 0.2);
 
         String[] labels = new String[]{"R", "G", "B"};
         boolean[] defaultValues = new boolean[]{true, true, true};
@@ -117,7 +111,7 @@ public class Spheroid_RGB implements PlugIn {
             return false;
 
         // get entered values
-        cellWidth = gd.getNextNumber();
+        cellWidth = (int) gd.getNextNumber();
         threshold = gd.getNextNumber();
 
         takeR = gd.getNextBoolean();
@@ -132,74 +126,31 @@ public class Spheroid_RGB implements PlugIn {
         String strFrame = "Spheroid RGB " + version + " (" + name + ")";
 
         if (takeR) {
-            new ITCN_Runner(rChannel, 15, 7.5, 0.2, false, image);
+            new ITCN_Runner(rChannel, cellWidth, (double) cellWidth/2., threshold, false, image);
         }
         if (takeG) {
-            new ITCN_Runner(gChannel, 15, 7.5, 0.2, false, image);
+            new ITCN_Runner(gChannel, cellWidth, (double) cellWidth/2., threshold, false, image);
         }
         if (takeB) {
-            new ITCN_Runner(bChannel, 15, 7.5, 0.2, false, image);
+            new ITCN_Runner(bChannel, cellWidth, (double) cellWidth/2., threshold, false, image);
         }
     }
 
     // Select processing method depending on image type
     public void process(ImageProcessor ip) {
         int type = image.getType();
-        if (type == ImagePlus.GRAY8)
-            process((byte[]) ip.getPixels());
-        else if (type == ImagePlus.GRAY16)
-            process((short[]) ip.getPixels());
-        else if (type == ImagePlus.GRAY32)
-            process((float[]) ip.getPixels());
-        else if (type == ImagePlus.COLOR_RGB) {
+//        if (type == ImagePlus.GRAY8)
+//            process((byte[]) ip.getPixels());
+//        else if (type == ImagePlus.GRAY16)
+//            process((short[]) ip.getPixels());
+//        else if (type == ImagePlus.GRAY32)
+//            process((float[]) ip.getPixels());
+//        else
+
+        if (type == ImagePlus.COLOR_RGB) {
             splitChannels(image);
-//            process((int[]) ip.getPixels());
         } else {
             throw new RuntimeException("not supported");
-        }
-    }
-
-    // processing of GRAY8 images
-    public void process(byte[] pixels) {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                // process each pixel of the line
-                // example: add 'number' to each pixel
-                pixels[x + y * width] += 0;
-            }
-        }
-    }
-
-    // processing of GRAY16 images
-    public void process(short[] pixels) {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                // process each pixel of the line
-                // example: add 'number' to each pixel
-                pixels[x + y * width] += 0;
-            }
-        }
-    }
-
-    // processing of GRAY32 images
-    public void process(float[] pixels) {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                // process each pixel of the line
-                // example: add 'number' to each pixel
-                pixels[x + y * width] += 0;
-            }
-        }
-    }
-
-    // processing of COLOR_RGB images
-    public void process(int[] pixels) {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                // process each pixel of the line
-                // example: add 'number' to each pixel
-                pixels[x + y * width] += 0;
-            }
         }
     }
 
@@ -220,7 +171,6 @@ public class Spheroid_RGB implements PlugIn {
             bChannel = rgb[2];
             bChannel.show();
         }
-
     }
 
     public void showAbout() {
