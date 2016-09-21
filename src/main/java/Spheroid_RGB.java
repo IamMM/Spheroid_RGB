@@ -1,9 +1,3 @@
-/**
- * Created on September 20, 2016
- *
- * @author Maximilian Maske
- */
-
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -15,17 +9,16 @@ import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Analyzer;
 import ij.plugin.frame.RoiManager;
-import ij.process.ImageProcessor;
 import ij.process.LUT;
 
 import java.awt.*;
 
 /**
  * Spheroid_RGB
- *
  * A plugin for analysing each channel of RGB Image
+ * Created on September 20, 2016
  *
- * @author The Fiji Team
+ * @author Maximilian Maske
  */
 public class Spheroid_RGB implements PlugIn {
     private final String version = " v1.0 ";
@@ -57,7 +50,6 @@ public class Spheroid_RGB implements PlugIn {
 
     /**
      * Main method for debugging.
-     * <p>
      * For debugging, it is convenient to have a method that starts ImageJ, loads an
      * image and calls the plugin, e.g. after setting breakpoints.
      *
@@ -82,12 +74,11 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     /**
-     * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
+     * @see ij.plugin.PlugIn#run(String)
      */
     @Override
     public void run(String arg) {
 //        if (IJ.versionLessThan("1.36b")) return;
-
         image = WindowManager.getCurrentImage();
 
         if (showDialog()) {
@@ -165,7 +156,7 @@ public class Spheroid_RGB implements PlugIn {
     private void runITCN(ImagePlus imp, String color) {
         //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
         ITCN_Runner itcn;
-        itcn = new ITCN_Runner(imp, cellWidth, (double) cellWidth/2., threshold, darkPeaks, null);
+        itcn = new ITCN_Runner(imp, cellWidth, (double) cellWidth / 2., threshold, darkPeaks, null);
         itcn.run();
         resultsTable.addValue("number of " + color + " cells", itcn.getNumberOfCells());
         itcn.getResultImage().show();
