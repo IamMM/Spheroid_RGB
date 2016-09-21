@@ -89,16 +89,10 @@ public class Spheroid_RGB implements PlugIn {
 //        if (IJ.versionLessThan("1.36b")) return;
 
         image = WindowManager.getCurrentImage();
-        ImageProcessor ip = image.getProcessor();
-
-        //TODO use ROI
-        if (image != null) {
-            Roi roi = image.getRoi();
-        }
 
         if (showDialog()) {
-            process(ip);
-            runApplication(image.getTitle());
+            process();
+            runApplication();
         }
     }
 
@@ -133,14 +127,7 @@ public class Spheroid_RGB implements PlugIn {
         return true;
     }
 
-    private void runApplication(String name) {
-        // create window/frame
-        String strFrame = "Spheroid RGB " + version + " (" + name + ")";
-
-        ITCN_Runner red;
-        ITCN_Runner green;
-        ITCN_Runner blue;
-
+    private void runApplication() {
         //create Results table
         resultsTable = Analyzer.getResultsTable();
         if (resultsTable == null) {
@@ -171,6 +158,7 @@ public class Spheroid_RGB implements PlugIn {
             resultsTable.updateResults();
         }
 
+//        String strFrame = "Spheroid RGB " + version + " (" + image.getTitle() + ")";
 //        resultsTable.show(strFrame); //results should only shown in the Results window
     }
 
@@ -184,7 +172,7 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     // Select processing method depending on image type
-    public void process(ImageProcessor ip) {
+    private void process() {
         int type = image.getType();
 //        if (type == ImagePlus.GRAY8) return;
 //        else if (type == ImagePlus.GRAY16)
@@ -200,9 +188,8 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     //split channels
-    public void splitChannels(ImagePlus imp) {
-        ChannelSplitter splitter = new ChannelSplitter();
-        ImagePlus[] rgb = splitter.split(imp);
+    private void splitChannels(ImagePlus imp) {
+        ImagePlus[] rgb = ChannelSplitter.split(imp);
 
         if (takeR) {
             rChannel = rgb[0];
