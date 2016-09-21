@@ -1,37 +1,42 @@
 /**
  * Created on January 17, 2006, 10:11 AM
- * @author  Thomas Kuo
+ *
+ * @author Thomas Kuo
  */
 
-import ij.*;
-import ij.process.*;
-import ij.measure.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
 
 import java.awt.*;
-import java.util.*;
-import java.lang.*;
-import java.text.*;
+import java.util.ArrayList;
 
-public class ITCN_Runner extends Thread {
+public class ITCN_Runner {
     // Input parameters with default values
-    private int width;                    // Filter width
-    private double min_dist;            // Min distance
-    private double threshold;            // Threshold
-    private boolean darkPeaks;            // Select dark or light peaks
-    private double sigma;                // Standard Deviation
-    private double variance;            // Variance
-    private ImagePlus impImage;                // ImagePlus for current image
-    private ImageProcessor ip;                // ImageProcessor for current image
-    private ImagePlus maskImp;                // ImagePlus for mask image (null if does not exist)
-    private int maskID;                        // ID for mask image
-    private static String maskName = null;    // name for mask image
+    private int width;                     // Filter width
+    private double min_dist;               // Min distance
+    private double threshold;              // Threshold
+    private boolean darkPeaks;             // Select dark or light peaks
+    private double sigma;                  // Standard Deviation
+    private double variance;               // Variance
+    private ImagePlus inputImage;            // ImagePlus for current image
+    private ImageProcessor ip;             // ImageProcessor for current image
+    private ImagePlus maskImp;             // ImagePlus for mask image (null if does not exist)
+    private int maskID;                    // ID for mask image
+    private static String maskName = null; // name for mask image
 
     private static final String strNONE = "Use selected ROI";
 
     double[] kernel;
 
+    //output fields
+    private ArrayList<Point> peaks;
+    private int numberOfCells;
+    private ImagePlus resultImage;
+
+
     public ITCN_Runner(ImagePlus imp, int width, double min_dist, double threshold, boolean darkPeaks, ImagePlus maskImp) {
-        this.impImage = imp;
+        this.inputImage = imp;
         this.ip = imp.getProcessor();
 
         this.maskImp = maskImp;
@@ -47,7 +52,7 @@ public class ITCN_Runner extends Thread {
         maskID = 0;
         maskName = null;
 
-        start();
+//        start();
     }
 
     public void run() {
@@ -63,48 +68,10 @@ public class ITCN_Runner extends Thread {
 
         // 2 Compute kernel
         IJ.showStatus("Finding Kernel");
-        kernel = findKernal();
+        kernel = findKernel();
 
         // 3 Convolution
         IJ.showStatus("Convolution");
-/*
-		double[][] image1 = new double[4][4];
-		int k=0;
-		for (int i=0; i<4; i++) {
-			for (int j=0; j<4; j++) {
-				image1[i][j] = k++;
-			}
-		}
-
-		image = filter2(image1,4,4, kernel, width, width);
-
-		String kStr = new String();
-		for (int j=0; j<width; j++) {
-			for (int i=0; i<width; i++) {
-				kStr += kernel[i+width*j]+" ";
-			}
-			kStr += "\n";
-		}
-		IJ.showMessage(kStr);
-
-		String im1Str = new String();
-		for (int j=0; j<4; j++) {
-			for (int i=0; i<4; i++) {
-				im1Str += image1[i][j]+" ";
-			}
-			im1Str += "\n";
-		}
-		IJ.showMessage(im1Str);
-
-		String imStr = new String();
-		for (int j=0; j<4; j++) {
-			for (int i=0; i<4; i++) {
-				imStr += image[i][j]+" ";
-			}
-			imStr += "\n";
-		}
-		IJ.showMessage(imStr);
-*/
 
         image = filter2(ip, kernel, width, width);
 
@@ -127,13 +94,10 @@ public class ITCN_Runner extends Thread {
             ImageProcessor ipMask2 = maskImp.getProcessor();
             ipMask = ipMask2.duplicate();
         } else {
-            if (impImage.getMask() != null) {
-                ipMask = (impImage.getMask()).duplicate();
+            if (inputImage.getMask() != null) {
+                ipMask = (inputImage.getMask()).duplicate();
             }
         }
-
-        //IJ.showMessage("ok");
-        //IJ.showMessage(ipMask.getPixelValue(5,5)+" ");
 
         // Get area
         int numPixels = 0;
@@ -173,50 +137,53 @@ public class ITCN_Runner extends Thread {
         }
 
         // Local Maximum
-        ArrayList peaks;
+
         peaks = find_local_max(image, r, Math.floor((double) width / 3.0), min_dist, mask);
 
-        // 5 Display results
-        ImageProcessor ipCopy = (ip.duplicate()).convertToRGB();
-        ImagePlus imp2 = new ImagePlus("Results " + impImage.getTitle(), ipCopy);
+        // 5 results
+        numberOfCells = peaks.size();
 
-        ipCopy.setColor(java.awt.Color.red);
-        ipCopy.setLineWidth(1);
+        ImageProcessor ipResults = (ip.duplicate()).convertToRGB();
+        resultImage = new ImagePlus("Results " + inputImage.getTitle(), ipResults);
 
-        for (int i = 0; i < peaks.size(); i++) {
-            Point pt = (Point) peaks.get(i);
+        ipResults.setColor(java.awt.Color.WHITE);
+        ipResults.setLineWidth(1);
 
-            ipCopy.drawDot(pt.x + r.x, pt.y + r.y);
+        Point pt;
+        for (int i = 0; i < numberOfCells; i++) {
+            pt = peaks.get(i);
+
+            ipResults.drawDot(pt.x + r.x, pt.y + r.y);
 
             //IJ.write("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
         }
 
-        IJ.write("Image: " + impImage.getTitle());
+        ipResults.setColor(java.awt.Color.yellow);
+        ipResults.drawOval(r.x, r.y, r.width, r.height);
 
-        // Read units
-        Calibration cali = impImage.getCalibration();
-
-        DecimalFormat densityForm = new DecimalFormat("###0.00");
-
-        if (cali == null) {
-            IJ.write("Number of Cells: " + peaks.size());
-        } else {
-            IJ.write("Number of Cells: " + peaks.size() + " in " + densityForm.format((double) numPixels * cali.pixelHeight * cali.pixelWidth) + " square " + cali.getUnits());
-            IJ.write("Density: " + densityForm.format((double) peaks.size() / ((double) numPixels * cali.pixelHeight * cali.pixelWidth)) + " cells per square " + cali.getUnit());
-        }
-
-        IJ.write(".........................................................................................");
-
-        ipCopy.setColor(java.awt.Color.yellow);
-        ipCopy.drawRect(r.x, r.y, r.width, r.height);
-
-        imp2.show();
+//        IJ.write("Image: " + inputImage.getTitle());
+//
+//        // Read units
+//        Calibration cali = inputImage.getCalibration();
+//
+//        DecimalFormat densityForm = new DecimalFormat("###0.00");
+//
+//        if (cali == null) {
+//            IJ.write("Number of Cells: " + numberOfCells);
+//        } else {
+//            IJ.write("Number of Cells: " + numberOfCells + " in " + densityForm.format((double) numPixels * cali.pixelHeight * cali.pixelWidth) + " square " + cali.getUnits());
+//            IJ.write("Density: " + densityForm.format((double) peaks.size() / ((double) numPixels * cali.pixelHeight * cali.pixelWidth)) + " cells per square " + cali.getUnit());
+//        }
+//
+//        IJ.write(".........................................................................................");
+//
+//        resultImage.show();
 
         return;
 
     }
 
-    private double[] findKernal() {
+    private double[] findKernel() {
         double[] hg = new double[width * width];
         double[] h = new double[width * width];
         double hgSum = 0, hSum = 0;
@@ -323,7 +290,7 @@ public class ITCN_Runner extends Thread {
         return dr;
     }
 
-    private ArrayList find_local_max(double[][] image, Rectangle r, double epsilon, double min_dist, boolean[][] mask) {
+    private ArrayList<Point> find_local_max(double[][] image, Rectangle r, double epsilon, double min_dist, boolean[][] mask) {
         ArrayList ind_n = new ArrayList();
         ArrayList ind_n_ext = new ArrayList();
 
@@ -351,7 +318,7 @@ public class ITCN_Runner extends Thread {
         }
         //int N_n_ext = ind_n_ext.size();
 
-        ArrayList peaks = new ArrayList();
+        ArrayList<Point> peaks = new ArrayList();
 
 
         double minimum = 0;
@@ -408,5 +375,13 @@ public class ITCN_Runner extends Thread {
         }
 
         return peaks;
+    }
+
+    public ImagePlus getResultImage() {
+        return resultImage;
+    }
+
+    public int getNumberOfCells() {
+        return numberOfCells;
     }
 }

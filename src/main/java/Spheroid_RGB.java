@@ -10,9 +10,15 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Roi;
+import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
+import ij.plugin.filter.Analyzer;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
+
+import java.awt.*;
 
 /**
  * Spheroid_RGB
@@ -34,6 +40,7 @@ public class Spheroid_RGB implements PlugIn {
     //ITCN values
     private int cellWidth;
     private double threshold;
+    private boolean darkPeaks;
 
     // what channels to take
     private boolean takeR;
@@ -44,6 +51,9 @@ public class Spheroid_RGB implements PlugIn {
     private ImagePlus rChannel;
     private ImagePlus gChannel;
     private ImagePlus bChannel;
+
+    //Results table instance
+    private ResultsTable resultsTable;
 
     /**
      * Main method for debugging.
@@ -68,7 +78,7 @@ public class Spheroid_RGB implements PlugIn {
         image.show();
 
         // run the plugin
-        IJ.runPlugIn(clazz.getName(), "");
+//        IJ.runPlugIn(clazz.getName(), "");
     }
 
     /**
@@ -95,13 +105,14 @@ public class Spheroid_RGB implements PlugIn {
     private boolean showDialog() {
         GenericDialog gd = new GenericDialog("Spheroid RGB");
 
-        // default value is 0.00, 2 digits right of the decimal point
+        gd.setAlwaysOnTop(true);
         gd.addMessage("Parameter for Automated Cell Count");
         gd.addNumericField("cell width", 15.00, 0);
         gd.addSlider("threshold", 0.0, 1.0, 0.2);
+        gd.addCheckbox("Count dark peaks", false);
 
         String[] labels = new String[]{"R", "G", "B"};
-        boolean[] defaultValues = new boolean[]{true, true, true};
+        boolean[] defaultValues = new boolean[]{true, false, true};
 
         gd.addMessage("Choose Color Channels");
         gd.addCheckboxGroup(3, 1, labels, defaultValues);
@@ -113,6 +124,7 @@ public class Spheroid_RGB implements PlugIn {
         // get entered values
         cellWidth = (int) gd.getNextNumber();
         threshold = gd.getNextNumber();
+        darkPeaks = gd.getNextBoolean();
 
         takeR = gd.getNextBoolean();
         takeG = gd.getNextBoolean();
@@ -125,32 +137,65 @@ public class Spheroid_RGB implements PlugIn {
         // create window/frame
         String strFrame = "Spheroid RGB " + version + " (" + name + ")";
 
-        if (takeR) {
-            new ITCN_Runner(rChannel, cellWidth, (double) cellWidth/2., threshold, false, image);
+        ITCN_Runner red;
+        ITCN_Runner green;
+        ITCN_Runner blue;
+
+        //create Results table
+        resultsTable = Analyzer.getResultsTable();
+        if (resultsTable == null) {
+            resultsTable = new ResultsTable();
+            Analyzer.setResultsTable(resultsTable);
         }
-        if (takeG) {
-            new ITCN_Runner(gChannel, cellWidth, (double) cellWidth/2., threshold, false, image);
+
+        // count cells from selected channels
+        // for each Roi from Roi Manager
+        // ITCN_Runner does the job of counting the cells
+        for (Roi currRoi : RoiManager.getInstance().getRoisAsArray()) {
+            resultsTable.incrementCounter();
+            resultsTable.addValue("ROI", currRoi.getName());
+            if (takeR) {
+                rChannel.setRoi(currRoi);
+                runITCN(rChannel, "red");
+            }
+            if (takeG) {
+                gChannel.setRoi(currRoi);
+                runITCN(gChannel, "green");
+            }
+            if (takeB) {
+                bChannel.setRoi(currRoi);
+                runITCN(bChannel, "blue");
+            }
+
+            resultsTable.addResults();
+            resultsTable.updateResults();
         }
-        if (takeB) {
-            new ITCN_Runner(bChannel, cellWidth, (double) cellWidth/2., threshold, false, image);
-        }
+
+//        resultsTable.show(strFrame); //results should only shown in the Results window
+    }
+
+    private void runITCN(ImagePlus imp, String color) {
+        //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
+        ITCN_Runner itcn;
+        itcn = new ITCN_Runner(imp, cellWidth, (double) cellWidth/2., threshold, darkPeaks, null);
+        itcn.run();
+        resultsTable.addValue("number of " + color + " cells", itcn.getNumberOfCells());
+        itcn.getResultImage().show();
     }
 
     // Select processing method depending on image type
     public void process(ImageProcessor ip) {
         int type = image.getType();
-//        if (type == ImagePlus.GRAY8)
-//            process((byte[]) ip.getPixels());
+//        if (type == ImagePlus.GRAY8) return;
 //        else if (type == ImagePlus.GRAY16)
 //            process((short[]) ip.getPixels());
 //        else if (type == ImagePlus.GRAY32)
 //            process((float[]) ip.getPixels());
 //        else
-
         if (type == ImagePlus.COLOR_RGB) {
             splitChannels(image);
         } else {
-            throw new RuntimeException("not supported");
+            IJ.showMessage("not supported");
         }
     }
 
@@ -161,21 +206,24 @@ public class Spheroid_RGB implements PlugIn {
 
         if (takeR) {
             rChannel = rgb[0];
-            rChannel.show();
+            rChannel.setLut(LUT.createLutFromColor(Color.RED));
+//            rChannel.show();
         }
         if (takeG) {
             gChannel = rgb[1];
-            gChannel.show();
+            gChannel.setLut(LUT.createLutFromColor(Color.GREEN));
+//            gChannel.show();
         }
         if (takeB) {
             bChannel = rgb[2];
-            bChannel.show();
+            bChannel.setLut(LUT.createLutFromColor(Color.BLUE));
+//            bChannel.show();
         }
     }
 
     public void showAbout() {
         IJ.showMessage("Spheroid RGB",
-                "a plugin for analysing a stained image of an spheroid"
+                "a plugin for analysing a stained image of a spheroid"
         );
     }
 }
