@@ -208,13 +208,13 @@ public class Spheroid_RGB implements PlugIn {
     // check if Image is RGB
     private void process() {
         int type = image.getType();
-//        if (type == ImagePlus.GRAY8) return;
-//        else if (type == ImagePlus.GRAY16)
-//            process((short[]) ip.getPixels());
-//        else if (type == ImagePlus.GRAY32)
-//            process((float[]) ip.getPixels());
-//        else
-        if (type == ImagePlus.COLOR_RGB) {
+        if (type == ImagePlus.GRAY8) {
+            rChannel = image;
+        } else if (type == ImagePlus.GRAY16)
+            IJ.showMessage("16-bit gray scale image not supported");
+        else if (type == ImagePlus.GRAY32)
+            IJ.showMessage("32-bit gray scale image not supported");
+        else if (type == ImagePlus.COLOR_RGB) {
             splitChannels(image);
         } else {
             IJ.showMessage("not supported");
