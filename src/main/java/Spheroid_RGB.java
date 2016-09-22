@@ -88,6 +88,11 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private boolean showDialog() {
+        if(RoiManager.getInstance() == null) {
+            IJ.showMessage("Please select ROI and add to ROI Manager");
+            return false;
+        }
+        
         GenericDialog gd = new GenericDialog("Spheroid RGB");
 
         gd.setAlwaysOnTop(true);
