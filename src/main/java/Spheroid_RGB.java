@@ -9,9 +9,12 @@ import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Analyzer;
 import ij.plugin.frame.RoiManager;
+import ij.process.ImageProcessor;
 import ij.process.LUT;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Spheroid_RGB
@@ -48,6 +51,11 @@ public class Spheroid_RGB implements PlugIn {
     //Results table instance
     private ResultsTable resultsTable;
 
+    //Result images
+    private ImagePlus redResultImage;
+    private ImagePlus greenResultImage;
+    private ImagePlus blueResultImage;
+
     /**
      * Main method for debugging.
      * For debugging, it is convenient to have a method that starts ImageJ, loads an
@@ -80,6 +88,8 @@ public class Spheroid_RGB implements PlugIn {
     public void run(String arg) {
 //        if (IJ.versionLessThan("1.36b")) return;
         image = WindowManager.getCurrentImage();
+        width = image.getWidth();
+        height = image.getHeight();
 
         if (showDialog()) {
             process();
@@ -92,7 +102,7 @@ public class Spheroid_RGB implements PlugIn {
             IJ.showMessage("Please select ROI and add to ROI Manager");
             return false;
         }
-        
+
         GenericDialog gd = new GenericDialog("Spheroid RGB");
 
         gd.setAlwaysOnTop(true);
@@ -131,40 +141,102 @@ public class Spheroid_RGB implements PlugIn {
             Analyzer.setResultsTable(resultsTable);
         }
 
+        HashMap<ImagePlus, ImageProcessor> channel = new HashMap<ImagePlus, ImageProcessor>();
+        if(rChannel != null) {
+            ImageProcessor redResults = (rChannel.getProcessor().duplicate()).convertToRGB();
+            channel.put(rChannel, redResults);
+        }
+        if(gChannel != null) {
+            ImageProcessor greenResults = (gChannel.getProcessor().duplicate()).convertToRGB();
+            channel.put(gChannel, greenResults);
+        }
+        if(bChannel != null) {
+            ImageProcessor blueResults = (bChannel.getProcessor().duplicate()).convertToRGB();
+            channel.put(bChannel, blueResults);
+        }
+
+        System.out.println(channel.size());
+        //create Result image
+        ImageProcessor ipResults = (rChannel.getProcessor().duplicate()).convertToRGB();
+
         // count cells from selected channels
         // for each Roi from Roi Manager
         // ITCN_Runner does the job of counting the cells
         for (Roi currRoi : RoiManager.getInstance().getRoisAsArray()) {
             resultsTable.incrementCounter();
             resultsTable.addValue("ROI", currRoi.getName());
-            if (takeR) {
-                rChannel.setRoi(currRoi);
-                runITCN(rChannel, "red");
+            for (ImagePlus currChannel : channel.keySet()) {
+                currChannel.setRoi(currRoi);
+                runITCN(currChannel, currChannel.getTitle(), channel.get(currChannel));
             }
-            if (takeG) {
-                gChannel.setRoi(currRoi);
-                runITCN(gChannel, "green");
-            }
-            if (takeB) {
-                bChannel.setRoi(currRoi);
-                runITCN(bChannel, "blue");
-            }
+
+//            if (takeR) {
+//                rChannel.setRoi(currRoi);
+//                runITCN(rChannel, "red", redIp);
+//            }
+//            if (takeG) {
+//                gChannel.setRoi(currRoi);
+//                runITCN(gChannel, "green", greenIp);
+//            }
+//            if (takeB) {
+//                bChannel.setRoi(currRoi);
+//                runITCN(bChannel, "blue", blueIp);
+//            }
 
             resultsTable.addResults();
             resultsTable.updateResults();
         }
 
+        ArrayList<ImagePlus> resultImages = new ArrayList<ImagePlus>();
+        for (ImagePlus currChannel : channel.keySet()) {
+            resultImages.add(new ImagePlus("Results " + currChannel.getTitle(), channel.get(currChannel)));
+        }
+
+        for (ImagePlus currImage : resultImages) {
+            currImage.show();
+        }
+//        if(takeR) {
+//            redResultImage = new ImagePlus("Results " + rChannel.getTitle(), redIp);
+//            redResultImage.show();
+//        } if(takeG) {
+//            greenResultImage = new ImagePlus("Results " + rChannel.getTitle(), greenIp);
+//            greenResultImage.show();
+//        } if(takeB) {
+//            blueResultImage = new ImagePlus("Results " + rChannel.getTitle(), blueIp);
+//            blueResultImage.show();
+//        }
+
+
 //        String strFrame = "Spheroid RGB " + version + " (" + image.getTitle() + ")";
 //        resultsTable.show(strFrame); //results should only shown in the Results window
     }
 
-    private void runITCN(ImagePlus imp, String color) {
+    private void runITCN(ImagePlus imp, String color, ImageProcessor ipResults) {
         //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
         ITCN_Runner itcn;
         itcn = new ITCN_Runner(imp, cellWidth, (double) cellWidth / 2., threshold, darkPeaks, null);
         itcn.run();
-        resultsTable.addValue("number of " + color + " cells", itcn.getNumberOfCells());
-        itcn.getResultImage().show();
+
+        int numberOfCells = itcn.getNumberOfCells();
+        ArrayList<Point> peaks = itcn.getPeaks();
+        resultsTable.addValue("number of " + color + " cells", numberOfCells);
+
+        //draw peaks
+        ipResults.setColor(java.awt.Color.WHITE);
+        ipResults.setLineWidth(1);
+
+        Point pt;
+        for (int i = 0; i < numberOfCells; i++) {
+            pt = peaks.get(i);
+
+            ipResults.drawDot(pt.x, pt.y);
+
+            //IJ.write("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
+        }
+
+        ipResults.setColor(java.awt.Color.yellow);
+        imp.getRoi().drawPixels(ipResults);
+
     }
 
     // Select processing method depending on image type

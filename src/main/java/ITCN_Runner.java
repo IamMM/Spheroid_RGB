@@ -144,22 +144,30 @@ public class ITCN_Runner {
         numberOfCells = peaks.size();
 
         ImageProcessor ipResults = (ip.duplicate()).convertToRGB();
-        resultImage = new ImagePlus("Results " + inputImage.getTitle(), ipResults);
 
-        ipResults.setColor(java.awt.Color.WHITE);
-        ipResults.setLineWidth(1);
-
-        Point pt;
         for (int i = 0; i < numberOfCells; i++) {
-            pt = peaks.get(i);
-
-            ipResults.drawDot(pt.x + r.x, pt.y + r.y);
-
-            //IJ.write("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
+            Point pt = peaks.get(i);
+            pt.x = pt.x + r.x;
+            pt.y = pt.y + r.y;
+            peaks.set(i,pt);
         }
 
-        ipResults.setColor(java.awt.Color.yellow);
-        ipResults.drawOval(r.x, r.y, r.width, r.height);
+//        resultImage = new ImagePlus("Results " + inputImage.getTitle(), ipResults);
+//
+//        ipResults.setColor(java.awt.Color.WHITE);
+//        ipResults.setLineWidth(1);
+//
+//        Point pt;
+//        for (int i = 0; i < numberOfCells; i++) {
+//            pt = peaks.get(i);
+//
+//            ipResults.drawDot(pt.x + r.x, pt.y + r.y);
+//
+//            //IJ.write("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
+//        }
+//
+//        ipResults.setColor(java.awt.Color.yellow);
+//        ipResults.drawOval(r.x, r.y, r.width, r.height);
 
 //        IJ.write("Image: " + inputImage.getTitle());
 //
@@ -383,5 +391,9 @@ public class ITCN_Runner {
 
     public int getNumberOfCells() {
         return numberOfCells;
+    }
+
+    public ArrayList<Point> getPeaks() {
+        return peaks;
     }
 }
