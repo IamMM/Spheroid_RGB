@@ -51,11 +51,6 @@ public class Spheroid_RGB implements PlugIn {
     //Results table instance
     private ResultsTable resultsTable;
 
-    //Result images
-    private ImagePlus redResultImage;
-    private ImagePlus greenResultImage;
-    private ImagePlus blueResultImage;
-
     /**
      * Main method for debugging.
      * For debugging, it is convenient to have a method that starts ImageJ, loads an
@@ -155,10 +150,6 @@ public class Spheroid_RGB implements PlugIn {
             channel.put(bChannel, blueResults);
         }
 
-        System.out.println(channel.size());
-        //create Result image
-        ImageProcessor ipResults = (rChannel.getProcessor().duplicate()).convertToRGB();
-
         // count cells from selected channels
         // for each Roi from Roi Manager
         // ITCN_Runner does the job of counting the cells
@@ -169,19 +160,6 @@ public class Spheroid_RGB implements PlugIn {
                 currChannel.setRoi(currRoi);
                 runITCN(currChannel, currChannel.getTitle(), channel.get(currChannel));
             }
-
-//            if (takeR) {
-//                rChannel.setRoi(currRoi);
-//                runITCN(rChannel, "red", redIp);
-//            }
-//            if (takeG) {
-//                gChannel.setRoi(currRoi);
-//                runITCN(gChannel, "green", greenIp);
-//            }
-//            if (takeB) {
-//                bChannel.setRoi(currRoi);
-//                runITCN(bChannel, "blue", blueIp);
-//            }
 
             resultsTable.addResults();
             resultsTable.updateResults();
@@ -195,17 +173,6 @@ public class Spheroid_RGB implements PlugIn {
         for (ImagePlus currImage : resultImages) {
             currImage.show();
         }
-//        if(takeR) {
-//            redResultImage = new ImagePlus("Results " + rChannel.getTitle(), redIp);
-//            redResultImage.show();
-//        } if(takeG) {
-//            greenResultImage = new ImagePlus("Results " + rChannel.getTitle(), greenIp);
-//            greenResultImage.show();
-//        } if(takeB) {
-//            blueResultImage = new ImagePlus("Results " + rChannel.getTitle(), blueIp);
-//            blueResultImage.show();
-//        }
-
 
 //        String strFrame = "Spheroid RGB " + version + " (" + image.getTitle() + ")";
 //        resultsTable.show(strFrame); //results should only shown in the Results window
@@ -234,12 +201,11 @@ public class Spheroid_RGB implements PlugIn {
             //IJ.write("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
         }
 
-        ipResults.setColor(java.awt.Color.yellow);
+        ipResults.setColor(java.awt.Color.YELLOW);
         imp.getRoi().drawPixels(ipResults);
-
     }
 
-    // Select processing method depending on image type
+    // check if Image is RGB
     private void process() {
         int type = image.getType();
 //        if (type == ImagePlus.GRAY8) return;
