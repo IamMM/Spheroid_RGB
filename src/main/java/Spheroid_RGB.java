@@ -15,6 +15,7 @@ import ij.process.ImageStatistics;
 import ij.process.LUT;
 
 import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -96,8 +97,19 @@ public class Spheroid_RGB implements PlugIn {
 
     private boolean showDialog() {
         if(RoiManager.getInstance() == null) {
-            GenericDialog roiDialog = new GenericDialog("Spheroid RGB");
-            roiDialog.addMessage("Please select ROI and add to ROI Manager");
+//            GenericDialog roiDialog = new GenericDialog("Spheroid RGB");
+//            roiDialog.addMessage("Please select ROI and add to ROI Manager");
+//            Button open = new Button("Open .roi file or RoiSet.zip");
+//            open.addActionListener(new ActionListener() {
+//                public void actionPerformed(ActionEvent e) {
+//                    new RoiManager();
+//                    RoiManager.getInstance().runCommand("Open"); //not working like that
+//                }
+//            });
+//            roiDialog.add(open);
+//            roiDialog.showDialog();
+            IJ.showMessage("Please select ROI and add to ROI Manager");
+            new RoiManager();
             return false;
         }
 
