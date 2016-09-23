@@ -10,6 +10,7 @@ import ij.plugin.PlugIn;
 import ij.plugin.filter.Analyzer;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 import ij.process.LUT;
 
 import java.awt.*;
@@ -25,7 +26,6 @@ import java.util.HashMap;
  */
 public class Spheroid_RGB implements PlugIn {
     private final String version = " v1.0 ";
-
     // imageJ components
     private ImagePlus image;
 
@@ -48,8 +48,9 @@ public class Spheroid_RGB implements PlugIn {
     private ImagePlus gChannel;
     private ImagePlus bChannel;
 
-    //Results table instance
-    private ResultsTable resultsTable;
+    //Colors for result images
+    private static Color PEAKS_COLOR = Color.WHITE;
+    private static final Color ROI_COLOR = Color.YELLOW;
 
     /**
      * Main method for debugging.
@@ -130,12 +131,13 @@ public class Spheroid_RGB implements PlugIn {
 
     private void runApplication() {
         //create Results table
-        resultsTable = Analyzer.getResultsTable();
+        ResultsTable resultsTable = Analyzer.getResultsTable();
         if (resultsTable == null) {
             resultsTable = new ResultsTable();
             Analyzer.setResultsTable(resultsTable);
         }
 
+        //Every Channel = 8bit ImagePlus and points to an RGB ImageProcessor for the result image
         HashMap<ImagePlus, ImageProcessor> channel = new HashMap<ImagePlus, ImageProcessor>();
         if(rChannel != null) {
             ImageProcessor redResults = (rChannel.getProcessor().duplicate()).convertToRGB();
@@ -150,15 +152,21 @@ public class Spheroid_RGB implements PlugIn {
             channel.put(bChannel, blueResults);
         }
 
-        // count cells from selected channels
-        // for each Roi from Roi Manager
-        // ITCN_Runner does the job of counting the cells
+        /*
+        count cells and get mean intensity from selected channels for each Roi from Roi Manager
+        ITCN_Runner does the job of counting the cells
+        */
+        ImageStatistics imageStats;
         for (Roi currRoi : RoiManager.getInstance().getRoisAsArray()) {
             resultsTable.incrementCounter();
             resultsTable.addValue("ROI", currRoi.getName());
             for (ImagePlus currChannel : channel.keySet()) {
                 currChannel.setRoi(currRoi);
-                runITCN(currChannel, currChannel.getTitle(), channel.get(currChannel));
+                int numberOfCells = runITCN(currChannel, channel.get(currChannel));
+                resultsTable.addValue("number of " + currChannel.getTitle() + " cells", numberOfCells);
+
+                imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, currRoi.getImage().getCalibration());
+                resultsTable.addValue("Mean Value " + currChannel.getTitle(), imageStats.mean);
             }
 
             resultsTable.addResults();
@@ -178,7 +186,7 @@ public class Spheroid_RGB implements PlugIn {
 //        resultsTable.show(strFrame); //results should only shown in the Results window
     }
 
-    private void runITCN(ImagePlus imp, String color, ImageProcessor ipResults) {
+    private int runITCN(ImagePlus imp, ImageProcessor ipResults) {
         //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
         ITCN_Runner itcn;
         itcn = new ITCN_Runner(imp, cellWidth, (double) cellWidth / 2., threshold, darkPeaks, null);
@@ -186,10 +194,9 @@ public class Spheroid_RGB implements PlugIn {
 
         int numberOfCells = itcn.getNumberOfCells();
         ArrayList<Point> peaks = itcn.getPeaks();
-        resultsTable.addValue("number of " + color + " cells", numberOfCells);
 
         //draw peaks
-        ipResults.setColor(java.awt.Color.WHITE);
+        ipResults.setColor(PEAKS_COLOR);
         ipResults.setLineWidth(1);
 
         Point pt;
@@ -198,18 +205,21 @@ public class Spheroid_RGB implements PlugIn {
 
             ipResults.drawDot(pt.x, pt.y);
 
-            //IJ.write("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
+//            System.out.println("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
         }
 
-        ipResults.setColor(java.awt.Color.YELLOW);
+        ipResults.setColor(ROI_COLOR);
         imp.getRoi().drawPixels(ipResults);
+
+        return numberOfCells;
     }
 
     // check if Image is RGB
     private void process() {
         int type = image.getType();
         if (type == ImagePlus.GRAY8) {
-            rChannel = image;
+            rChannel = gChannel = bChannel = image;
+            PEAKS_COLOR = Color.RED;
         } else if (type == ImagePlus.GRAY16)
             IJ.showMessage("16-bit gray scale image not supported");
         else if (type == ImagePlus.GRAY32)

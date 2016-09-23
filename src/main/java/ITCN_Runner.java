@@ -145,6 +145,7 @@ public class ITCN_Runner {
 
         ImageProcessor ipResults = (ip.duplicate()).convertToRGB();
 
+        //transform roi related coordinates to image based coordinates 
         for (int i = 0; i < numberOfCells; i++) {
             Point pt = peaks.get(i);
             pt.x = pt.x + r.x;
