@@ -3,6 +3,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.NonBlockingGenericDialog;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
@@ -70,7 +71,7 @@ public class Spheroid_RGB implements PlugIn {
         new ImageJ();
 
         // open the Spheroid sample
-        ImagePlus image = IJ.openImage("P:/image analysis/cell count/EdU_slide2.2.tif");
+        ImagePlus image = IJ.openImage("C:/workspace/Spheroid_RGB/EdU_slide2.2.tif");
         image.show();
 
         // run the plugin
@@ -95,11 +96,12 @@ public class Spheroid_RGB implements PlugIn {
 
     private boolean showDialog() {
         if(RoiManager.getInstance() == null) {
-            IJ.showMessage("Please select ROI and add to ROI Manager");
+            GenericDialog roiDialog = new GenericDialog("Spheroid RGB");
+            roiDialog.addMessage("Please select ROI and add to ROI Manager");
             return false;
         }
 
-        GenericDialog gd = new GenericDialog("Spheroid RGB");
+        NonBlockingGenericDialog gd = new NonBlockingGenericDialog("Spheroid RGB");
 
         gd.setAlwaysOnTop(true);
         gd.addMessage("Parameter for Automated Cell Count");
@@ -156,8 +158,10 @@ public class Spheroid_RGB implements PlugIn {
         count cells and get mean intensity from selected channels for each Roi from Roi Manager
         ITCN_Runner does the job of counting the cells
         */
+        RoiManager roiManager = RoiManager.getInstance();
+        if (roiManager == null) roiManager = new RoiManager();
         ImageStatistics imageStats;
-        for (Roi currRoi : RoiManager.getInstance().getRoisAsArray()) {
+        for (Roi currRoi : roiManager.getRoisAsArray()) {
             resultsTable.incrementCounter();
             resultsTable.addValue("ROI", currRoi.getName());
             for (ImagePlus currChannel : channel.keySet()) {
@@ -181,6 +185,8 @@ public class Spheroid_RGB implements PlugIn {
         for (ImagePlus currImage : resultImages) {
             currImage.show();
         }
+
+        roiManager.runCommand(image, "Show All");
 
 //        String strFrame = "Spheroid RGB " + version + " (" + image.getTitle() + ")";
 //        resultsTable.show(strFrame); //results should only shown in the Results window
