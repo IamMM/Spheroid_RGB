@@ -110,7 +110,6 @@ public class Spheroid_RGB implements PlugIn {
 //            roiDialog.showDialog();
             IJ.showMessage("Please select ROI and add to ROI Manager");
             new RoiManager();
-            return false;
         }
 
         NonBlockingGenericDialog gd = new NonBlockingGenericDialog("Spheroid RGB");
