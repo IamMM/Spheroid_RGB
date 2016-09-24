@@ -23,7 +23,7 @@ Channels to run over each ROI the following statistics:
 
 ---
 
-Started from template minimal Maven project implementing an ImageJ 1.x plugin: \s\s
+Started from template minimal Maven project implementing an ImageJ 1.x plugin:\s\s
 https://github.com/imagej/minimal-ij1-plugin/archive/master.zip
 
 Cell counting based on the algorithm from the ITCN Plugin, which is looking for local intensity peaks in 8-bit images: \s\s
