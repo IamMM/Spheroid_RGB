@@ -114,7 +114,7 @@ public class Spheroid_RGB implements PlugIn {
 
         NonBlockingGenericDialog gd = new NonBlockingGenericDialog("Spheroid RGB");
 
-        gd.setAlwaysOnTop(true);
+//        gd.setAlwaysOnTop(true);
         gd.addMessage("Parameter for Automated Cell Count");
         gd.addNumericField("cell width", 15.00, 0);
         gd.addSlider("threshold", 0.0, 1.0, 0.2);
