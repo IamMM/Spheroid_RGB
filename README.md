@@ -35,3 +35,5 @@ Started from template [minimal Maven project](https://github.com/imagej/minimal-
 
 Cell counting based on the algorithm from the [ITCN Plugin](https://imagej.nih.gov/ij/plugins/itcn.html), which is looking for local intensity peaks in 8-bit images.
 [Center for Bio-Image Informatics, University of California](http://bioimage.ucsb.edu/automatic-nuclei-counter-plug-in-for-imagej)
+
+Spheroid RGB was developed for the Auckland Cancer Society Research Center.
