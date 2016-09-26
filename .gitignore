@@ -4,3 +4,4 @@
 /target/
 /.idea/
 *.iml
+/src/main/java/META-INF
