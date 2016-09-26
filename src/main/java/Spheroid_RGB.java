@@ -13,6 +13,7 @@ import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
+import ij.text.TextWindow;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -85,9 +86,14 @@ public class Spheroid_RGB implements PlugIn {
     @Override
     public void run(String arg) {
 //        if (IJ.versionLessThan("1.36b")) return;
-        image = WindowManager.getCurrentImage();
-        width = image.getWidth();
-        height = image.getHeight();
+        if(WindowManager.getCurrentImage() != null) {
+            image = WindowManager.getCurrentImage();
+            width = image.getWidth();
+            height = image.getHeight();
+        }else {
+            IJ.showMessage("No images open");
+            return;
+        }
 
         if (showDialog()) {
             process();
@@ -112,7 +118,7 @@ public class Spheroid_RGB implements PlugIn {
             new RoiManager();
         }
 
-        NonBlockingGenericDialog gd = new NonBlockingGenericDialog("Spheroid RGB");
+        NonBlockingGenericDialog gd = new NonBlockingGenericDialog("Spheroid RGB (" + image.getTitle() + ")");
 
 //        gd.setAlwaysOnTop(true);
         gd.addMessage("Parameter for Automated Cell Count");
@@ -165,10 +171,7 @@ public class Spheroid_RGB implements PlugIn {
             channel.put(bChannel, blueResults);
         }
 
-        /*
-        count cells and get mean intensity from selected channels for each Roi from Roi Manager
-        ITCN_Runner does the job of counting the cells
-        */
+        //count cells and get mean intensity from selected channels for each Roi from Roi Manager
         RoiManager roiManager = RoiManager.getInstance();
         if (roiManager == null) roiManager = new RoiManager();
         ImageStatistics imageStats;
@@ -184,10 +187,17 @@ public class Spheroid_RGB implements PlugIn {
                 resultsTable.addValue("Mean Value " + currChannel.getTitle(), imageStats.mean);
             }
 
+            //ratio
+            int row = resultsTable.getCounter() - 1;
+            resultsTable.addValue("Count Ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(3, row)));
+            resultsTable.addValue("Intensity Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(4, row)));
+
             resultsTable.addResults();
             resultsTable.updateResults();
         }
 
+
+        //Create and collect result images
         ArrayList<ImagePlus> resultImages = new ArrayList<ImagePlus>();
         for (ImagePlus currChannel : channel.keySet()) {
             resultImages.add(new ImagePlus("Results " + currChannel.getTitle(), channel.get(currChannel)));
@@ -201,6 +211,10 @@ public class Spheroid_RGB implements PlugIn {
 
 //        String strFrame = "Spheroid RGB " + version + " (" + image.getTitle() + ")";
 //        resultsTable.show(strFrame); //results should only shown in the Results window
+    }
+
+    private double ratio(double c1, double c2) {
+          return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
     }
 
     private int runITCN(ImagePlus imp, ImageProcessor ipResults) {
