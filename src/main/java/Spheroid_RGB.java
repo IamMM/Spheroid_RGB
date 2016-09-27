@@ -188,9 +188,11 @@ public class Spheroid_RGB implements PlugIn {
             }
 
             //ratio
-            int row = resultsTable.getCounter() - 1;
-            resultsTable.addValue("Count Ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(3, row)));
-            resultsTable.addValue("Intensity Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(4, row)));
+            if(channel.size() > 1) {
+                int row = resultsTable.getCounter() - 1;
+                resultsTable.addValue("Count Ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(3, row)));
+                resultsTable.addValue("Intensity Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(4, row)));
+            }
 
             resultsTable.addResults();
             resultsTable.updateResults();
@@ -249,7 +251,7 @@ public class Spheroid_RGB implements PlugIn {
     private void process() {
         int type = image.getType();
         if (type == ImagePlus.GRAY8) {
-            rChannel = gChannel = bChannel = image;
+            rChannel = image;
             PEAKS_COLOR = Color.RED;
         } else if (type == ImagePlus.GRAY16)
             IJ.showMessage("16-bit gray scale image not supported");
