@@ -181,10 +181,10 @@ public class Spheroid_RGB implements PlugIn {
             for (ImagePlus currChannel : channel.keySet()) {
                 currChannel.setRoi(currRoi);
                 int numberOfCells = runITCN(currChannel, channel.get(currChannel));
-                resultsTable.addValue("number of " + currChannel.getTitle() + " cells", numberOfCells);
+                resultsTable.addValue("count (" + currChannel.getTitle() + ")", numberOfCells);
 
                 imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, currRoi.getImage().getCalibration());
-                resultsTable.addValue("Mean Value " + currChannel.getTitle(), imageStats.mean);
+                resultsTable.addValue("mean (" + currChannel.getTitle() + ")", imageStats.mean);
             }
 
             //ratio
