@@ -22,7 +22,7 @@ Channels to run over each ROI the following statistics:
     - mean intensity of each selected color channel and selected ROI
     - ratio between number of cells in percent
 
-ROI | number of red cells | mean Value red | number of blue cells | mean value blue | count ratio (%) | intensity ratio (%)
+ROI | count (red) | mean (red) | count (blue) | mean (blue) | count ratio (%) | intensity ratio (%)
 --- | --- | --- | --- | --- | --- | --- 
 1 | 186	| 21.036 | 395 | 52.744| 47.089 | 39.882
 2 | 165	| 19.769 | 363 | 40.075 | 45.455 | 49.331
