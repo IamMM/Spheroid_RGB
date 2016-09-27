@@ -45,12 +45,13 @@ public class Spheroid_RGB implements PlugIn {
     private boolean takeR;
     private boolean takeG;
     private boolean takeB;
+    private int total;
 
     // split channels
     private ImagePlus rChannel;
     private ImagePlus gChannel;
-    private ImagePlus bChannel;
 
+    private ImagePlus bChannel;
     //Colors for result images
     private static Color PEAKS_COLOR = Color.WHITE;
     private static final Color ROI_COLOR = Color.YELLOW;
@@ -132,6 +133,8 @@ public class Spheroid_RGB implements PlugIn {
         gd.addMessage("Choose Color Channels");
         gd.addCheckboxGroup(3, 1, labels, defaultValues);
 
+        gd.addChoice("Channel representing total number of cells", labels, labels[2]);
+
         gd.showDialog();
         if (gd.wasCanceled())
             return false;
@@ -144,6 +147,8 @@ public class Spheroid_RGB implements PlugIn {
         takeR = gd.getNextBoolean();
         takeG = gd.getNextBoolean();
         takeB = gd.getNextBoolean();
+
+        total = gd.getNextChoiceIndex();
 
         return true;
     }
@@ -171,7 +176,7 @@ public class Spheroid_RGB implements PlugIn {
             channel.put(bChannel, blueResults);
         }
 
-        //count cells and get mean intensity from selected channels for each Roi from Roi Manager
+        //count cells and get mean intensity from selected channels for each WiseRoi from WiseRoi Manager
         RoiManager roiManager = RoiManager.getInstance();
         if (roiManager == null) roiManager = new RoiManager();
         ImageStatistics imageStats;
@@ -188,10 +193,36 @@ public class Spheroid_RGB implements PlugIn {
             }
 
             //ratio
-            if(channel.size() > 1) {
+            if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
                 resultsTable.addValue("Count Ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(3, row)));
                 resultsTable.addValue("Intensity Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(4, row)));
+            } else if (channel.size() == 3) {
+                int row = resultsTable.getCounter() - 1;
+
+                String major = "(red)";
+                String minor1 = "(green)";
+                String minor2 = " (blue)";
+                if (total == 1) {
+                    major = "(green)";
+                    minor1 = "(red)";
+                }
+                if (total == 2) {
+                    major = "(blue)";
+                    minor2 = "(red)";
+                }
+
+                //count ratio
+                resultsTable.addValue("count " + minor1 + ":" + major
+                        , ratio(resultsTable.getValue("count " + minor1, row), resultsTable.getValue("count " + major, row)));
+                resultsTable.addValue("count " + minor2 + ":" + major
+                        , ratio(resultsTable.getValue("count " + minor2, row), resultsTable.getValue("count " + major, row)));
+                //intensity ratio
+                resultsTable.addValue("intensity " + minor1 + ":" + major
+                        , ratio(resultsTable.getValue("mean " + minor1, row), resultsTable.getValue("mean " + major, row)));
+                resultsTable.addValue("intensity " + minor2 + ":" + major
+                        , ratio(resultsTable.getValue("mean " + minor2, row), resultsTable.getValue("mean " + major, row)));
+
             }
 
             resultsTable.addResults();
