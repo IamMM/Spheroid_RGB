@@ -202,7 +202,7 @@ public class Spheroid_RGB implements PlugIn {
 
                 String major = "(red)";
                 String minor1 = "(green)";
-                String minor2 = " (blue)";
+                String minor2 = "(blue)";
                 if (total == 1) {
                     major = "(green)";
                     minor1 = "(red)";
