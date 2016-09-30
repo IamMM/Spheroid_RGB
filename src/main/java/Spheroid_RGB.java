@@ -31,43 +31,6 @@ public class Spheroid_RGB implements PlugIn {
     private static final String VERSION = " v0.1.0 ";
     private static Color PEAKS_COLOR = Color.WHITE;
     private static final Color ROI_COLOR = Color.YELLOW;
-    private static int widthDefault = 10;
-    private static double min_distDefault = 5.0;
-    private static double thresDefault = 0.0;
-    private static double thresPrecision = 10;
-
-    // application window
-    private PlugInFrame frame;
-
-    //gui components
-    private java.awt.Panel buttonPanel;
-    private java.awt.Button exitButton;
-    private java.awt.Label ccImageLabel;
-    private java.awt.Checkbox darkPeaksCheckbox;
-    private java.awt.Label filenameLabel;
-    private java.awt.Panel imagePanel;
-    private java.awt.Choice maskChoice;
-    private java.awt.Label maskLabel;
-    private java.awt.Panel maskPanel;
-    private java.awt.Label minDistLabel;
-    private java.awt.TextField minDistTextField;
-    private java.awt.Label minDistUnitsLabel;
-    private java.awt.Button okButton;
-    private java.awt.Button openMaskButton;
-    private java.awt.Label recomendLabel;
-    private java.awt.Panel varsPanel;
-    private java.awt.Label widthLabel;
-    private java.awt.TextField widthTextField;
-    private java.awt.Label widthUnitsLabel;
-    private java.awt.Button widthButton;
-    private java.awt.Button minDistButton;
-    private java.awt.Label thresLabel;
-    private java.awt.TextField thresTextField;
-    private java.awt.Scrollbar thresScroll;
-    private java.awt.Panel midPanel;
-    private static final String strNONE = "Use selected ROI";
-    private ImagePlus currImp;
-    private ArrayList winIDList;
 
     // imageJ components
     private ImagePlus image;
@@ -301,11 +264,8 @@ public class Spheroid_RGB implements PlugIn {
         ipResults.setLineWidth(1);
 
         Point pt;
-        for (int i = 0; i < peaks.size(); i++) {
-            pt = peaks.get(i);
-
-            ipResults.drawDot(pt.x, pt.y);
-
+        for (Point p : peaks) {
+            ipResults.drawDot(p.x, p.y);
 //            System.out.println("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
         }
 
@@ -319,7 +279,7 @@ public class Spheroid_RGB implements PlugIn {
         double sum = 0;
         for (Point p : peaks) {
             int pos = p.y * width + p.x;
-            sum += pixels[pos] & 0xff;;
+            sum += pixels[pos] & 0xff;
         }
         return sum / peaks.size();
     }
@@ -357,17 +317,5 @@ public class Spheroid_RGB implements PlugIn {
             bChannel = rgb[2];
             bChannel.setLut(LUT.createLutFromColor(Color.BLUE));
         }
-    }
-
-    /********************************************************
-     * 														*
-     *						GUI-METHODS						*
-     *														*
-     ********************************************************/
-
-    private void createGUI() {
-        frame = new PlugInFrame(TITLE);
-
-
     }
 }
