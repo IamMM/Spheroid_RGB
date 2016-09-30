@@ -2,21 +2,19 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.NonBlockingGenericDialog;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Analyzer;
+import ij.plugin.frame.PlugInFrame;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
-import ij.text.TextWindow;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -28,13 +26,53 @@ import java.util.HashMap;
  * @author Maximilian Maske
  */
 public class Spheroid_RGB implements PlugIn {
-    private final String version = " v1.0 ";
+    //constants
+    private static final String TITLE = "Spheroid RGB";
+    private static final String VERSION = " v0.1.0 ";
+    private static Color PEAKS_COLOR = Color.WHITE;
+    private static final Color ROI_COLOR = Color.YELLOW;
+    private static int widthDefault = 10;
+    private static double min_distDefault = 5.0;
+    private static double thresDefault = 0.0;
+    private static double thresPrecision = 10;
+
+    // application window
+    private PlugInFrame frame;
+
+    //gui components
+    private java.awt.Panel buttonPanel;
+    private java.awt.Button exitButton;
+    private java.awt.Label ccImageLabel;
+    private java.awt.Checkbox darkPeaksCheckbox;
+    private java.awt.Label filenameLabel;
+    private java.awt.Panel imagePanel;
+    private java.awt.Choice maskChoice;
+    private java.awt.Label maskLabel;
+    private java.awt.Panel maskPanel;
+    private java.awt.Label minDistLabel;
+    private java.awt.TextField minDistTextField;
+    private java.awt.Label minDistUnitsLabel;
+    private java.awt.Button okButton;
+    private java.awt.Button openMaskButton;
+    private java.awt.Label recomendLabel;
+    private java.awt.Panel varsPanel;
+    private java.awt.Label widthLabel;
+    private java.awt.TextField widthTextField;
+    private java.awt.Label widthUnitsLabel;
+    private java.awt.Button widthButton;
+    private java.awt.Button minDistButton;
+    private java.awt.Label thresLabel;
+    private java.awt.TextField thresTextField;
+    private java.awt.Scrollbar thresScroll;
+    private java.awt.Panel midPanel;
+    private static final String strNONE = "Use selected ROI";
+    private ImagePlus currImp;
+    private ArrayList winIDList;
+
     // imageJ components
     private ImagePlus image;
-
-    // image property members
     private int width;
-    private int height;
+    private int heigth;
 
     //ITCN values
     private int cellWidth;
@@ -50,11 +88,7 @@ public class Spheroid_RGB implements PlugIn {
     // split channels
     private ImagePlus rChannel;
     private ImagePlus gChannel;
-
     private ImagePlus bChannel;
-    //Colors for result images
-    private static Color PEAKS_COLOR = Color.WHITE;
-    private static final Color ROI_COLOR = Color.YELLOW;
 
     /**
      * Main method for debugging.
@@ -90,7 +124,7 @@ public class Spheroid_RGB implements PlugIn {
         if(WindowManager.getCurrentImage() != null) {
             image = WindowManager.getCurrentImage();
             width = image.getWidth();
-            height = image.getHeight();
+            heigth = image.getHeight();
         }else {
             IJ.showMessage("No images open");
             return;
@@ -104,24 +138,12 @@ public class Spheroid_RGB implements PlugIn {
 
     private boolean showDialog() {
         if(RoiManager.getInstance() == null) {
-//            GenericDialog roiDialog = new GenericDialog("Spheroid RGB");
-//            roiDialog.addMessage("Please select ROI and add to ROI Manager");
-//            Button open = new Button("Open .roi file or RoiSet.zip");
-//            open.addActionListener(new ActionListener() {
-//                public void actionPerformed(ActionEvent e) {
-//                    new RoiManager();
-//                    RoiManager.getInstance().runCommand("Open"); //not working like that
-//                }
-//            });
-//            roiDialog.add(open);
-//            roiDialog.showDialog();
             IJ.showMessage("Please select ROI and add to ROI Manager");
             new RoiManager();
         }
 
-        NonBlockingGenericDialog gd = new NonBlockingGenericDialog("Spheroid RGB (" + image.getTitle() + ")");
+        NonBlockingGenericDialog gd = new NonBlockingGenericDialog(TITLE + " " + VERSION);
 
-//        gd.setAlwaysOnTop(true);
         gd.addMessage("Parameter for Automated Cell Count");
         gd.addNumericField("cell width", 15.00, 0);
         gd.addSlider("threshold", 0.0, 1.0, 0.2);
@@ -161,20 +183,7 @@ public class Spheroid_RGB implements PlugIn {
             Analyzer.setResultsTable(resultsTable);
         }
 
-        //Every Channel = 8bit ImagePlus and points to an RGB ImageProcessor for the result image
-        HashMap<ImagePlus, ImageProcessor> channel = new HashMap<ImagePlus, ImageProcessor>();
-        if(rChannel != null) {
-            ImageProcessor redResults = (rChannel.getProcessor().duplicate()).convertToRGB();
-            channel.put(rChannel, redResults);
-        }
-        if(gChannel != null) {
-            ImageProcessor greenResults = (gChannel.getProcessor().duplicate()).convertToRGB();
-            channel.put(gChannel, greenResults);
-        }
-        if(bChannel != null) {
-            ImageProcessor blueResults = (bChannel.getProcessor().duplicate()).convertToRGB();
-            channel.put(bChannel, blueResults);
-        }
+        HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
 
         //count cells and get mean intensity from selected channels for each WiseRoi from WiseRoi Manager
         RoiManager roiManager = RoiManager.getInstance();
@@ -185,18 +194,22 @@ public class Spheroid_RGB implements PlugIn {
             resultsTable.addValue("ROI", currRoi.getName());
             for (ImagePlus currChannel : channel.keySet()) {
                 currChannel.setRoi(currRoi);
-                int numberOfCells = runITCN(currChannel, channel.get(currChannel));
-                resultsTable.addValue("count (" + currChannel.getTitle() + ")", numberOfCells);
+                ArrayList<Point> peaks = runITCN(currChannel, channel.get(currChannel));
+                resultsTable.addValue("count (" + currChannel.getTitle() + ")", peaks.size());
 
                 imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, currRoi.getImage().getCalibration());
-                resultsTable.addValue("mean (" + currChannel.getTitle() + ")", imageStats.mean);
+                resultsTable.addValue("roi mean (" + currChannel.getTitle() + ")", imageStats.mean);
+
+                double mean = mean((byte[])currChannel.getProcessor().getPixels(), peaks);
+                resultsTable.addValue("peak mean (" + currChannel.getTitle() + ")", mean);
             }
 
             //ratio
             if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("Count Ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(3, row)));
-                resultsTable.addValue("Intensity Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(4, row)));
+                resultsTable.addValue("Count Ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
+                resultsTable.addValue("rio mean Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
+                resultsTable.addValue("peak mean Ratio (%)", ratio(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
 
@@ -246,17 +259,41 @@ public class Spheroid_RGB implements PlugIn {
 //        resultsTable.show(strFrame); //results should only shown in the Results window
     }
 
+    /**
+     * Every Channel = 8bit ImagePlus and points to an RGB ImageProcessor for the result image
+     */
+    private HashMap<ImagePlus, ImageProcessor> initChannelMap() {
+        HashMap<ImagePlus, ImageProcessor> channel = new HashMap<ImagePlus, ImageProcessor>();
+        if(rChannel != null) {
+            ImageProcessor redResults = (rChannel.getProcessor().duplicate()).convertToRGB();
+            channel.put(rChannel, redResults);
+        }
+        if(gChannel != null) {
+            ImageProcessor greenResults = (gChannel.getProcessor().duplicate()).convertToRGB();
+            channel.put(gChannel, greenResults);
+        }
+        if(bChannel != null) {
+            ImageProcessor blueResults = (bChannel.getProcessor().duplicate()).convertToRGB();
+            channel.put(bChannel, blueResults);
+        }
+        return channel;
+    }
+
+    /**
+     * @param c1 component 1
+     * @param c2 component 2
+     * @return percentage with assumption that grater value is 100%
+     */
     private double ratio(double c1, double c2) {
           return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
     }
 
-    private int runITCN(ImagePlus imp, ImageProcessor ipResults) {
+    private ArrayList<Point> runITCN(ImagePlus imp, ImageProcessor ipResults) {
         //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
         ITCN_Runner itcn;
         itcn = new ITCN_Runner(imp, cellWidth, (double) cellWidth / 2., threshold, darkPeaks, null);
         itcn.run();
 
-        int numberOfCells = itcn.getNumberOfCells();
         ArrayList<Point> peaks = itcn.getPeaks();
 
         //draw peaks
@@ -264,7 +301,7 @@ public class Spheroid_RGB implements PlugIn {
         ipResults.setLineWidth(1);
 
         Point pt;
-        for (int i = 0; i < numberOfCells; i++) {
+        for (int i = 0; i < peaks.size(); i++) {
             pt = peaks.get(i);
 
             ipResults.drawDot(pt.x, pt.y);
@@ -275,7 +312,16 @@ public class Spheroid_RGB implements PlugIn {
         ipResults.setColor(ROI_COLOR);
         imp.getRoi().drawPixels(ipResults);
 
-        return numberOfCells;
+        return peaks;
+    }
+
+    private double mean(byte[] pixels, ArrayList<Point> peaks) {
+        double sum = 0;
+        for (Point p : peaks) {
+            int pos = p.y * width + p.x;
+            sum += pixels[pos] & 0xff;;
+        }
+        return sum / peaks.size();
     }
 
     // check if Image is RGB
@@ -302,23 +348,26 @@ public class Spheroid_RGB implements PlugIn {
         if (takeR) {
             rChannel = rgb[0];
             rChannel.setLut(LUT.createLutFromColor(Color.RED));
-//            rChannel.show();
         }
         if (takeG) {
             gChannel = rgb[1];
             gChannel.setLut(LUT.createLutFromColor(Color.GREEN));
-//            gChannel.show();
         }
         if (takeB) {
             bChannel = rgb[2];
             bChannel.setLut(LUT.createLutFromColor(Color.BLUE));
-//            bChannel.show();
         }
     }
 
-    public void showAbout() {
-        IJ.showMessage("Spheroid RGB",
-                "a plugin for analysing a stained image of a spheroid"
-        );
+    /********************************************************
+     * 														*
+     *						GUI-METHODS						*
+     *														*
+     ********************************************************/
+
+    private void createGUI() {
+        frame = new PlugInFrame(TITLE);
+
+
     }
 }
