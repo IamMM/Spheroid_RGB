@@ -28,7 +28,13 @@ import java.util.HashMap;
  * @author Maximilian Maske
  */
 public class Spheroid_RGB implements PlugIn {
-    private final String version = " v1.0 ";
+
+    //constants
+    private static final String TITLE = "Spheroid RGB";
+    private static final String VERSION = " v0.1.0 ";
+    private static Color PEAKS_COLOR = Color.WHITE;
+    private static final Color ROI_COLOR = Color.YELLOW;
+
     // imageJ components
     private ImagePlus image;
 
@@ -50,11 +56,7 @@ public class Spheroid_RGB implements PlugIn {
     // split channels
     private ImagePlus rChannel;
     private ImagePlus gChannel;
-
     private ImagePlus bChannel;
-    //Colors for result images
-    private static Color PEAKS_COLOR = Color.WHITE;
-    private static final Color ROI_COLOR = Color.YELLOW;
 
     /**
      * Main method for debugging.
@@ -119,7 +121,7 @@ public class Spheroid_RGB implements PlugIn {
             new RoiManager();
         }
 
-        NonBlockingGenericDialog gd = new NonBlockingGenericDialog("Spheroid RGB (" + image.getTitle() + ")");
+        NonBlockingGenericDialog gd = new NonBlockingGenericDialog( TITLE + VERSION + " (" + image.getTitle() + ")");
 
 //        gd.setAlwaysOnTop(true);
         gd.addMessage("Parameter for Automated Cell Count");
