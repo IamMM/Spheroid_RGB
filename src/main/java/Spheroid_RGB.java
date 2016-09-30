@@ -8,7 +8,6 @@ import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Analyzer;
-import ij.plugin.frame.PlugInFrame;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -148,7 +147,7 @@ public class Spheroid_RGB implements PlugIn {
 
         HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
 
-        //count cells and get mean intensity from selected channels for each WiseRoi from WiseRoi Manager
+        //count cells and get meanPeak intensity from selected channels for each WiseRoi from WiseRoi Manager
         RoiManager roiManager = RoiManager.getInstance();
         if (roiManager == null) roiManager = new RoiManager();
         ImageStatistics imageStats;
@@ -161,18 +160,18 @@ public class Spheroid_RGB implements PlugIn {
                 resultsTable.addValue("count (" + currChannel.getTitle() + ")", peaks.size());
 
                 imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, currRoi.getImage().getCalibration());
-                resultsTable.addValue("roi mean (" + currChannel.getTitle() + ")", imageStats.mean);
+                resultsTable.addValue("roi meanPeak (" + currChannel.getTitle() + ")", imageStats.mean);
 
-                double mean = mean((byte[])currChannel.getProcessor().getPixels(), peaks);
-                resultsTable.addValue("peak mean (" + currChannel.getTitle() + ")", mean);
+                double mean = meanPeak((byte[])currChannel.getProcessor().getPixels(), peaks);
+                resultsTable.addValue("peak meanPeak (" + currChannel.getTitle() + ")", mean);
             }
 
             //ratio
             if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
                 resultsTable.addValue("Count Ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
-                resultsTable.addValue("rio mean Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
-                resultsTable.addValue("peak mean Ratio (%)", ratio(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
+                resultsTable.addValue("rio meanPeak Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
+                resultsTable.addValue("peak meanPeak Ratio (%)", ratio(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
 
@@ -195,9 +194,9 @@ public class Spheroid_RGB implements PlugIn {
                         , ratio(resultsTable.getValue("count " + minor2, row), resultsTable.getValue("count " + major, row)));
                 //intensity ratio
                 resultsTable.addValue("intensity " + minor1 + ":" + major
-                        , ratio(resultsTable.getValue("mean " + minor1, row), resultsTable.getValue("mean " + major, row)));
+                        , ratio(resultsTable.getValue("meanPeak " + minor1, row), resultsTable.getValue("meanPeak " + major, row)));
                 resultsTable.addValue("intensity " + minor2 + ":" + major
-                        , ratio(resultsTable.getValue("mean " + minor2, row), resultsTable.getValue("mean " + major, row)));
+                        , ratio(resultsTable.getValue("meanPeak " + minor2, row), resultsTable.getValue("meanPeak " + major, row)));
 
             }
 
@@ -275,13 +274,24 @@ public class Spheroid_RGB implements PlugIn {
         return peaks;
     }
 
-    private double mean(byte[] pixels, ArrayList<Point> peaks) {
+    private double meanPeak(byte[] pixels, ArrayList<Point> peaks) {
         double sum = 0;
         for (Point p : peaks) {
             int pos = p.y * width + p.x;
             sum += pixels[pos] & 0xff;
         }
         return sum / peaks.size();
+    }
+
+    private double meanWithThreshold (byte[] pixels, int threshold) {
+        double sum = 0;
+        for (byte b : pixels) {
+            int value = b & 0xff;
+            if(value > threshold) {
+                sum += value;
+            }
+        }
+        return sum / pixels.length;
     }
 
     // check if Image is RGB
