@@ -291,7 +291,7 @@ public class Spheroid_RGB implements PlugIn {
                 sum += value;
             }
         }
-        return sum / pixels.length;
+        return sum / pixels.length; //todo: sum / count;??
     }
 
     // check if Image is RGB
