@@ -6,6 +6,7 @@ import ij.gui.NonBlockingGenericDialog;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
+import ij.plugin.Histogram;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Analyzer;
 import ij.plugin.frame.RoiManager;
@@ -160,10 +161,14 @@ public class Spheroid_RGB implements PlugIn {
                 resultsTable.addValue("count (" + currChannel.getTitle() + ")", peaks.size());
 
                 imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, currRoi.getImage().getCalibration());
-                resultsTable.addValue("roi meanPeak (" + currChannel.getTitle() + ")", imageStats.mean);
+                resultsTable.addValue("roi mean (" + currChannel.getTitle() + ")", imageStats.mean);
 
                 double mean = meanPeak((byte[])currChannel.getProcessor().getPixels(), peaks);
-                resultsTable.addValue("peak meanPeak (" + currChannel.getTitle() + ")", mean);
+                resultsTable.addValue("peak mean (" + currChannel.getTitle() + ")", mean);
+
+                double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor(), 0, 255);
+                resultsTable.addValue("threshold mean (" + currChannel.getTitle() + ")", thresholdMean);
+
             }
 
             //ratio
@@ -283,15 +288,18 @@ public class Spheroid_RGB implements PlugIn {
         return sum / peaks.size();
     }
 
-    private double meanWithThreshold (byte[] pixels, int threshold) {
+    private double meanWithThreshold (ImageProcessor ip, int minThreshold, int maxThreshold) {
+        int[] histogram = ip.getHistogram();
+        long longPixelCount = 0;
         double sum = 0;
-        for (byte b : pixels) {
-            int value = b & 0xff;
-            if(value > threshold) {
-                sum += value;
-            }
+
+        for(int i = minThreshold; i <= maxThreshold; i++) {
+            int count = histogram[i];
+            longPixelCount += (long)count;
+            sum += (double)i * (double)count;
         }
-        return sum / pixels.length; //todo: sum / count;??
+
+        return  sum / (double)longPixelCount;
     }
 
     // check if Image is RGB
