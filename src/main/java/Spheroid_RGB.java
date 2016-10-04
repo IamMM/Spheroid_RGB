@@ -4,9 +4,9 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.NonBlockingGenericDialog;
 import ij.gui.Roi;
+import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
-import ij.plugin.Histogram;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Analyzer;
 import ij.plugin.frame.RoiManager;
@@ -35,9 +35,8 @@ public class Spheroid_RGB implements PlugIn {
     // imageJ components
     private ImagePlus image;
     private int width;
-    private int heigth;
 
-    //ITCN values
+    // nuclei counter values
     private int cellWidth;
     private double threshold;
     private boolean darkPeaks;
@@ -87,7 +86,6 @@ public class Spheroid_RGB implements PlugIn {
         if(WindowManager.getCurrentImage() != null) {
             image = WindowManager.getCurrentImage();
             width = image.getWidth();
-            heigth = image.getHeight();
         }else {
             IJ.showMessage("No images open");
             return;
@@ -152,31 +150,31 @@ public class Spheroid_RGB implements PlugIn {
         RoiManager roiManager = RoiManager.getInstance();
         if (roiManager == null) roiManager = new RoiManager();
         ImageStatistics imageStats;
+        Calibration calibration = image.getCalibration();
         for (Roi currRoi : roiManager.getRoisAsArray()) {
             resultsTable.incrementCounter();
             resultsTable.addValue("ROI", currRoi.getName());
             for (ImagePlus currChannel : channel.keySet()) {
                 currChannel.setRoi(currRoi);
-                ArrayList<Point> peaks = runITCN(currChannel, channel.get(currChannel));
+                ArrayList<Point> peaks = rumNucleiCounter(currChannel, channel.get(currChannel));
                 resultsTable.addValue("count (" + currChannel.getTitle() + ")", peaks.size());
 
-                imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, currRoi.getImage().getCalibration());
-                resultsTable.addValue("roi mean (" + currChannel.getTitle() + ")", imageStats.mean);
+                double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor(), 0, 255);
+                resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
 
                 double mean = meanPeak((byte[])currChannel.getProcessor().getPixels(), peaks);
-                resultsTable.addValue("peak mean (" + currChannel.getTitle() + ")", mean);
-
-                double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor(), 0, 255);
-                resultsTable.addValue("threshold mean (" + currChannel.getTitle() + ")", thresholdMean);
-
+                resultsTable.addValue("mean peak (" + currChannel.getTitle() + ")", mean);
             }
+
+            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, calibration);
+            resultsTable.addValue("area (" + calibration.getUnit() + ")", imageStats.area);
 
             //ratio
             if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("Count Ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
-                resultsTable.addValue("rio meanPeak Ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
-                resultsTable.addValue("peak meanPeak Ratio (%)", ratio(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
+                resultsTable.addValue("count ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
+                resultsTable.addValue("mean ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
+                resultsTable.addValue("mean peak ratio (%)", ratio(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
 
@@ -255,19 +253,17 @@ public class Spheroid_RGB implements PlugIn {
           return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
     }
 
-    private ArrayList<Point> runITCN(ImagePlus imp, ImageProcessor ipResults) {
+    private ArrayList<Point> rumNucleiCounter(ImagePlus imp, ImageProcessor ipResults) {
         //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
-        ITCN_Runner itcn;
-        itcn = new ITCN_Runner(imp, cellWidth, (double) cellWidth / 2., threshold, darkPeaks, null);
-        itcn.run();
+        Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, cellWidth, (double) cellWidth / 2., threshold, darkPeaks, null);
+        nucleiCounter.run();
 
-        ArrayList<Point> peaks = itcn.getPeaks();
+        ArrayList<Point> peaks = nucleiCounter.getPeaks();
 
         //draw peaks
         ipResults.setColor(PEAKS_COLOR);
         ipResults.setLineWidth(1);
 
-        Point pt;
         for (Point p : peaks) {
             ipResults.drawDot(p.x, p.y);
 //            System.out.println("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
@@ -299,7 +295,7 @@ public class Spheroid_RGB implements PlugIn {
             sum += (double)i * (double)count;
         }
 
-        return  sum / (double)longPixelCount;
+        return  sum / (double)longPixelCount; //todo: alter sum / ip.getPixelCount();
     }
 
     // check if Image is RGB
