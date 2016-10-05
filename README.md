@@ -19,8 +19,10 @@ Channels to run over each ROI the following statistics:
     - Regions of Interest (ROI) for check
 - Table:
     - number of cells of of selected channel and selected ROI
-    - mean intensity of each selected color channel and selected ROI
-    - ratio between number of cells in percent
+    - threshold mean intensity of each selected color channel and selected ROI
+    - mean intensity of the peaks which representing the nuclei
+    - area measurement of the ROI with calibration from source image
+    - ratio between number of cells  and mean values in percent
 
 | ROI | count (red) | mean (red) | mean peak (red) | count (blue) | mean (blue) | mean peak (blue) | area (μm)  | count ratio (%) | mean ratio (%) | mean peak ratio (%) |
 |-----|-------------|------------|-----------------|--------------|-------------|------------------|------------|-----------------|----------------|---------------------|
