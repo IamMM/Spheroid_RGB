@@ -28,7 +28,7 @@ import java.util.HashMap;
 public class Spheroid_RGB implements PlugIn {
     //constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.1.0 ";
+    private static final String VERSION = " v0.2.0 ";
     private static Color PEAKS_COLOR = Color.WHITE;
     private static final Color ROI_COLOR = Color.YELLOW;
 
@@ -38,7 +38,8 @@ public class Spheroid_RGB implements PlugIn {
 
     // nuclei counter values
     private int cellWidth;
-    private double threshold;
+    private int threshold;
+    private double doubleThreshold;
     private boolean darkPeaks;
 
     // what channels to take
@@ -105,9 +106,9 @@ public class Spheroid_RGB implements PlugIn {
 
         NonBlockingGenericDialog gd = new NonBlockingGenericDialog(TITLE + " " + VERSION);
 
-        gd.addMessage("Parameter for Automated Cell Count");
+        gd.addMessage("Image: " + image.getTitle());
         gd.addNumericField("cell width", 15.00, 0);
-        gd.addSlider("threshold", 0.0, 1.0, 0.2);
+        gd.addSlider("threshold", 0, 255, 5);
         gd.addCheckbox("Count dark peaks", false);
 
         String[] labels = new String[]{"R", "G", "B"};
@@ -124,7 +125,7 @@ public class Spheroid_RGB implements PlugIn {
 
         // get entered values
         cellWidth = (int) gd.getNextNumber();
-        threshold = gd.getNextNumber();
+        threshold = (int) gd.getNextNumber();
         darkPeaks = gd.getNextBoolean();
 
         takeR = gd.getNextBoolean();
@@ -133,6 +134,8 @@ public class Spheroid_RGB implements PlugIn {
 
         total = gd.getNextChoiceIndex();
 
+        // 0 - 255 threshold in threshold for nuclei counter 0.0 - 10.0
+        doubleThreshold = 10 * ((double)threshold /255);
         return true;
     }
 
@@ -159,7 +162,7 @@ public class Spheroid_RGB implements PlugIn {
                 ArrayList<Point> peaks = rumNucleiCounter(currChannel, channel.get(currChannel));
                 resultsTable.addValue("count (" + currChannel.getTitle() + ")", peaks.size());
 
-                double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor(), 0, 255);
+                double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor());
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
 
                 double mean = meanPeak((byte[])currChannel.getProcessor().getPixels(), peaks);
@@ -255,7 +258,7 @@ public class Spheroid_RGB implements PlugIn {
 
     private ArrayList<Point> rumNucleiCounter(ImagePlus imp, ImageProcessor ipResults) {
         //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
-        Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, cellWidth, (double) cellWidth / 2., threshold, darkPeaks, null);
+        Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, cellWidth, (double) cellWidth / 2., doubleThreshold , darkPeaks, null);
         nucleiCounter.run();
 
         ArrayList<Point> peaks = nucleiCounter.getPeaks();
@@ -284,10 +287,15 @@ public class Spheroid_RGB implements PlugIn {
         return sum / peaks.size();
     }
 
-    private double meanWithThreshold (ImageProcessor ip, int minThreshold, int maxThreshold) {
+    private double meanWithThreshold (ImageProcessor ip) {
         int[] histogram = ip.getHistogram();
         long longPixelCount = 0;
         double sum = 0;
+        int minThreshold = 0;
+        int maxThreshold= 255;
+
+        if(darkPeaks) maxThreshold = 255 - threshold;
+        else minThreshold = threshold;
 
         for(int i = minThreshold; i <= maxThreshold; i++) {
             int count = histogram[i];
@@ -295,7 +303,7 @@ public class Spheroid_RGB implements PlugIn {
             sum += (double)i * (double)count;
         }
 
-        return  sum / (double)longPixelCount; //todo: alter sum / ip.getPixelCount();
+        return  sum / ip.getPixelCount(); //todo: sum / (double)longPixelCount;
     }
 
     // check if Image is RGB
