@@ -11,7 +11,7 @@ import ij.process.ImageProcessor;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class ITCN_Runner {
+public class Nuclei_Counter {
     // Input parameters with default values
     private int width;                     // Filter width
     private double min_dist;               // Min distance
@@ -35,7 +35,7 @@ public class ITCN_Runner {
     private ImagePlus resultImage;
 
 
-    public ITCN_Runner(ImagePlus imp, int width, double min_dist, double threshold, boolean darkPeaks, ImagePlus maskImp) {
+    public Nuclei_Counter(ImagePlus imp, int width, double min_dist, double threshold, boolean darkPeaks, ImagePlus maskImp) {
         this.inputImage = imp;
         this.ip = imp.getProcessor();
 
