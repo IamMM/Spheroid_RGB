@@ -289,21 +289,23 @@ public class Spheroid_RGB implements PlugIn {
 
     private double meanWithThreshold (ImageProcessor ip) {
         int[] histogram = ip.getHistogram();
-        long longPixelCount = 0;
         double sum = 0;
         int minThreshold = 0;
         int maxThreshold= 255;
 
-        if(darkPeaks) maxThreshold = 255 - threshold;
+        if(darkPeaks) maxThreshold -= threshold;
         else minThreshold = threshold;
 
         for(int i = minThreshold; i <= maxThreshold; i++) {
-            int count = histogram[i];
-            longPixelCount += (long)count;
-            sum += (double)i * (double)count;
+            sum += (double)i * (double)histogram[i];
         }
 
-        return  sum / ip.getPixelCount(); //todo: sum / (double)longPixelCount;
+        long longPixelCount = 0;
+        for(int count : histogram) {
+            longPixelCount += (long)count;
+        }
+
+        return  sum / (double)longPixelCount;
     }
 
     // check if Image is RGB
