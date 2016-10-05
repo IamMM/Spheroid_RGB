@@ -303,7 +303,7 @@ public class Spheroid_RGB implements PlugIn {
             sum += (double)i * (double)count;
         }
 
-        return  sum / ip.getPixelCount(); //todo: sum / (double)longPixelCount;
+        return  sum / (double)longPixelCount; //todo: sum / ip.getPixelCount();
     }
 
     // check if Image is RGB
