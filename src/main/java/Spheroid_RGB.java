@@ -195,14 +195,14 @@ public class Spheroid_RGB implements PlugIn {
 
                 //count ratio
                 resultsTable.addValue("count " + minor1 + ":" + major
-                        , ratio(resultsTable.getValue("count " + minor1, row), resultsTable.getValue("count " + major, row)));
+                        , (resultsTable.getValue("count " + minor1, row) / resultsTable.getValue("count " + major, row)) * 100);
                 resultsTable.addValue("count " + minor2 + ":" + major
-                        , ratio(resultsTable.getValue("count " + minor2, row), resultsTable.getValue("count " + major, row)));
+                        , (resultsTable.getValue("count " + minor2, row) / resultsTable.getValue("count " + major, row)) * 100);
                 //intensity ratio
                 resultsTable.addValue("intensity " + minor1 + ":" + major
-                        , ratio(resultsTable.getValue("meanPeak " + minor1, row), resultsTable.getValue("meanPeak " + major, row)));
+                        , (resultsTable.getValue("mean " + minor1, row) / resultsTable.getValue("mean " + major, row)) * 100);
                 resultsTable.addValue("intensity " + minor2 + ":" + major
-                        , ratio(resultsTable.getValue("meanPeak " + minor2, row), resultsTable.getValue("meanPeak " + major, row)));
+                        , (resultsTable.getValue("mean " + minor2, row) / resultsTable.getValue("mean " + major, row)) * 100);
 
             }
 
