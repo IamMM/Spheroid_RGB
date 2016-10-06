@@ -29,7 +29,7 @@ import java.util.HashMap;
 public class Spheroid_RGB implements PlugIn {
     //constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.2.0 ";
+    private static final String VERSION = " v0.3.0 ";
     private static Color PEAKS_COLOR = Color.WHITE;
     private static final Color ROI_COLOR = Color.YELLOW;
 
@@ -124,7 +124,7 @@ public class Spheroid_RGB implements PlugIn {
         magicButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                magicSelect();
+                showMagicSelectDialog();
             }
         });
         gd.add(magicButton);
@@ -267,7 +267,7 @@ public class Spheroid_RGB implements PlugIn {
           return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
     }
 
-    private void magicSelect() {
+    private void showMagicSelectDialog() {
         IJ.setTool("Point");
         if(image.getRoi() == null) {
             IJ.beep();
@@ -292,7 +292,7 @@ public class Spheroid_RGB implements PlugIn {
                 }
             };
 
-            GenericDialog wandDialog = new GenericDialog(TITLE + " " + VERSION);
+            GenericDialog wandDialog = new GenericDialog(TITLE + " magic select");
             String[] modes = {"Legacy", "4-connected", "8-connected"};
             wandDialog.addSlider("Tolerance ", 0.0, 255.0, 1.);
             wandDialog.addChoice("Mode:", modes, modes[1]);
