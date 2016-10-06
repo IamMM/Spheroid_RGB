@@ -2,8 +2,7 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.NonBlockingGenericDialog;
-import ij.gui.Roi;
+import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
@@ -15,6 +14,8 @@ import ij.process.ImageStatistics;
 import ij.process.LUT;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -100,7 +101,7 @@ public class Spheroid_RGB implements PlugIn {
 
     private boolean showDialog() {
         if(RoiManager.getInstance() == null) {
-            IJ.showMessage("Please select ROI and add to ROI Manager");
+//            IJ.showMessage("Please select ROI and add to ROI Manager");
             new RoiManager();
         }
 
@@ -119,7 +120,17 @@ public class Spheroid_RGB implements PlugIn {
 
         gd.addChoice("Channel representing total number of cells", labels, labels[2]);
 
+        Button magicButton = new Button("magic select");
+        magicButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                magicSelect();
+            }
+        });
+        gd.add(magicButton);
+
         gd.showDialog();
+
         if (gd.wasCanceled())
             return false;
 
@@ -256,6 +267,44 @@ public class Spheroid_RGB implements PlugIn {
           return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
     }
 
+    private void magicSelect() {
+        IJ.setTool("Point");
+        if(image.getRoi() == null) {
+            IJ.beep();
+            IJ.showStatus("Please select a seed with the point tool");
+            return;
+        }
+        try {
+            DialogListener listener = new DialogListener() {
+                double tolerance;
+                String mode;
+
+                PointRoi p = (PointRoi) image.getRoi();
+                Polygon polygon = p.getPolygon();
+
+                @Override
+                public boolean dialogItemChanged(GenericDialog genericDialog, AWTEvent awtEvent) {
+                    tolerance = genericDialog.getNextNumber();
+                    mode = genericDialog.getNextChoice();
+                    IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], tolerance, mode);
+
+                    return true;
+                }
+            };
+
+            GenericDialog wandDialog = new GenericDialog(TITLE + " " + VERSION);
+            String[] modes = {"Legacy", "4-connected", "8-connected"};
+            wandDialog.addSlider("Tolerance ", 0.0, 255.0, 1.);
+            wandDialog.addChoice("Mode:", modes, modes[1]);
+            wandDialog.addDialogListener(listener);
+            wandDialog.setOKLabel("Add to Roi Manager");
+            wandDialog.showDialog();
+            if (wandDialog.wasOKed()) RoiManager.getInstance().addRoi(image.getRoi());
+        }catch (Exception e){
+            IJ.showMessage("Selection must be a Point Selection");
+        }
+    }
+
     private ArrayList<Point> rumNucleiCounter(ImagePlus imp, ImageProcessor ipResults) {
         //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
         Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, cellWidth, (double) cellWidth / 2., doubleThreshold , darkPeaks, null);
@@ -300,6 +349,7 @@ public class Spheroid_RGB implements PlugIn {
             sum += (double)i * (double)histogram[i];
         }
 
+        //todo: check with jacqui if all pixels or only range for dividing
         long longPixelCount = 0;
         for(int count : histogram) {
             longPixelCount += (long)count;
