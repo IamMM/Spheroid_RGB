@@ -54,6 +54,10 @@ public class Spheroid_RGB implements PlugIn {
     private ImagePlus gChannel;
     private ImagePlus bChannel;
 
+    // magic selection
+    private double startTolerance = 128;
+    private int startMode = 1;
+
     /**
      * Main method for debugging.
      * For debugging, it is convenient to have a method that starts ImageJ, loads an
@@ -275,29 +279,30 @@ public class Spheroid_RGB implements PlugIn {
             return;
         }
         try {
+            final PointRoi p = (PointRoi) image.getRoi();
+            final Polygon polygon = p.getPolygon();
+            final String[] modes = {"Legacy", "4-connected", "8-connected"};
             DialogListener listener = new DialogListener() {
                 double tolerance;
-                String mode;
-
-                PointRoi p = (PointRoi) image.getRoi();
-                Polygon polygon = p.getPolygon();
+                int mode;
 
                 @Override
                 public boolean dialogItemChanged(GenericDialog genericDialog, AWTEvent awtEvent) {
                     tolerance = genericDialog.getNextNumber();
-                    mode = genericDialog.getNextChoice();
-                    IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], tolerance, mode);
+                    startTolerance = tolerance;
+                    startMode = genericDialog.getNextChoiceIndex();
+                    IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], tolerance, modes[startMode]);
 
                     return true;
                 }
             };
 
             GenericDialog wandDialog = new GenericDialog(TITLE + " magic select");
-            String[] modes = {"Legacy", "4-connected", "8-connected"};
-            wandDialog.addSlider("Tolerance ", 0.0, 255.0, 1.);
-            wandDialog.addChoice("Mode:", modes, modes[1]);
+            wandDialog.addSlider("Tolerance ", 0.0, 255.0, startTolerance);
+            wandDialog.addChoice("Mode:", modes, modes[startMode]);
             wandDialog.addDialogListener(listener);
             wandDialog.setOKLabel("Add to Roi Manager");
+            IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], startTolerance, modes[startMode]);
             wandDialog.showDialog();
             if (wandDialog.wasOKed()) RoiManager.getInstance().addRoi(image.getRoi());
         }catch (Exception e){
