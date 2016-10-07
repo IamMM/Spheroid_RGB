@@ -112,14 +112,14 @@ public class Spheroid_RGB implements PlugIn {
         NonBlockingGenericDialog gd = new NonBlockingGenericDialog(TITLE + " " + VERSION);
 
         gd.addMessage("Image: " + image.getTitle());
-        gd.addNumericField("cell width", 15.00, 0);
-        gd.addSlider("threshold", 0, 255, 5);
+        gd.addNumericField("Cell width", 15.00, 0);
+        gd.addSlider("Threshold", 0, 255, 5);
         gd.addCheckbox("Count dark peaks", false);
 
         String[] labels = new String[]{"R", "G", "B"};
         boolean[] defaultValues = new boolean[]{true, false, true};
 
-        gd.addMessage("Choose Color Channels");
+        gd.addMessage("Choose color channels");
         gd.addCheckboxGroup(3, 1, labels, defaultValues);
 
         gd.addChoice("Channel representing total number of cells", labels, labels[2]);
@@ -135,8 +135,11 @@ public class Spheroid_RGB implements PlugIn {
 
         gd.showDialog();
 
-        if (gd.wasCanceled())
-            return false;
+        if (gd.wasCanceled()) return false;
+        if (gd.wasOKed() && (RoiManager.getInstance().getCount() == 0)) {
+            IJ.showMessage("Roi Manager is empty.");
+            showDialog();
+        }
 
         // get entered values
         cellWidth = (int) gd.getNextNumber();
@@ -166,7 +169,6 @@ public class Spheroid_RGB implements PlugIn {
 
         //count cells and get meanPeak intensity from selected channels for each WiseRoi from WiseRoi Manager
         RoiManager roiManager = RoiManager.getInstance();
-        if (roiManager == null) roiManager = new RoiManager();
         ImageStatistics imageStats;
         Calibration calibration = image.getCalibration();
         for (Roi currRoi : roiManager.getRoisAsArray()) {
@@ -224,8 +226,7 @@ public class Spheroid_RGB implements PlugIn {
             resultsTable.addResults();
             resultsTable.updateResults();
         }
-
-
+        
         //Create and collect result images
         ArrayList<ImagePlus> resultImages = new ArrayList<ImagePlus>();
         for (ImagePlus currChannel : channel.keySet()) {
@@ -237,9 +238,6 @@ public class Spheroid_RGB implements PlugIn {
         }
 
         roiManager.runCommand(image, "Show All");
-
-//        String strFrame = "Spheroid RGB " + version + " (" + image.getTitle() + ")";
-//        resultsTable.show(strFrame); //results should only shown in the Results window
     }
 
     /**
@@ -274,17 +272,16 @@ public class Spheroid_RGB implements PlugIn {
     private void showMagicSelectDialog() {
         IJ.setTool("Point");
         if(image.getRoi() == null) {
-            IJ.beep();
-            IJ.showStatus("Please select a seed with the point tool");
+            IJ.showMessage("Please select a seed with the point tool");
             return;
         }
         try {
             final PointRoi p = (PointRoi) image.getRoi();
             final Polygon polygon = p.getPolygon();
             final String[] modes = {"Legacy", "4-connected", "8-connected"};
+
             DialogListener listener = new DialogListener() {
                 double tolerance;
-                int mode;
 
                 @Override
                 public boolean dialogItemChanged(GenericDialog genericDialog, AWTEvent awtEvent) {
@@ -306,7 +303,7 @@ public class Spheroid_RGB implements PlugIn {
             wandDialog.showDialog();
             if (wandDialog.wasOKed()) RoiManager.getInstance().addRoi(image.getRoi());
         }catch (Exception e){
-            IJ.showMessage("Selection must be a Point Selection");
+            IJ.showMessage("Selection must be a point selection");
         }
     }
 
