@@ -192,9 +192,9 @@ public class Spheroid_RGB implements PlugIn {
             //ratio
             if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("count ratio (%)", ratio(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
-                resultsTable.addValue("mean ratio (%)", ratio(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
-                resultsTable.addValue("mean peak ratio (%)", ratio(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
+                resultsTable.addValue("count ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
+                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
+                resultsTable.addValue("mean peak ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
 
@@ -210,12 +210,12 @@ public class Spheroid_RGB implements PlugIn {
                     minor2 = "(red)";
                 }
 
-                //count ratio
+                //count ratioMinMax
                 resultsTable.addValue("count " + minor1 + ":" + major
                         , (resultsTable.getValue("count " + minor1, row) / resultsTable.getValue("count " + major, row)) * 100);
                 resultsTable.addValue("count " + minor2 + ":" + major
                         , (resultsTable.getValue("count " + minor2, row) / resultsTable.getValue("count " + major, row)) * 100);
-                //intensity ratio
+                //intensity ratioMinMax
                 resultsTable.addValue("intensity " + minor1 + ":" + major
                         , (resultsTable.getValue("mean " + minor1, row) / resultsTable.getValue("mean " + major, row)) * 100);
                 resultsTable.addValue("intensity " + minor2 + ":" + major
@@ -226,7 +226,7 @@ public class Spheroid_RGB implements PlugIn {
             resultsTable.addResults();
             resultsTable.updateResults();
         }
-        
+
         //Create and collect result images
         ArrayList<ImagePlus> resultImages = new ArrayList<ImagePlus>();
         for (ImagePlus currChannel : channel.keySet()) {
@@ -265,7 +265,7 @@ public class Spheroid_RGB implements PlugIn {
      * @param c2 component 2
      * @return percentage with assumption that grater value is 100%
      */
-    private double ratio(double c1, double c2) {
+    private double ratioMinMax(double c1, double c2) {
           return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
     }
 
@@ -311,10 +311,14 @@ public class Spheroid_RGB implements PlugIn {
         //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
         Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, cellWidth, (double) cellWidth / 2., doubleThreshold , darkPeaks, null);
         nucleiCounter.run();
-
         ArrayList<Point> peaks = nucleiCounter.getPeaks();
 
-        //draw peaks
+        drawPeaks(imp, ipResults, peaks);
+
+        return peaks;
+    }
+
+    private void drawPeaks(ImagePlus imp, ImageProcessor ipResults, ArrayList<Point> peaks) {
         ipResults.setColor(PEAKS_COLOR);
         ipResults.setLineWidth(1);
 
@@ -325,8 +329,6 @@ public class Spheroid_RGB implements PlugIn {
 
         ipResults.setColor(ROI_COLOR);
         imp.getRoi().drawPixels(ipResults);
-
-        return peaks;
     }
 
     private double meanPeak(byte[] pixels, ArrayList<Point> peaks) {
