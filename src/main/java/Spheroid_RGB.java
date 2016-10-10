@@ -2,13 +2,9 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.GUI;
-import ij.gui.Line;
-import ij.gui.NonBlockingGenericDialog;
-import ij.gui.Roi;
+import ij.gui.*;
 import ij.io.OpenDialog;
 import ij.io.Opener;
-import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
@@ -21,8 +17,7 @@ import ij.process.ImageStatistics;
 import ij.process.LUT;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -34,11 +29,6 @@ import java.util.HashMap;
  * @author Maximilian Maske
  */
 public class Spheroid_RGB implements PlugIn {
-    //constants
-    private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.3.0 ";
-    private static Color PEAKS_COLOR = Color.WHITE;
-    private static final Color ROI_COLOR = Color.YELLOW;
 
     //constants
     private static final String TITLE = "Spheroid RGB";

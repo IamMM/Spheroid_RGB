@@ -371,7 +371,7 @@ public class Gui extends PlugInFrame {
 
         ImagePlus maskImp = WindowManager.getImage(maskID.intValue());
 
-        new ITCN_Runner(currImp, Integer.parseInt(widthTextField.getText()),
+        new Nuclei_Counter(currImp, Integer.parseInt(widthTextField.getText()),
                 Double.parseDouble(minDistTextField.getText()), Double.parseDouble(thresTextField.getText()),
                 darkPeaksCheckbox.getState(), maskImp);
     }
