@@ -117,10 +117,12 @@ public class Spheroid_RGB implements PlugIn {
             return;
         }
 
-        if (showDialog()) {
-            process();
-            runApplication();
-        }
+//        if (showDialog()) {
+//            process();
+//            runApplication();
+//        }
+
+        createGUI();
     }
 
     private boolean showDialog() {
@@ -522,7 +524,7 @@ public class Spheroid_RGB implements PlugIn {
         //varsPanel.add(widthTextField);
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.ipadx = ipadx;
+//        gridBagConstraints.ipadx = ipadx;
         varsPanel.add(widthTextField, gridBagConstraints);
 
         minDistUnitsLabel.setText("pixels");
@@ -653,7 +655,7 @@ public class Spheroid_RGB implements PlugIn {
 
         buttonPanel.setLayout(new GridLayout());
 
-        okButton.setLabel("Count");
+        okButton.setLabel("Analyze");
         okButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 okButtonActionPerformed(evt);
@@ -662,7 +664,7 @@ public class Spheroid_RGB implements PlugIn {
 
         buttonPanel.add(okButton);
 
-        exitButton.setLabel("Exit");
+        exitButton.setLabel("Cancel");
         exitButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 exitButtonActionPerformed(evt);
