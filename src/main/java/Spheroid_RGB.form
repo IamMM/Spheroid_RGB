@@ -138,18 +138,21 @@
               <text value="threshold"/>
             </properties>
           </component>
-          <component id="3077" class="javax.swing.JSlider" binding="slider1" default-binding="true">
+          <component id="3077" class="javax.swing.JSlider" binding="thresSlider" default-binding="true">
             <constraints>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties/>
+            <properties>
+              <maximum value="255"/>
+              <value value="5"/>
+            </properties>
           </component>
-          <component id="1e7bb" class="javax.swing.JLabel" binding="thresValue">
+          <component id="1e7bb" class="javax.swing.JLabel" binding="thresLabel">
             <constraints>
               <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="128"/>
+              <text value="0" noi18n="true"/>
             </properties>
           </component>
           <component id="d1bd2" class="javax.swing.JButton" binding="maximumButton" default-binding="true">

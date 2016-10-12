@@ -14,6 +14,8 @@ import ij.process.ImageStatistics;
 import ij.process.LUT;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -29,29 +31,25 @@ public class Spheroid_RGB implements PlugIn {
     private JPanel mainPanel;
     private JButton openButton;
     private JButton lineLengthButton;
-    private JSlider slider1;
+    private JSlider thresSlider;
     private JButton maximumButton;
+    private JButton magicSelectButton;
     private JCheckBox redCheckBox;
     private JCheckBox blueCheckBox;
-    private JButton magicSelectButton;
+    private JCheckBox greenCheckBox;
     private JButton analyzeButton;
     private JButton cancelButton;
-    private JLabel thresValue;
+    private JLabel thresLabel;
     private JTextField cellWidthField;
     private JTextField minDistField;
     private JCheckBox darkPeaksCheck;
     private JComboBox totalCheckBox;
-    private JCheckBox greenCheckBox;
 
     //constants
     private static final String TITLE = "Spheroid_RGB RGB";
     private static final String VERSION = " v0.1.0 ";
     private static Color PEAKS_COLOR = Color.WHITE;
     private static final Color ROI_COLOR = Color.YELLOW;
-    private static int widthDefault = 10;
-    private static double min_distDefault = 5.0;
-    private static double thresDefault = 0.0;
-    private static double thresPrecision = 10;
 
    // imageJ components
     private ImagePlus image;
@@ -82,12 +80,20 @@ public class Spheroid_RGB implements PlugIn {
         lineLengthButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                widthButtonActionPerformed();
             }
         });
 
-        createUIComponents();
         initActionListeners();
+        initImageList();
+
+        thresSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                thresLabel.setText(thresSlider.getValue() + "");
+                threshold = thresSlider.getValue();
+            }
+        });
     }
 
     /**
@@ -120,7 +126,6 @@ public class Spheroid_RGB implements PlugIn {
      */
     @Override
     public void run(String arg) {
-//        if (IJ.versionLessThan("1.36b")) return;
         if(WindowManager.getCurrentImage() != null) {
             image = WindowManager.getCurrentImage();
             width = image.getWidth();
@@ -130,13 +135,14 @@ public class Spheroid_RGB implements PlugIn {
         }
 
         JFrame frame = new JFrame("Spheroid RGB");
-        frame.setContentPane(new Spheroid_RGB().mainPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setContentPane(this.mainPanel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //todo may remove this
         frame.pack();
+        setLookAndFeel();
         frame.setVisible(true);
 
 //        if (showDialog()) {
-//            process();
+//            checkImageType();
 //            runApplication();
 //        }
     }
@@ -196,14 +202,16 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void runApplication() {
+        //check image type and init channels
+        checkImageType();
+        HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
+
         //create Results table
         ResultsTable resultsTable = Analyzer.getResultsTable();
         if (resultsTable == null) {
             resultsTable = new ResultsTable();
             Analyzer.setResultsTable(resultsTable);
         }
-
-        HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
 
         //count cells and get meanPeak intensity from selected channels for each WiseRoi from WiseRoi Manager
         RoiManager roiManager = RoiManager.getInstance();
@@ -276,6 +284,23 @@ public class Spheroid_RGB implements PlugIn {
         }
 
         roiManager.runCommand(image, "Show All");
+    }
+
+    // check if Image is RGB
+    private void checkImageType() {
+        int type = image.getType();
+        if (type == ImagePlus.GRAY8) {
+            rChannel = image;
+            PEAKS_COLOR = Color.RED;
+        } else if (type == ImagePlus.GRAY16)
+            IJ.showMessage("16-bit gray scale image not supported");
+        else if (type == ImagePlus.GRAY32)
+            IJ.showMessage("32-bit gray scale image not supported");
+        else if (type == ImagePlus.COLOR_RGB) {
+            splitChannels(image);
+        } else {
+            IJ.showMessage("not supported");
+        }
     }
 
     /**
@@ -400,23 +425,6 @@ public class Spheroid_RGB implements PlugIn {
         return  sum / (double)longPixelCount;
     }
 
-    // check if Image is RGB
-    private void process() {
-        int type = image.getType();
-        if (type == ImagePlus.GRAY8) {
-            rChannel = image;
-            PEAKS_COLOR = Color.RED;
-        } else if (type == ImagePlus.GRAY16)
-            IJ.showMessage("16-bit gray scale image not supported");
-        else if (type == ImagePlus.GRAY32)
-            IJ.showMessage("32-bit gray scale image not supported");
-        else if (type == ImagePlus.COLOR_RGB) {
-            splitChannels(image);
-        } else {
-            IJ.showMessage("not supported");
-        }
-    }
-
     //split channels
     private void splitChannels(ImagePlus imp) {
         ImagePlus[] rgb = ChannelSplitter.split(imp);
@@ -432,6 +440,21 @@ public class Spheroid_RGB implements PlugIn {
         if (takeB) {
             bChannel = rgb[2];
             bChannel.setLut(LUT.createLutFromColor(Color.BLUE));
+        }
+    }
+
+    /********************************************************
+     * 														*
+     *						BUTTON-METHODS  				*
+     *														*
+     ********************************************************/
+
+    private void widthButtonActionPerformed() {
+        Roi roi = image.getRoi();
+
+        if (roi.isLine()) {
+            Line line = (Line) roi;
+            cellWidthField.setText(Integer.toString((int) Math.ceil(line.getRawLength())));
         }
     }
 
@@ -457,26 +480,31 @@ public class Spheroid_RGB implements PlugIn {
         });
     }
 
+    private void setLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel(
+                    UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void okButtonActionPerformed() {
-        process();
+        checkImageType();
         runApplication();
     }
 
 
-    private void createUIComponents() {
-        winList = new JComboBox(new String[]{"Hallo", "Welt"});
-        openButton = new JButton();
-        cellWidthField = new JTextField();
-//        lineLengthButton;
-//        slider1;
-//        maximumButton;
-//        lightBackgroundDarkPeaksCheckBox;
-//        redCheckBox;
-//        greenCheckBox1;
-//        blueCheckBox;
-//        comboBox2;
-//        magicSelectButton;
-//        analyzeButton;
-//        cancelButton;
+    private void initImageList() {
+        String[] titles = WindowManager.getImageTitles();
+        for (String title : titles) {
+            winList.addItem(title);
+        }
     }
 }
