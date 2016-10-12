@@ -3,35 +3,48 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.*;
-import ij.io.OpenDialog;
-import ij.io.Opener;
 import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Analyzer;
-import ij.plugin.frame.PlugInFrame;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Spheroid_RGB
- * A plugin for analysing each channel of RGB Image
- * Created on September 20, 2016
- *
- * @author Maximilian Maske
+ * Created by mmas255 on 11/10/2016.
  */
 public class Spheroid_RGB implements PlugIn {
+    // swing components
+    private JComboBox winList;
+    private JPanel mainPanel;
+    private JButton openButton;
+    private JButton lineLengthButton;
+    private JSlider slider1;
+    private JButton maximumButton;
+    private JCheckBox redCheckBox;
+    private JCheckBox blueCheckBox;
+    private JButton magicSelectButton;
+    private JButton analyzeButton;
+    private JButton cancelButton;
+    private JLabel thresValue;
+    private JTextField cellWidthField;
+    private JTextField minDistField;
+    private JCheckBox darkPeaksCheck;
+    private JComboBox totalCheckBox;
+    private JCheckBox greenCheckBox;
 
     //constants
-    private static final String TITLE = "Spheroid RGB";
+    private static final String TITLE = "Spheroid_RGB RGB";
     private static final String VERSION = " v0.1.0 ";
     private static Color PEAKS_COLOR = Color.WHITE;
     private static final Color ROI_COLOR = Color.YELLOW;
@@ -40,19 +53,7 @@ public class Spheroid_RGB implements PlugIn {
     private static double thresDefault = 0.0;
     private static double thresPrecision = 10;
 
-    // application window
-    private PlugInFrame frame;
-
-    private java.awt.Choice maskChoice;
-    private java.awt.TextField minDistTextField;
-    private java.awt.TextField widthTextField;
-    private java.awt.TextField thresTextField;
-    private java.awt.Scrollbar thresScroll;
-    private ArrayList winIDList;
-
-    private static final String strNONE = "Use selected ROI";
-
-    // imageJ components
+   // imageJ components
     private ImagePlus image;
     private int width;
 
@@ -71,12 +72,23 @@ public class Spheroid_RGB implements PlugIn {
     // split channels
     private ImagePlus rChannel;
     private ImagePlus gChannel;
-
     private ImagePlus bChannel;
 
     // magic selection
     private double startTolerance = 128;
     private int startMode = 1;
+
+    public Spheroid_RGB() {
+        lineLengthButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
+        createUIComponents();
+        initActionListeners();
+    }
 
     /**
      * Main method for debugging.
@@ -95,12 +107,12 @@ public class Spheroid_RGB implements PlugIn {
         // start ImageJ
         new ImageJ();
 
-        // open the Spheroid sample
+        // open the Spheroid_RGB sample
         ImagePlus image = IJ.openImage("C:/workspace/Spheroid_RGB/EdU_slide2.2.tif");
         image.show();
 
         // run the plugin
-//        IJ.runPlugIn(clazz.getName(), "");
+        IJ.runPlugIn(clazz.getName(), "");
     }
 
     /**
@@ -117,12 +129,16 @@ public class Spheroid_RGB implements PlugIn {
             return;
         }
 
+        JFrame frame = new JFrame("Spheroid RGB");
+        frame.setContentPane(new Spheroid_RGB().mainPanel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+
 //        if (showDialog()) {
 //            process();
 //            runApplication();
 //        }
-
-        createGUI();
     }
 
     private boolean showDialog() {
@@ -288,7 +304,7 @@ public class Spheroid_RGB implements PlugIn {
      * @return percentage with assumption that grater value is 100%
      */
     private double ratioMinMax(double c1, double c2) {
-          return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
+        return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
     }
 
     private void showMagicSelectDialog() {
@@ -425,323 +441,42 @@ public class Spheroid_RGB implements PlugIn {
      *														*
      ********************************************************/
 
-    private void createGUI() {
-        frame = new PlugInFrame(TITLE);
-
-        Panel imagePanel = new Panel();
-        Label ccImageLabel = new Label();
-        Label filenameLabel = new Label();
-        Panel varsPanel = new Panel();
-        Label widthLabel = new Label();
-        widthTextField = new TextField();
-        Label minDistUnitsLabel = new Label();
-       Label minDistLabel = new Label();
-        minDistTextField = new TextField();
-        Label widthUnitsLabel = new Label();
-        Label recomendLabel = new Label();
-        Checkbox darkPeaksCheckbox = new Checkbox();
-        Panel maskPanel = new Panel();
-        Label maskLabel = new Label();
-        maskChoice = new Choice();
-        Button openMaskButton = new Button();
-        Panel buttonPanel = new Panel();
-        Button okButton = new Button();
-        Button exitButton = new Button();
-        Button widthButton = new Button();
-        Button minDistButton = new Button();
-        Label thresLabel = new Label();
-        thresTextField = new TextField();
-        thresScroll = new Scrollbar();
-        Panel midPanel = new Panel();
-
-        GridBagConstraints gridBagConstraints;
-        int ipadx = 50;
-
-        frame.setLayout(new GridLayout(5, 1));
-
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosed(WindowEvent evt) { image.unlock(); }
-        });
-
-
-        // window manager stuff.....
-
-        image = WindowManager.getCurrentImage();
-        if (image == null) {
-            IJ.showStatus("No image");
-            return;
-        }
-        if (!image.lock())
-            return;
-
-        int[] WinList = WindowManager.getIDList();
-        if (WinList == null) {
-            IJ.error("No windows are open.");
-            return;
-        }
-
-        winIDList = new ArrayList(WinList.length + 1);
-        winIDList.add(new Integer(0));
-        for (int i = 0; i < WinList.length; i++) {
-            winIDList.add(new Integer(WinList[i]));
-        }
-
-        String[] WinTitles = new String[WinList.length + 1];
-        WinTitles[0] = strNONE;
-
-        // Window Manager stuff...
-
-        imagePanel.setLayout(new GridLayout());
-
-        ccImageLabel.setAlignment(Label.RIGHT);
-        ccImageLabel.setText("Image Name:");
-        imagePanel.add(ccImageLabel);
-
-        filenameLabel.setText(image.getTitle());
-        imagePanel.add(filenameLabel);
-
-        frame.add(imagePanel);
-
-        //varsPanel.setLayout(new java.awt.GridLayout(3, 4));
-        varsPanel.setLayout(new GridBagLayout());
-
-        widthLabel.setAlignment(Label.RIGHT);
-        widthLabel.setText("Width");
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.anchor = GridBagConstraints.EAST;
-        varsPanel.add(widthLabel, gridBagConstraints);
-
-//        widthLabel.setAlignment(java.awt.Label.RIGHT);
-//        widthLabel.setText("Width");
-//        varsPanel.add(widthLabel);
-
-        widthTextField.setText(Integer.toString(widthDefault));
-        widthTextField.addTextListener(new TextListener() {
-            public void textValueChanged(TextEvent evt) {
-                widthTextFieldTextValueChanged(evt);
-            }
-        });
-        //varsPanel.add(widthTextField);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-//        gridBagConstraints.ipadx = ipadx;
-        varsPanel.add(widthTextField, gridBagConstraints);
-
-        minDistUnitsLabel.setText("pixels");
-        varsPanel.add(minDistUnitsLabel);
-
-        widthButton.setLabel("Measure Line Length");
-        widthButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                widthButtonActionPerformed(evt);
-            }
-        });
-        //varsPanel.add(widthButton);
-        gridBagConstraints = new GridBagConstraints();
-        varsPanel.add(widthButton, gridBagConstraints);
-
-        minDistLabel.setAlignment(Label.RIGHT);
-        minDistLabel.setText("Minimum Distance");
-        varsPanel.add(minDistLabel);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = GridBagConstraints.EAST;
-        varsPanel.add(minDistLabel, gridBagConstraints);
-
-        minDistTextField.setText(Double.toString(min_distDefault));
-        varsPanel.add(minDistTextField);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.ipadx = ipadx;
-        varsPanel.add(minDistTextField, gridBagConstraints);
-
-        widthUnitsLabel.setText("pixels");
-        varsPanel.add(widthUnitsLabel);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 1;
-        varsPanel.add(widthUnitsLabel, gridBagConstraints);
-
-        minDistButton.setLabel("Measure Line Length");
-        minDistButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                minDistButtonActionPerformed(evt);
-            }
-        });
-        varsPanel.add(minDistButton);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 1;
-        varsPanel.add(minDistButton, gridBagConstraints);
-
-        thresLabel.setAlignment(Label.RIGHT);
-        thresLabel.setText("Threshold");
-        varsPanel.add(thresLabel);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = GridBagConstraints.EAST;
-        varsPanel.add(thresLabel, gridBagConstraints);
-
-        thresTextField.setText(Double.toString(thresDefault));
-        thresTextField.addTextListener(new TextListener() {
-            public void textValueChanged(TextEvent evt) {
-                thresTextFieldTextValueChanged(evt);
-            }
-        });
-        varsPanel.add(thresTextField);
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.ipadx = ipadx;
-        varsPanel.add(thresTextField, gridBagConstraints);
-
-        //varsPanel.add(thresScroll);
-        thresScroll.setValues((int) (thresPrecision * thresDefault), 1, 0, 10 * (int) thresPrecision + 1);
-        thresScroll.setOrientation(Scrollbar.HORIZONTAL);
-        thresScroll.addAdjustmentListener(new AdjustmentListener() {
-            public void adjustmentValueChanged(AdjustmentEvent evt) {
-                thresScrollAdjustmentValueChanged(evt);
-            }
-        });
-        gridBagConstraints = new GridBagConstraints();
-        gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-        varsPanel.add(thresScroll, gridBagConstraints);
-
-        frame.add(varsPanel);
-
-        midPanel.setLayout(new GridLayout(2, 1));
-
-        recomendLabel.setAlignment(Label.CENTER);
-        recomendLabel.setText("(Recommended: Minimum Distance = Width/2)");
-        midPanel.add(recomendLabel);
-
-        darkPeaksCheckbox.setLabel("Detect Dark Peaks");
-        midPanel.add(darkPeaksCheckbox);
-
-        frame.add(midPanel);
-
-        maskLabel.setText("Mask Image");
-        maskPanel.add(maskLabel);
-
-        maskPanel.add(maskChoice);
-        maskChoice.add(WinTitles[0]);
-        for (int i = 0; i < WinList.length; i++) {
-            ImagePlus imp = WindowManager.getImage(WinList[i]);
-            if (imp != null) {
-                WinTitles[i + 1] = imp.getTitle();
-            } else {
-                WinTitles[i + 1] = "";
-            }
-            maskChoice.add(WinTitles[i + 1]);
-        }
-
-        openMaskButton.setLabel("Open...");
-        openMaskButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                openMaskButtonActionPerformed(evt);
+    private void initActionListeners(){
+        winList.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println(winList.getSelectedIndex());
             }
         });
 
-        maskPanel.add(openMaskButton);
-
-        frame.add(maskPanel);
-
-        buttonPanel.setLayout(new GridLayout());
-
-        okButton.setLabel("Analyze");
-        okButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                okButtonActionPerformed(evt);
+        analyzeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                okButtonActionPerformed();
             }
         });
-
-        buttonPanel.add(okButton);
-
-        exitButton.setLabel("Cancel");
-        exitButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
-                exitButtonActionPerformed(evt);
-            }
-        });
-
-        buttonPanel.add(exitButton);
-
-        frame.add(buttonPanel);
-
-        frame.pack();
-        frame.setSize(400, 375);
-        GUI.center(frame);
-        frame.setVisible(true);
     }
 
-    private void widthTextFieldTextValueChanged(TextEvent evt) {
-        if(widthTextField.getText().isEmpty()) minDistTextField.setText("0.0");
-        else minDistTextField.setText(Double.toString(Double.parseDouble(widthTextField.getText()) / 2));
+    private void okButtonActionPerformed() {
+        process();
+        runApplication();
     }
 
-    private void widthButtonActionPerformed(ActionEvent evt) {
-        Roi roi = image.getRoi();
 
-        if (roi.isLine()) {
-            Line line = (Line) roi;
-            widthTextField.setText(Integer.toString((int) Math.ceil(line.getRawLength())));
-        }
-    }
-
-    private void minDistButtonActionPerformed(ActionEvent evt) {
-        Roi roi = image.getRoi();
-
-        if (roi.isLine()) {
-            Line line = (Line) roi;
-            minDistTextField.setText(Integer.toString((int) Math.ceil(line.getRawLength())));
-        }
-    }
-
-    private void thresTextFieldTextValueChanged(TextEvent evt) {
-        double threshold = Double.parseDouble(thresTextField.getText());
-        if (thresPrecision * threshold != Math.round(thresPrecision * threshold)) {
-            threshold = Math.round(thresPrecision * threshold) / thresPrecision;
-            thresTextField.setText(Double.toString(threshold));
-        }
-        if ((double) thresScroll.getValue() != thresPrecision * threshold)
-            thresScroll.setValue((int) (thresPrecision * threshold));
-    }
-
-    private void thresScrollAdjustmentValueChanged(java.awt.event.AdjustmentEvent evt) {
-        double threshold = (double) thresScroll.getValue();
-        thresTextField.setText(Double.toString(threshold / thresPrecision));
-    }
-
-    private void exitButtonActionPerformed(ActionEvent evt) {
-        frame.close();
-    }
-
-    private void okButtonActionPerformed(ActionEvent evt) {
-       runApplication();
-    }
-
-    private void openMaskButtonActionPerformed(ActionEvent evt) {
-        OpenDialog od = new OpenDialog("Open Mask...", "");
-        String directory = od.getDirectory();
-        String name = od.getFileName();
-        if (name == null)
-            return;
-
-        Opener opener = new Opener();
-        ImagePlus imp2 = opener.openImage(directory, name);
-
-        winIDList.add(new Integer(imp2.getID()));
-
-        maskChoice.add(name);
-        maskChoice.select(maskChoice.getItemCount() - 1);
-
-        imp2.show();
+    private void createUIComponents() {
+        winList = new JComboBox(new String[]{"Hallo", "Welt"});
+        openButton = new JButton();
+        cellWidthField = new JTextField();
+//        lineLengthButton;
+//        slider1;
+//        maximumButton;
+//        lightBackgroundDarkPeaksCheckBox;
+//        redCheckBox;
+//        greenCheckBox1;
+//        blueCheckBox;
+//        comboBox2;
+//        magicSelectButton;
+//        analyzeButton;
+//        cancelButton;
     }
 }
