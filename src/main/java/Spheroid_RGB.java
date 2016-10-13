@@ -401,7 +401,8 @@ public class Spheroid_RGB implements PlugIn {
         image = opener.openImage(directory, name);
 
         image.show();
-        initImageList();
+        winList.addItem(image.getTitle());
+        winList.setSelectedIndex(winList.getItemCount() - 1);
     }
 
     private void widthButtonAction(JTextField field) {
@@ -451,6 +452,10 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 image = WindowManager.getImage((String) winList.getSelectedItem());
+                if (image == null) {
+                    initImageList();
+                    image = WindowManager.getCurrentImage();
+                }
             }
         });
 
@@ -548,6 +553,7 @@ public class Spheroid_RGB implements PlugIn {
         takeR = redCheckBox.isSelected();
         takeG = greenCheckBox.isSelected();
         takeB = blueCheckBox.isSelected();
+        total = totalCheckBox.getSelectedIndex();
     }
 
     private void setLookAndFeel() {
