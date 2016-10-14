@@ -50,7 +50,9 @@ public class Spheroid_RGB implements PlugIn {
     private JCheckBox darkPeaksCheck;
     private JComboBox totalCheckBox;
     private JButton lineLengthButtonMinDist;
-    private JButton button1;
+    private JButton plotButton;
+    private JButton showLinesButton;
+    private JButton hideLinesButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -108,7 +110,8 @@ public class Spheroid_RGB implements PlugIn {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-        ImagePlus image = IJ.openImage("C:/workspace/Spheroid_RGB/EdU_slide2.2.tif");
+//        ImagePlus image = IJ.openImage("C:/workspace/Spheroid_RGB/EdU_slide2.2.tif");
+        ImagePlus image = IJ.openImage("P:/images/test_images/LOX1/Pimagestest_imagesLOX1.jpg");
         image.show();
 
         // run the plugin
@@ -131,6 +134,7 @@ public class Spheroid_RGB implements PlugIn {
         if(RoiManager.getInstance() == null) {
             new RoiManager();
         }
+
         frame = new JFrame(TITLE + VERSION);
         frame.setContentPane(this.mainPanel);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -555,6 +559,30 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 frame.dispose();
+            }
+        });
+
+        //Multi initLines
+        showLinesButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                image.setHideOverlay(false);
+            }
+        });
+
+        hideLinesButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                image.setHideOverlay(true);
+            }
+        });
+        plotButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new Multi_Plot(image);
+                showLinesButton.setEnabled(true);
+                hideLinesButton.setEnabled(true);
+
             }
         });
     }
