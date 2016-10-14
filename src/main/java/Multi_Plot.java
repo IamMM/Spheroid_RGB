@@ -1,25 +1,33 @@
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.*;
 import ij.measure.Measurements;
+import ij.plugin.RoiRotator;
 import ij.process.ImageStatistics;
 
 import java.awt.*;
 import java.util.ArrayList;
 
 /**
- * Created by mmas255 on 14/10/2016.
+ * Created on 14/10/2016.
+ *
+ * @author Maximilian Maske
  */
-public class Multi_Plot {
+class Multi_Plot {
 
     private ImagePlus image;
     private Roi roi;
     private double xCentroid;
     private double yCentroid;
-    ArrayList<Line> lines =  new ArrayList<Line>();
+    private ArrayList<Roi> lines =  new ArrayList<Roi>();
+    private int numberOfProfiles;
+    private double ANGEL;
 
-    public  Multi_Plot(ImagePlus image) {
+    public Multi_Plot(ImagePlus image, int numberOfProfiles) {
         this.image = image;
         this.roi = image.getRoi();
+        this.numberOfProfiles = numberOfProfiles;
+        ANGEL = 180 / (double) numberOfProfiles;
 
         initCentroid();
         initLines();
@@ -32,23 +40,30 @@ public class Multi_Plot {
         yCentroid = stats.yCentroid;
     }
 
-    public void initLines() {
+    private void initLines() {
         Rectangle bounds = roi.getBounds();
-        lines.add(new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid));
-        lines.add(new Line(xCentroid, bounds.y, xCentroid, bounds.y + bounds.getHeight()));
-        lines.add(new Line(bounds.x, bounds.y,bounds.x + bounds.getWidth(),bounds.y + bounds.getHeight()));
-        lines.add(new Line(bounds.x + bounds.getWidth(), bounds.y, bounds.x, bounds.y + bounds.getHeight()));
+//        lines.add(new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid));
+//        lines.add(new Line(xCentroid, bounds.y, xCentroid, bounds.y + bounds.getHeight()));
+//        lines.add(new Line(bounds.x, bounds.y,bounds.x + bounds.getWidth(),bounds.y + bounds.getHeight()));
+//        lines.add(new Line(bounds.x + bounds.getWidth(), bounds.y, bounds.x, bounds.y + bounds.getHeight()));
+
+        Roi horizontal = new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid);;
+        for (int i = 0; i <numberOfProfiles;i++) {
+            horizontal = RoiRotator.rotate(horizontal, ANGEL);
+            lines.add(horizontal);
+        }
 
         Overlay overlay = new Overlay();
-        for (Line l : lines) {
+        for (Roi l : lines) {
             overlay.add(l);
         }
 
         image.setOverlay(overlay);
+        IJ.run("Select None");
     }
 
-    public void plot() {
-        for (Line l : lines) {
+    private void plot() {
+        for (Roi l : lines) {
             image.setRoi(l);
             ProfilePlot profilePlot = new ProfilePlot(image);
             profilePlot.createWindow();

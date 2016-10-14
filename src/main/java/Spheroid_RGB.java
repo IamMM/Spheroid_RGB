@@ -27,7 +27,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Created by Maxmilian Maske on october 2016.
+ * Created on october 2016
+ *
+ * @author Maximlian Maske
  */
 public class Spheroid_RGB implements PlugIn {
     // swing components
@@ -50,9 +52,11 @@ public class Spheroid_RGB implements PlugIn {
     private JCheckBox darkPeaksCheck;
     private JComboBox totalCheckBox;
     private JButton lineLengthButtonMinDist;
-    private JButton plotButton;
-    private JButton showLinesButton;
-    private JButton hideLinesButton;
+    private JButton plotAllButton;
+    private JButton plotAverageButton;
+    private JCheckBox showLines;
+    private JSlider profileSlider;
+    private JLabel profileTextField;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -562,29 +566,36 @@ public class Spheroid_RGB implements PlugIn {
             }
         });
 
-        //Multi initLines
-        showLinesButton.addActionListener(new ActionListener() {
+        //Multi plot
+        profileSlider.addChangeListener(new ChangeListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                image.setHideOverlay(false);
+            public void stateChanged(ChangeEvent e) {
+                profileTextField.setText(profileSlider.getValue() + "");
             }
         });
 
-        hideLinesButton.addActionListener(new ActionListener() {
+        plotAllButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                image.setHideOverlay(true);
+                new Multi_Plot(image, profileSlider.getValue());
+                showLines.setEnabled(true);
             }
         });
-        plotButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new Multi_Plot(image);
-                showLinesButton.setEnabled(true);
-                hideLinesButton.setEnabled(true);
 
+        plotAverageButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                IJ.showMessage("Not implemented yet. :(");
             }
         });
+
+        showLines.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                image.setHideOverlay(!showLines.isSelected());
+            }
+        });
+
     }
 
     private void getGuiValues() {
