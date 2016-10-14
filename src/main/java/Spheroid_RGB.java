@@ -50,8 +50,6 @@ public class Spheroid_RGB implements PlugIn {
     private JCheckBox darkPeaksCheck;
     private JComboBox totalCheckBox;
     private JButton lineLengthButtonMinDist;
-    private JPanel totalPanel;
-    private JTabbedPane tabbedPane1;
     private JButton button1;
 
     // constants
@@ -140,13 +138,28 @@ public class Spheroid_RGB implements PlugIn {
         frame.setLocationRelativeTo(null); //center the frame on screen
         setLookAndFeel();
         frame.setVisible(true);
+        WindowManager.addWindow(frame);
     }
 
     private void runApplication() {
         getGuiValues();
 
+        RoiManager roiManager = RoiManager.getInstance();
+        if (roiManager == null) roiManager = new RoiManager();
+
+        if(!(takeR || takeG || takeB)) {
+            IJ.showMessage("Nothing to do", "No Channel selected.");
+            return;
+        }
+        if (roiManager.getCount() == 0) {
+            IJ.showMessage("Nothing to do", "Roi Manager is empty.");
+            return;
+        }
+
         //check image type and init channels
-        checkImageType();
+        {
+            checkImageType();
+        }
         HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
 
         //create Results table
@@ -156,9 +169,7 @@ public class Spheroid_RGB implements PlugIn {
             Analyzer.setResultsTable(resultsTable);
         }
 
-
         //count cells and get meanPeak intensity from selected channels for each WiseRoi from WiseRoi Manager
-        RoiManager roiManager = RoiManager.getInstance();
         ImageStatistics imageStats;
         Calibration calibration = image.getCalibration();
         for (Roi currRoi : roiManager.getRoisAsArray()) {
@@ -519,7 +530,8 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 takeR = redCheckBox.isSelected();
-                totalPanel.setVisible(takeR && takeG && takeB);
+
+                totalCheckBox.setEnabled(takeR && takeG && takeB);
             }
         });
 
@@ -527,7 +539,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 takeG = greenCheckBox.isSelected();
-                totalPanel.setVisible(takeR && takeG && takeB);
+                totalCheckBox.setEnabled(takeR && takeG && takeB);
             }
         });
 
@@ -535,7 +547,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 takeB = blueCheckBox.isSelected();
-                totalPanel.setVisible(takeR && takeG && takeB);
+                totalCheckBox.setEnabled(takeR && takeG && takeB);
             }
         });
 
