@@ -51,6 +51,8 @@ public class Spheroid_RGB implements PlugIn {
     private JComboBox totalCheckBox;
     private JButton lineLengthButtonMinDist;
     private JPanel totalPanel;
+    private JTabbedPane tabbedPane1;
+    private JButton button1;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
