@@ -145,6 +145,7 @@ public class Spheroid_RGB implements PlugIn {
         frame.pack();
         frame.setLocationRelativeTo(null); //center the frame on screen
         setLookAndFeel();
+        setIcon();
         frame.setVisible(true);
         WindowManager.addWindow(frame);
     }
@@ -574,10 +575,18 @@ public class Spheroid_RGB implements PlugIn {
             }
         });
 
+        showLines.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                image.setHideOverlay(!showLines.isSelected());
+            }
+        });
+
         plotAllButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new Multi_Plot(image, profileSlider.getValue());
+                Multi_Plot plot = new Multi_Plot(image, profileSlider.getValue());
+                plot.plotAll();
                 showLines.setEnabled(true);
             }
         });
@@ -588,14 +597,6 @@ public class Spheroid_RGB implements PlugIn {
                 IJ.showMessage("Not implemented yet. :(");
             }
         });
-
-        showLines.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                image.setHideOverlay(!showLines.isSelected());
-            }
-        });
-
     }
 
     private void getGuiValues() {
@@ -613,6 +614,7 @@ public class Spheroid_RGB implements PlugIn {
         try {
             UIManager.setLookAndFeel(
                     UIManager.getSystemLookAndFeelClassName());
+            SwingUtilities.updateComponentTreeUI(frame);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
@@ -622,6 +624,11 @@ public class Spheroid_RGB implements PlugIn {
         } catch (UnsupportedLookAndFeelException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setIcon() {
+        ImageIcon img = new ImageIcon("img/icon_SN33267.png");
+        frame.setIconImage(img.getImage());
     }
 
     private void initImageList() {

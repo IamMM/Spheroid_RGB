@@ -23,7 +23,7 @@ class Multi_Plot {
     private int numberOfProfiles;
     private double ANGEL;
 
-    public Multi_Plot(ImagePlus image, int numberOfProfiles) {
+    Multi_Plot(ImagePlus image, int numberOfProfiles) {
         this.image = image;
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
@@ -31,7 +31,6 @@ class Multi_Plot {
 
         initCentroid();
         initLines();
-        plot();
     }
 
     private void initCentroid() {
@@ -42,11 +41,6 @@ class Multi_Plot {
 
     private void initLines() {
         Rectangle bounds = roi.getBounds();
-//        lines.add(new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid));
-//        lines.add(new Line(xCentroid, bounds.y, xCentroid, bounds.y + bounds.getHeight()));
-//        lines.add(new Line(bounds.x, bounds.y,bounds.x + bounds.getWidth(),bounds.y + bounds.getHeight()));
-//        lines.add(new Line(bounds.x + bounds.getWidth(), bounds.y, bounds.x, bounds.y + bounds.getHeight()));
-
         Roi horizontal = new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid);;
         for (int i = 0; i <numberOfProfiles;i++) {
             horizontal = RoiRotator.rotate(horizontal, ANGEL);
@@ -62,11 +56,17 @@ class Multi_Plot {
         IJ.run("Select None");
     }
 
-    private void plot() {
+    void plotAll() {
         for (Roi l : lines) {
             image.setRoi(l);
             ProfilePlot profilePlot = new ProfilePlot(image);
             profilePlot.createWindow();
+        }
+    }
+    
+    void plotAverage() {
+        for (Roi l : lines) {
+            //todo continue here
         }
     }
 }
