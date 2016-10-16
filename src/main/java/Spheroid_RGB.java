@@ -165,10 +165,6 @@ public class Spheroid_RGB implements PlugIn {
             return;
         }
 
-        //check image type and init channels
-        {
-            checkImageType();
-        }
         HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
 
         //create Results table
