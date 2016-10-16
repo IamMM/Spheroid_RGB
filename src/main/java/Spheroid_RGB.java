@@ -115,7 +115,7 @@ public class Spheroid_RGB implements PlugIn {
 
         // open the Spheroid_RGB sample
 //        ImagePlus image = IJ.openImage("C:/workspace/Spheroid_RGB/EdU_slide2.2.tif");
-        ImagePlus image = IJ.openImage("P:/images/test_images/LOX1/Pimagestest_imagesLOX1.jpg");
+        ImagePlus image = IJ.openImage("img/LOX1/red.jpg");
         image.show();
 
         // run the plugin
@@ -470,9 +470,16 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 image = WindowManager.getImage((String) winList.getSelectedItem());
-                if (image == null) {
+                if(image == null || winList.getItemCount() != WindowManager.getImageCount()) {
                     initImageList();
                     image = WindowManager.getCurrentImage();
+                }
+
+                if(winList.getItemCount() != 0) {
+                    WindowManager.setCurrentWindow(WindowManager.getImage((String) winList.getSelectedItem()).getWindow());
+                    WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
+                } else {
+                    IJ.showMessage("No images open", "It seems like you closed all image windows.");
                 }
             }
         });
