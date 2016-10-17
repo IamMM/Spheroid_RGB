@@ -21,13 +21,13 @@ class Multi_Plot {
     private double yCentroid;
     private ArrayList<Roi> lines =  new ArrayList<Roi>();
     private int numberOfProfiles;
-    private double ANGEL;
+    private double ANGLE;
 
     Multi_Plot(ImagePlus image, int numberOfProfiles) {
         this.image = image;
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
-        ANGEL = 180 / (double) numberOfProfiles;
+        ANGLE = 180 / (double) numberOfProfiles;
 
         initCentroid();
         initLines();
@@ -43,7 +43,7 @@ class Multi_Plot {
         Rectangle bounds = roi.getBounds();
         Roi horizontal = new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid);;
         for (int i = 0; i <numberOfProfiles;i++) {
-            horizontal = RoiRotator.rotate(horizontal, ANGEL);
+            horizontal = RoiRotator.rotate(horizontal, ANGLE);
             lines.add(horizontal);
         }
 
