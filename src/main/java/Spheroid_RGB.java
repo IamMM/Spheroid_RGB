@@ -57,6 +57,8 @@ public class Spheroid_RGB implements PlugIn {
     private JCheckBox countCellsCheckBox;
     private JPanel countPanel;
     private JPanel innerCountPanel;
+    private JButton averageButton;
+    private JButton minimumButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
