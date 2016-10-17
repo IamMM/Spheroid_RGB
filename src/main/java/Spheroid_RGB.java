@@ -78,20 +78,20 @@ public class Spheroid_RGB implements PlugIn {
     private double doubleThreshold;
     private boolean darkPeaks;
 
-    // what channels to take
+    // rgb channels
+    ImagePlus[] rgb;
     private boolean takeR;
     private boolean takeG;
     private boolean takeB;
     private int total;
-
-    // split channels
-    private ImagePlus rChannel;
-    private ImagePlus gChannel;
-    private ImagePlus bChannel;
+    private boolean imageIsGray;
 
     // magic selection
     private double startTolerance = 128;
+
     private int startMode = 1;
+    // multi plot
+    private int plotChannel;
 
     public Spheroid_RGB() {
         initActionListeners();
@@ -253,15 +253,15 @@ public class Spheroid_RGB implements PlugIn {
     private void checkImageType() {
         int type = image.getType();
         if (type == ImagePlus.GRAY8) {
-            rChannel = image;
-            gChannel = bChannel = null;
+            imageIsGray = true;
             PEAKS_COLOR = Color.RED;
         } else if (type == ImagePlus.GRAY16)
             IJ.showMessage("16-bit gray scale image not supported");
         else if (type == ImagePlus.GRAY32)
             IJ.showMessage("32-bit gray scale image not supported");
         else if (type == ImagePlus.COLOR_RGB) {
-            splitChannels(image);
+            rgb = ChannelSplitter.split(image);
+            setChannelLut();
         } else {
             IJ.showMessage("not supported");
         }
@@ -272,17 +272,22 @@ public class Spheroid_RGB implements PlugIn {
      */
     private HashMap<ImagePlus, ImageProcessor> initChannelMap() {
         HashMap<ImagePlus, ImageProcessor> channel = new HashMap<ImagePlus, ImageProcessor>();
-        if(takeR) {
-            ImageProcessor redResults = (rChannel.getProcessor().duplicate()).convertToRGB();
-            channel.put(rChannel, redResults);
-        }
-        if(takeG) {
-            ImageProcessor greenResults = (gChannel.getProcessor().duplicate()).convertToRGB();
-            channel.put(gChannel, greenResults);
-        }
-        if(takeB) {
-            ImageProcessor blueResults = (bChannel.getProcessor().duplicate()).convertToRGB();
-            channel.put(bChannel, blueResults);
+        if(imageIsGray) {
+            ImageProcessor results = (image.getProcessor().duplicate()).convertToRGB();
+            channel.put(image, results);
+        } else {
+            if (takeR) {
+                ImageProcessor redResults = (rgb[0].getProcessor().duplicate()).convertToRGB();
+                channel.put(rgb[0], redResults);
+            }
+            if (takeG) {
+                ImageProcessor greenResults = (rgb[1].getProcessor().duplicate()).convertToRGB();
+                channel.put(rgb[1], greenResults);
+            }
+            if (takeB) {
+                ImageProcessor blueResults = (rgb[2].getProcessor().duplicate()).convertToRGB();
+                channel.put(rgb[2], blueResults);
+            }
         }
         return channel;
     }
@@ -389,21 +394,16 @@ public class Spheroid_RGB implements PlugIn {
         return  sum / (double)longPixelCount;
     }
 
-    //split channels
-    private void splitChannels(ImagePlus imp) {
-        ImagePlus[] rgb = ChannelSplitter.split(imp);
-
+    //make split channels pseudo color
+    private void setChannelLut() {
         if (takeR) {
-            rChannel = rgb[0];
-            rChannel.setLut(LUT.createLutFromColor(Color.RED));
+            rgb[0].setLut(LUT.createLutFromColor(Color.RED));
         }
         if (takeG) {
-            gChannel = rgb[1];
-            gChannel.setLut(LUT.createLutFromColor(Color.GREEN));
+            rgb[1].setLut(LUT.createLutFromColor(Color.GREEN));
         }
         if (takeB) {
-            bChannel = rgb[2];
-            bChannel.setLut(LUT.createLutFromColor(Color.BLUE));
+            rgb[2].setLut(LUT.createLutFromColor(Color.BLUE));
         }
     }
 
@@ -575,6 +575,13 @@ public class Spheroid_RGB implements PlugIn {
         });
 
         //Multi plot
+        redRadioButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                plotChannel = 0; //red
+            }
+        });
+
         profileSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {

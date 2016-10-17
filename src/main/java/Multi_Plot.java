@@ -54,6 +54,7 @@ class Multi_Plot {
 
         image.setOverlay(overlay);
         IJ.run("Select None");
+        image.show();
     }
 
     void plotAll() {
