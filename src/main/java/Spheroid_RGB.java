@@ -57,6 +57,9 @@ public class Spheroid_RGB implements PlugIn {
     private JCheckBox showLines;
     private JSlider profileSlider;
     private JLabel profileTextField;
+    private JRadioButton redRadioButton;
+    private JRadioButton greenRadioButton;
+    private JRadioButton blueRadioButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -93,7 +96,7 @@ public class Spheroid_RGB implements PlugIn {
     public Spheroid_RGB() {
         initActionListeners();
         initImageList();
-        initTotalChoice();
+        initComponents();
     }
 
     /**
@@ -115,7 +118,7 @@ public class Spheroid_RGB implements PlugIn {
 
         // open the Spheroid_RGB sample
 //        ImagePlus image = IJ.openImage("C:/workspace/Spheroid_RGB/EdU_slide2.2.tif");
-        ImagePlus image = IJ.openImage("img/LOX1/red.jpg");
+        ImagePlus image = IJ.openImage("img/SN33267.tif");
         image.show();
 
         // run the plugin
@@ -127,14 +130,6 @@ public class Spheroid_RGB implements PlugIn {
      */
     @Override
     public void run(String arg) {
-        if(WindowManager.getCurrentImage() != null) {
-            image = WindowManager.getCurrentImage();
-            width = image.getWidth();
-        }else {
-            IJ.showMessage("No images open");
-            return;
-        }
-
         if(RoiManager.getInstance() == null) {
             new RoiManager();
         }
@@ -151,6 +146,14 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void runApplication() {
+        if(WindowManager.getCurrentImage() != null) {
+            image = WindowManager.getCurrentImage();
+            width = image.getWidth();
+        }else {
+            IJ.showMessage("No images open");
+            return;
+        }
+
         getGuiValues();
 
         RoiManager roiManager = RoiManager.getInstance();
@@ -251,6 +254,7 @@ public class Spheroid_RGB implements PlugIn {
         int type = image.getType();
         if (type == ImagePlus.GRAY8) {
             rChannel = image;
+            gChannel = bChannel = null;
             PEAKS_COLOR = Color.RED;
         } else if (type == ImagePlus.GRAY16)
             IJ.showMessage("16-bit gray scale image not supported");
@@ -417,7 +421,7 @@ public class Spheroid_RGB implements PlugIn {
 
         Opener opener = new Opener();
         image = opener.openImage(directory, name);
-
+//        WindowManager.setCurrentWindow(WindowManager.getImage(name).getWindow());
         image.show();
         winList.addItem(image.getTitle());
         winList.setSelectedIndex(winList.getItemCount() - 1);
@@ -494,7 +498,7 @@ public class Spheroid_RGB implements PlugIn {
         cellWidthField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
-//                super.keyTyped(e);
+                super.keyTyped(e);
                 cellWidthFieldChanged();
             }
         });
@@ -574,7 +578,7 @@ public class Spheroid_RGB implements PlugIn {
         profileSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                profileTextField.setText(profileSlider.getValue() + "");
+                profileTextField.setText(profileSlider.getValue() + " lines");
             }
         });
 
@@ -607,9 +611,6 @@ public class Spheroid_RGB implements PlugIn {
         minDist = Double.parseDouble(minDistField.getText());
         threshold = thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
-        takeR = redCheckBox.isSelected();
-        takeG = greenCheckBox.isSelected();
-        takeB = blueCheckBox.isSelected();
         total = totalCheckBox.getSelectedIndex();
     }
 
@@ -642,9 +643,16 @@ public class Spheroid_RGB implements PlugIn {
         }
     }
 
-    private void initTotalChoice() {
+    private void initComponents() {
+        // initialize total combo box
         totalCheckBox.addItem("Red");
         totalCheckBox.addItem("Green");
         totalCheckBox.addItem("Blue");
+
+        // initialize radio button group
+        ButtonGroup group = new ButtonGroup();
+        group.add(redRadioButton);
+        group.add(greenRadioButton);
+        group.add(blueRadioButton);
     }
 }
