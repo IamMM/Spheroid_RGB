@@ -60,36 +60,40 @@ public class Spheroid_RGB implements PlugIn {
     private JRadioButton redRadioButton;
     private JRadioButton greenRadioButton;
     private JRadioButton blueRadioButton;
+    private JCheckBox countCellsCheckBox;
+    private JPanel countPanel;
+    private JPanel innerCountPanel;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
     private static final String VERSION = " v1.0 ";
-    private static Color PEAKS_COLOR = Color.WHITE;
-    private static final Color ROI_COLOR = Color.YELLOW;
+    static Color PEAKS_COLOR = Color.WHITE;
+    static final Color ROI_COLOR = Color.YELLOW;
 
    // imageJ components
-    private ImagePlus image;
-    private int width;
+    static ImagePlus image;
+    static int width;
+    static RoiManager roiManager;
 
     // nuclei counter values
-    private int cellWidth;
-    private double minDist;
-    private int threshold;
-    private double doubleThreshold;
-    private boolean darkPeaks;
+    static int cellWidth;
+    static double minDist;
+    static int threshold;
+    static double doubleThreshold;
+    static boolean darkPeaks;
 
     // rgb channels
-    ImagePlus[] rgb;
-    private boolean takeR;
-    private boolean takeG;
-    private boolean takeB;
-    private int total;
-    private boolean imageIsGray;
+    static ImagePlus[] rgb;
+    static boolean takeR;
+    static boolean takeG;
+    static boolean takeB;
+    static int total;
+    static boolean imageIsGray;
 
     // magic selection
     private double startTolerance = 128;
-
     private int startMode = 1;
+
     // multi plot
     private int plotChannel;
 
@@ -145,7 +149,7 @@ public class Spheroid_RGB implements PlugIn {
         WindowManager.addWindow(frame);
     }
 
-    private void runApplication() {
+    private void runAnalyzer() {
         if(WindowManager.getCurrentImage() != null) {
             image = WindowManager.getCurrentImage();
             width = image.getWidth();
@@ -156,7 +160,7 @@ public class Spheroid_RGB implements PlugIn {
 
         getGuiValues();
 
-        RoiManager roiManager = RoiManager.getInstance();
+        roiManager = RoiManager.getInstance();
         if (roiManager == null) roiManager = new RoiManager();
 
         if(!(takeR || takeG || takeB)) {
@@ -168,85 +172,16 @@ public class Spheroid_RGB implements PlugIn {
             return;
         }
 
-        HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
-
-        //create Results table
-        ResultsTable resultsTable = Analyzer.getResultsTable();
-        if (resultsTable == null) {
-            resultsTable = new ResultsTable();
-            Analyzer.setResultsTable(resultsTable);
+        Table_Analyzer table_analyzer = new Table_Analyzer();
+        if(countCellsCheckBox.isSelected()) {
+            table_analyzer.runCountAndMean();
+        }else {
+            table_analyzer.runMean();
         }
+    }
 
-        //count cells and get meanPeak intensity from selected channels for each WiseRoi from WiseRoi Manager
-        ImageStatistics imageStats;
-        Calibration calibration = image.getCalibration();
-        for (Roi currRoi : roiManager.getRoisAsArray()) {
-            resultsTable.incrementCounter();
-            resultsTable.addValue("ROI", currRoi.getName());
-            for (ImagePlus currChannel : channel.keySet()) {
-                currChannel.setRoi(currRoi);
-                ArrayList<Point> peaks = rumNucleiCounter(currChannel, channel.get(currChannel));
-                resultsTable.addValue("count (" + currChannel.getTitle() + ")", peaks.size());
+    private void runMultiPlot() {
 
-                double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor());
-                resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
-
-                double mean = meanPeak((byte[])currChannel.getProcessor().getPixels(), peaks);
-                resultsTable.addValue("mean peak (" + currChannel.getTitle() + ")", mean);
-            }
-
-            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, calibration);
-            resultsTable.addValue("area (" + calibration.getUnit() + ")", imageStats.area);
-
-            //ratio
-            if(channel.size() == 2) {
-                int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("count ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
-                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
-                resultsTable.addValue("mean peak ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
-            } else if (channel.size() == 3) {
-                int row = resultsTable.getCounter() - 1;
-
-                String major = "(red)";
-                String minor1 = "(green)";
-                String minor2 = "(blue)";
-                if (total == 1) {
-                    major = "(green)";
-                    minor1 = "(red)";
-                }
-                if (total == 2) {
-                    major = "(blue)";
-                    minor2 = "(red)";
-                }
-
-                //count ratioMinMax
-                resultsTable.addValue("count " + minor1 + ":" + major
-                        , (resultsTable.getValue("count " + minor1, row) / resultsTable.getValue("count " + major, row)) * 100);
-                resultsTable.addValue("count " + minor2 + ":" + major
-                        , (resultsTable.getValue("count " + minor2, row) / resultsTable.getValue("count " + major, row)) * 100);
-                //intensity ratioMinMax
-                resultsTable.addValue("intensity " + minor1 + ":" + major
-                        , (resultsTable.getValue("mean " + minor1, row) / resultsTable.getValue("mean " + major, row)) * 100);
-                resultsTable.addValue("intensity " + minor2 + ":" + major
-                        , (resultsTable.getValue("mean " + minor2, row) / resultsTable.getValue("mean " + major, row)) * 100);
-
-            }
-
-            resultsTable.addResults();
-            resultsTable.updateResults();
-        }
-
-        //Create and collect result images
-        ArrayList<ImagePlus> resultImages = new ArrayList<ImagePlus>();
-        for (ImagePlus currChannel : channel.keySet()) {
-            resultImages.add(new ImagePlus("Results " + currChannel.getTitle(), channel.get(currChannel)));
-        }
-
-        for (ImagePlus currImage : resultImages) {
-            currImage.show();
-        }
-
-        roiManager.runCommand(image, "Show All");
     }
 
     // check if Image is RGB
@@ -260,45 +195,12 @@ public class Spheroid_RGB implements PlugIn {
         else if (type == ImagePlus.GRAY32)
             IJ.showMessage("32-bit gray scale image not supported");
         else if (type == ImagePlus.COLOR_RGB) {
+            imageIsGray = false;
             rgb = ChannelSplitter.split(image);
             setChannelLut();
         } else {
             IJ.showMessage("not supported");
         }
-    }
-
-    /**
-     * Every Channel = 8bit ImagePlus and points to an RGB ImageProcessor for the result image
-     */
-    private HashMap<ImagePlus, ImageProcessor> initChannelMap() {
-        HashMap<ImagePlus, ImageProcessor> channel = new HashMap<ImagePlus, ImageProcessor>();
-        if(imageIsGray) {
-            ImageProcessor results = (image.getProcessor().duplicate()).convertToRGB();
-            channel.put(image, results);
-        } else {
-            if (takeR) {
-                ImageProcessor redResults = (rgb[0].getProcessor().duplicate()).convertToRGB();
-                channel.put(rgb[0], redResults);
-            }
-            if (takeG) {
-                ImageProcessor greenResults = (rgb[1].getProcessor().duplicate()).convertToRGB();
-                channel.put(rgb[1], greenResults);
-            }
-            if (takeB) {
-                ImageProcessor blueResults = (rgb[2].getProcessor().duplicate()).convertToRGB();
-                channel.put(rgb[2], blueResults);
-            }
-        }
-        return channel;
-    }
-
-    /**
-     * @param c1 component 1
-     * @param c2 component 2
-     * @return percentage with assumption that grater value is 100%
-     */
-    private double ratioMinMax(double c1, double c2) {
-        return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
     }
 
     private void showMagicSelectDialog() {
@@ -339,73 +241,12 @@ public class Spheroid_RGB implements PlugIn {
         }
     }
 
-    private ArrayList<Point> rumNucleiCounter(ImagePlus imp, ImageProcessor ipResults) {
-        //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
-        Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, cellWidth, minDist, doubleThreshold , darkPeaks, null);
-        nucleiCounter.run();
-        ArrayList<Point> peaks = nucleiCounter.getPeaks();
-
-        drawPeaks(imp, ipResults, peaks);
-
-        return peaks;
-    }
-
-    private void drawPeaks(ImagePlus imp, ImageProcessor ipResults, ArrayList<Point> peaks) {
-        ipResults.setColor(PEAKS_COLOR);
-        ipResults.setLineWidth(1);
-
-        for (Point p : peaks) {
-            ipResults.drawDot(p.x, p.y);
-//            System.out.println("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
-        }
-
-        ipResults.setColor(ROI_COLOR);
-        imp.getRoi().drawPixels(ipResults);
-    }
-
-    private double meanPeak(byte[] pixels, ArrayList<Point> peaks) {
-        double sum = 0;
-        for (Point p : peaks) {
-            int pos = p.y * width + p.x;
-            sum += pixels[pos] & 0xff;
-        }
-        return sum / peaks.size();
-    }
-
-    private double meanWithThreshold (ImageProcessor ip) {
-        int[] histogram = ip.getHistogram();
-        double sum = 0;
-        int minThreshold = 0;
-        int maxThreshold= 255;
-
-        if(darkPeaks) maxThreshold -= threshold;
-        else minThreshold = threshold;
-
-        for(int i = minThreshold; i <= maxThreshold; i++) {
-            sum += (double)i * (double)histogram[i];
-        }
-
-        //todo: check with jacqui if all pixels or only range for dividing
-        long longPixelCount = 0;
-        for(int count : histogram) {
-            longPixelCount += (long)count;
-        }
-
-        return  sum / (double)longPixelCount;
-    }
-
     //make split channels pseudo color
     private void setChannelLut() {
-        if (takeR) {
-            rgb[0].setLut(LUT.createLutFromColor(Color.RED));
+        rgb[0].setLut(LUT.createLutFromColor(Color.RED));
+        rgb[1].setLut(LUT.createLutFromColor(Color.GREEN));
+        rgb[2].setLut(LUT.createLutFromColor(Color.BLUE));
         }
-        if (takeG) {
-            rgb[1].setLut(LUT.createLutFromColor(Color.GREEN));
-        }
-        if (takeB) {
-            rgb[2].setLut(LUT.createLutFromColor(Color.BLUE));
-        }
-    }
 
     /********************************************************
      * 														*
@@ -450,9 +291,9 @@ public class Spheroid_RGB implements PlugIn {
         }
     }
 
-    private void okButtonActionPerformed() {
+    private void analyzeButtonActionPerformed() {
         checkImageType();
-        runApplication();
+        runAnalyzer();
     }
 
     /********************************************************
@@ -474,6 +315,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 image = WindowManager.getImage((String) winList.getSelectedItem());
+
                 if(image == null || winList.getItemCount() != WindowManager.getImageCount()) {
                     initImageList();
                     image = WindowManager.getCurrentImage();
@@ -481,9 +323,22 @@ public class Spheroid_RGB implements PlugIn {
 
                 if(winList.getItemCount() != 0) {
                     WindowManager.setCurrentWindow(WindowManager.getImage((String) winList.getSelectedItem()).getWindow());
-                    WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
+//                    WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
                 } else {
                     IJ.showMessage("No images open", "It seems like you closed all image windows.");
+                }
+            }
+        });
+
+        countCellsCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                for (Component c : countPanel.getComponents()) {
+                    c.setEnabled(countCellsCheckBox.isSelected());
+                }
+
+                for (Component c : innerCountPanel.getComponents()) {
+                    c.setEnabled(countCellsCheckBox.isSelected());
                 }
             }
         });
@@ -491,7 +346,7 @@ public class Spheroid_RGB implements PlugIn {
         analyzeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                okButtonActionPerformed();
+                analyzeButtonActionPerformed();
             }
         });
 
@@ -582,6 +437,20 @@ public class Spheroid_RGB implements PlugIn {
             }
         });
 
+        greenRadioButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                plotChannel = 1; //green
+            }
+        });
+
+        blueRadioButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                plotChannel = 2; //blue
+            }
+        });
+
         profileSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -599,7 +468,9 @@ public class Spheroid_RGB implements PlugIn {
         plotAllButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Multi_Plot plot = new Multi_Plot(image, profileSlider.getValue());
+                rgb = ChannelSplitter.split(image);
+                setChannelLut();
+                Multi_Plot plot = new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue());
                 plot.plotAll();
                 showLines.setEnabled(true);
             }

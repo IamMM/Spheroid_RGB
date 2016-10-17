@@ -3,6 +3,7 @@ import ij.ImagePlus;
 import ij.gui.*;
 import ij.measure.Measurements;
 import ij.plugin.RoiRotator;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageStatistics;
 
 import java.awt.*;
@@ -17,6 +18,7 @@ class Multi_Plot {
 
     private ImagePlus image;
     private Roi roi;
+    private ImagePlus mask;
     private double xCentroid;
     private double yCentroid;
     private ArrayList<Roi> lines =  new ArrayList<Roi>();
@@ -25,6 +27,18 @@ class Multi_Plot {
 
     Multi_Plot(ImagePlus image, int numberOfProfiles) {
         this.image = image;
+        this.roi = image.getRoi();
+        this.numberOfProfiles = numberOfProfiles;
+        ANGLE = 180 / (double) numberOfProfiles;
+
+        initCentroid();
+        initLines();
+    }
+
+    Multi_Plot(ImagePlus image, ImagePlus mask, int numberOfProfiles) {
+        this.image = image;
+        this.mask = mask;
+        image.setRoi(mask.getRoi());
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
         ANGLE = 180 / (double) numberOfProfiles;
@@ -53,7 +67,7 @@ class Multi_Plot {
         }
 
         image.setOverlay(overlay);
-        IJ.run("Select None");
+        image.setRoi(roi);
         image.show();
     }
 
