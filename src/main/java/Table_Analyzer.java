@@ -1,10 +1,8 @@
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
-import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
@@ -19,11 +17,11 @@ import java.util.HashMap;
  */
 class Table_Analyzer extends Spheroid_RGB {
 
-    public Table_Analyzer(){
+    Table_Analyzer(){
 
     }
 
-    public void runCountAndMean() {
+    void runCountAndMean() {
         //create Results table
         ResultsTable resultsTable = Analyzer.getResultsTable();
         if (resultsTable == null) {
@@ -106,7 +104,7 @@ class Table_Analyzer extends Spheroid_RGB {
         roiManager.runCommand(image, "Show All");
     }
 
-    public void runMean() {
+    void runMean() {
         //create Results table
         ResultsTable resultsTable = Analyzer.getResultsTable();
         if (resultsTable == null) {
@@ -135,7 +133,7 @@ class Table_Analyzer extends Spheroid_RGB {
             //ratio
             if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
+                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(2, row)));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
 

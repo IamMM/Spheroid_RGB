@@ -1,9 +1,10 @@
-import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.*;
+import ij.gui.Line;
+import ij.gui.Overlay;
+import ij.gui.ProfilePlot;
+import ij.gui.Roi;
 import ij.measure.Measurements;
 import ij.plugin.RoiRotator;
-import ij.plugin.frame.RoiManager;
 import ij.process.ImageStatistics;
 
 import java.awt.*;
@@ -18,8 +19,6 @@ class Multi_Plot {
 
     private ImagePlus image;
     private Roi roi;
-    private ImagePlus mask;
-    private double xCentroid;
     private double yCentroid;
     private ArrayList<Roi> lines =  new ArrayList<Roi>();
     private int numberOfProfiles;
@@ -37,7 +36,6 @@ class Multi_Plot {
 
     Multi_Plot(ImagePlus image, ImagePlus mask, int numberOfProfiles) {
         this.image = image;
-        this.mask = mask;
         image.setRoi(mask.getRoi());
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
@@ -49,7 +47,6 @@ class Multi_Plot {
 
     private void initCentroid() {
         ImageStatistics stats = roi.getImage().getStatistics(Measurements.CENTROID);
-        xCentroid = stats.xCentroid;
         yCentroid = stats.yCentroid;
     }
 

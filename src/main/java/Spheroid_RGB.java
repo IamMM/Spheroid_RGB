@@ -5,13 +5,9 @@ import ij.WindowManager;
 import ij.gui.*;
 import ij.io.OpenDialog;
 import ij.io.Opener;
-import ij.measure.Calibration;
-import ij.measure.ResultsTable;
 import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
-import ij.plugin.filter.Analyzer;
 import ij.plugin.frame.RoiManager;
-import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
 
@@ -23,8 +19,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Created on october 2016
@@ -72,7 +66,6 @@ public class Spheroid_RGB implements PlugIn {
 
    // imageJ components
     static ImagePlus image;
-    static int width;
     static RoiManager roiManager;
 
     // nuclei counter values
@@ -121,8 +114,8 @@ public class Spheroid_RGB implements PlugIn {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-//        ImagePlus image = IJ.openImage("C:/workspace/Spheroid_RGB/EdU_slide2.2.tif");
-        ImagePlus image = IJ.openImage("img/SN33267.tif");
+        ImagePlus image = IJ.openImage("img/EdU.tif");
+//        ImagePlus image = IJ.openImage("img/SN33267.tif");
         image.show();
 
         // run the plugin
@@ -152,7 +145,6 @@ public class Spheroid_RGB implements PlugIn {
     private void runAnalyzer() {
         if(WindowManager.getCurrentImage() != null) {
             image = WindowManager.getCurrentImage();
-            width = image.getWidth();
         }else {
             IJ.showMessage("No images open");
             return;
