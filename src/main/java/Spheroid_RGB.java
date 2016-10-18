@@ -62,7 +62,7 @@ public class Spheroid_RGB implements PlugIn {
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v1.0 ";
+    private static final String VERSION = " v0.4.0 ";
     static Color PEAKS_COLOR = Color.WHITE;
     static final Color ROI_COLOR = Color.YELLOW;
 

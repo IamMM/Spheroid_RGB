@@ -1,3 +1,4 @@
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.*;
 import ij.measure.Measurements;
@@ -23,12 +24,14 @@ class Multi_Plot {
     private ArrayList<ProfilePlot> profilePlots;
     private ArrayList<double[]> profiles = new ArrayList<double[]>();
     private double yMax = 0;
+    private String plotTitle;
 
     Multi_Plot(ImagePlus image, int numberOfProfiles) {
         this.image = image;
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
         ANGLE = 180 / (double) numberOfProfiles;
+        plotTitle = "Plot " + image.getTitle();
 
         initCentroid();
         initLines();
@@ -41,10 +44,14 @@ class Multi_Plot {
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
         ANGLE = 180 / (double) numberOfProfiles;
+        plotTitle = "Plot " + mask.getTitle() + " (" + image.getTitle() + ")";
 
-        initCentroid();
-        initLines();
-        showLines();
+        //todo: if no roi selected ERROR
+        if(roi != null) {
+            initCentroid();
+            initLines();
+            showLines();
+        }
     }
 
     private void initCentroid() {
@@ -82,6 +89,7 @@ class Multi_Plot {
             }
             profilePlots.add(profilePlot);
         }
+        IJ.run("Select None");
     }
 
     private double[] avgProfile(ArrayList<double[]> profiles) {
@@ -116,9 +124,9 @@ class Multi_Plot {
         for (int i = 0; i < x.length; i++) {
             x[i] = (double) i;
         }
-
+        
         PlotWindow.noGridLines = false; // draw grid lines
-        Plot plot = new Plot("Plot","Distance","Intensity");
+        Plot plot = new Plot(plotTitle,"Distance","Intensity");
         plot.setLimits(0, x.length, 0, yMax);
         plot.setLineWidth(1);
         plot.setColor(Color.red);
