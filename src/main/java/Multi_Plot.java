@@ -21,8 +21,8 @@ class Multi_Plot {
     private int numberOfProfiles;
     private double ANGLE;
     private ArrayList<ProfilePlot> profilePlots;
-    ArrayList<double[]> profiles = new ArrayList<double[]>();
-    double yMax = 0;
+    private ArrayList<double[]> profiles = new ArrayList<double[]>();
+    private double yMax = 0;
 
     Multi_Plot(ImagePlus image, int numberOfProfiles) {
         this.image = image;
@@ -32,6 +32,7 @@ class Multi_Plot {
 
         initCentroid();
         initLines();
+        showLines();
     }
 
     Multi_Plot(ImagePlus image, ImagePlus mask, int numberOfProfiles) {
@@ -53,7 +54,7 @@ class Multi_Plot {
 
     private void initLines() {
         Rectangle bounds = roi.getBounds();
-        Roi horizontal = new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid);;
+        Roi horizontal = new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid);
         for (int i = 0; i <numberOfProfiles;i++) {
             horizontal = RoiRotator.rotate(horizontal, ANGLE);
             lines.add(horizontal);

@@ -174,8 +174,15 @@ public class Spheroid_RGB implements PlugIn {
         }
     }
 
-    private void runMultiPlot() {
-
+    private Multi_Plot runMultiPlot() {
+        checkImageType();
+        if (imageIsGray){
+            return new Multi_Plot(image,profileSlider.getValue());
+        } else {
+            rgb = ChannelSplitter.split(image);
+            setChannelLut();
+            return new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue());
+        }
     }
 
     // check if Image is RGB
@@ -494,10 +501,7 @@ public class Spheroid_RGB implements PlugIn {
         plotAllButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                rgb = ChannelSplitter.split(image);
-                setChannelLut();
-                Multi_Plot plot = new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue());
-                plot.plotAll();
+                runMultiPlot().plotAll();
                 showLines.setEnabled(true);
             }
         });
@@ -505,10 +509,7 @@ public class Spheroid_RGB implements PlugIn {
         plotAverageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                rgb = ChannelSplitter.split(image);
-                setChannelLut();
-                Multi_Plot plot = new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue());
-                plot.plotAverage();
+               runMultiPlot().plotAverage();
                 showLines.setEnabled(true);
             }
         });
