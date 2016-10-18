@@ -116,7 +116,7 @@ public class Spheroid_RGB implements PlugIn {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-        ImagePlus image = IJ.openImage("img/EdU.tif");
+        ImagePlus image = IJ.openImage("img/SN33267.tif");
 //        ImagePlus image = IJ.openImage("img/SN33267.tif");
         image.show();
 
@@ -285,6 +285,24 @@ public class Spheroid_RGB implements PlugIn {
         }
     }
 
+    private void averageButtonAction() {
+        Roi roi = image.getRoi();
+
+        if (roi.isArea()) {
+            ImageStatistics stats = roi.getImage().getStatistics();
+            thresSlider.setValue((int) Math.ceil(stats.mean));
+        }
+    }
+
+    private void minimumButtonAction() {
+        Roi roi = image.getRoi();
+
+        if (roi.isArea()) {
+            ImageStatistics stats = roi.getImage().getStatistics();
+            thresSlider.setValue((int) Math.ceil(stats.min));
+        }
+    }
+
     private void analyzeButtonActionPerformed() {
         checkImageType();
         runAnalyzer();
@@ -384,6 +402,20 @@ public class Spheroid_RGB implements PlugIn {
                 maximumButtonAction();
             }
         });
+        averageButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                averageButtonAction();
+            }
+        });
+
+        minimumButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                minimumButtonAction();
+            }
+        });
+
         darkPeaksCheck.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -473,7 +505,11 @@ public class Spheroid_RGB implements PlugIn {
         plotAverageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                IJ.showMessage("Not implemented yet. :(");
+                rgb = ChannelSplitter.split(image);
+                setChannelLut();
+                Multi_Plot plot = new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue());
+                plot.plotAverage();
+                showLines.setEnabled(true);
             }
         });
     }

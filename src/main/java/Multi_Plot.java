@@ -1,8 +1,5 @@
 import ij.ImagePlus;
-import ij.gui.Line;
-import ij.gui.Overlay;
-import ij.gui.ProfilePlot;
-import ij.gui.Roi;
+import ij.gui.*;
 import ij.measure.Measurements;
 import ij.plugin.RoiRotator;
 import ij.process.ImageStatistics;
@@ -23,6 +20,9 @@ class Multi_Plot {
     private ArrayList<Roi> lines =  new ArrayList<Roi>();
     private int numberOfProfiles;
     private double ANGLE;
+    private ArrayList<ProfilePlot> profilePlots;
+    ArrayList<double[]> profiles = new ArrayList<double[]>();
+    double yMax = 0;
 
     Multi_Plot(ImagePlus image, int numberOfProfiles) {
         this.image = image;
@@ -43,6 +43,7 @@ class Multi_Plot {
 
         initCentroid();
         initLines();
+        showLines();
     }
 
     private void initCentroid() {
@@ -57,28 +58,78 @@ class Multi_Plot {
             horizontal = RoiRotator.rotate(horizontal, ANGLE);
             lines.add(horizontal);
         }
+    }
 
+    private void showLines() {
         Overlay overlay = new Overlay();
         for (Roi l : lines) {
             overlay.add(l);
         }
 
         image.setOverlay(overlay);
-        image.setRoi(roi);
         image.show();
     }
 
-    void plotAll() {
+    private void createAllPlots() {
+        profilePlots = new ArrayList<ProfilePlot>();
         for (Roi l : lines) {
             image.setRoi(l);
             ProfilePlot profilePlot = new ProfilePlot(image);
-            profilePlot.createWindow();
+            profiles.add(profilePlot.getProfile());
+            if(profilePlot.getMax() > yMax) {
+                yMax = profilePlot.getMax();
+            }
+            profilePlots.add(profilePlot);
         }
+    }
+
+    private double[] avgProfile(ArrayList<double[]> profiles) {
+        double[] avg = new double[profiles.get(0).length];
+        for (double[] profile : profiles) {
+            for (int i = 0; i < profile.length; i++) {
+                avg[i] += profile[i];
+            }
+
+        }
+
+        int size = profiles.size();
+        for (int i = 0; i < avg.length; i++) {
+            avg[i] /= size;
+        }
+
+        return avg;
+    }
+
+    void plotAll() {
+        createAllPlots();
+        for (ProfilePlot p : profilePlots) {
+            p.createWindow();
+        }
+        image.setRoi(roi);
     }
     
     void plotAverage() {
-        for (Roi l : lines) {
-            //todo continue here
+       createAllPlots();
+
+        double[] x = new double[profiles.get(0).length];
+        for (int i = 0; i < x.length; i++) {
+            x[i] = (double) i;
         }
+
+        PlotWindow.noGridLines = false; // draw grid lines
+        Plot plot = new Plot("Plot","Distance","Intensity");
+        plot.setLimits(0, x.length, 0, yMax);
+        plot.setLineWidth(1);
+        plot.setColor(Color.red);
+
+        for (double[] y : profiles) {
+            plot.addPoints(x,y,PlotWindow.LINE);
+        }
+
+        plot.setColor(Color.blue);
+        plot.setLineWidth(2);
+        plot.addPoints(x, avgProfile(profiles), PlotWindow.LINE);
+
+        plot.show();
     }
 }
