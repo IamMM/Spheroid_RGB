@@ -28,7 +28,7 @@ import java.awt.event.KeyEvent;
 public class Spheroid_RGB implements PlugIn {
     // swing components
     private JFrame frame;
-    private JComboBox winList;
+    private JComboBox imgList;
     private JPanel mainPanel;
     private JButton openButton;
     private JButton lineLengthButton;
@@ -242,7 +242,7 @@ public class Spheroid_RGB implements PlugIn {
         }
     }
 
-    //make split channels pseudo color
+    // set suitable look up table for 8bit channel (pseudo color)
     private void setChannelLut() {
         rgb[0].setLut(LUT.createLutFromColor(Color.RED));
         rgb[1].setLut(LUT.createLutFromColor(Color.GREEN));
@@ -265,8 +265,8 @@ public class Spheroid_RGB implements PlugIn {
         image = opener.openImage(directory, name);
 //        WindowManager.setCurrentWindow(WindowManager.getImage(name).getWindow());
         image.show();
-        winList.addItem(image.getTitle());
-        winList.setSelectedIndex(winList.getItemCount() - 1);
+        imgList.addItem(image.getTitle());
+        imgList.setSelectedIndex(imgList.getItemCount() - 1);
     }
 
     private void widthButtonAction(JTextField field) {
@@ -330,18 +330,18 @@ public class Spheroid_RGB implements PlugIn {
             }
         });
 
-        winList.addActionListener(new ActionListener() {
+        imgList.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                image = WindowManager.getImage((String) winList.getSelectedItem());
+                image = WindowManager.getImage((String) imgList.getSelectedItem());
 
-                if(image == null || winList.getItemCount() != WindowManager.getImageCount()) {
+                if(image == null || imgList.getItemCount() != WindowManager.getImageCount()) {
                     initImageList();
                     image = WindowManager.getCurrentImage();
                 }
 
-                if(winList.getItemCount() != 0) {
-                    WindowManager.setCurrentWindow(WindowManager.getImage((String) winList.getSelectedItem()).getWindow());
+                if(imgList.getItemCount() != 0) {
+                    WindowManager.setCurrentWindow(WindowManager.getImage((String) imgList.getSelectedItem()).getWindow());
 //                    WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
                 } else {
                     IJ.showMessage("No images open", "It seems like you closed all image windows.");
@@ -366,6 +366,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 analyzeButtonActionPerformed();
+                initImageList();
             }
         });
 
@@ -503,14 +504,16 @@ public class Spheroid_RGB implements PlugIn {
             public void actionPerformed(ActionEvent e) {
                 runMultiPlot().plotAll();
                 showLines.setEnabled(true);
+                initImageList();
             }
         });
 
         plotAverageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               runMultiPlot().plotAverage();
+                runMultiPlot().plotAverage();
                 showLines.setEnabled(true);
+                initImageList();
             }
         });
     }
@@ -546,9 +549,9 @@ public class Spheroid_RGB implements PlugIn {
 
     private void initImageList() {
         String[] titles = WindowManager.getImageTitles();
-        winList.removeAllItems();
+        imgList.removeAllItems();
         for (String title : titles) {
-            winList.addItem(title);
+            imgList.addItem(title);
         }
     }
 

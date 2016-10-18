@@ -124,7 +124,7 @@ class Multi_Plot {
         for (int i = 0; i < x.length; i++) {
             x[i] = (double) i;
         }
-        
+
         PlotWindow.noGridLines = false; // draw grid lines
         Plot plot = new Plot(plotTitle,"Distance","Intensity");
         plot.setLimits(0, x.length, 0, yMax);
