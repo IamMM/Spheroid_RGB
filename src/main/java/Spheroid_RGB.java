@@ -10,6 +10,8 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
+import jdk.nashorn.internal.runtime.regexp.RegExp;
+import sun.misc.Regexp;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -279,8 +281,12 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void cellWidthFieldChanged() {
-        if(cellWidthField.getText().isEmpty()) minDistField.setText("0.0");
-        else minDistField.setText(Double.toString(Double.parseDouble(cellWidthField.getText()) / 2));
+        String input = cellWidthField.getText();
+        if(input.isEmpty()) minDistField.setText("0.0");
+        else {
+            String clean = input.replaceAll("\\D", ""); // http://www.regular-expressions.info/shorthand.html
+            minDistField.setText(Double.toString(Double.parseDouble(clean) / 2));
+        }
     }
 
     private void maximumButtonAction() {
@@ -519,8 +525,8 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void getGuiValues() {
-        cellWidth = Integer.parseInt(cellWidthField.getText());
-        minDist = Double.parseDouble(minDistField.getText());
+        cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("\\D", "")); //make sure there are only digits
+        minDist = Double.parseDouble(minDistField.getText().replaceAll("\\D", ""));
         threshold = thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
         total = totalCheckBox.getSelectedIndex();
