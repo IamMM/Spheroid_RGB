@@ -5,7 +5,11 @@
     <constraints>
       <xy x="20" y="20" width="623" height="416"/>
     </constraints>
-    <properties/>
+    <properties>
+      <minimumSize width="543" height="333"/>
+      <opaque value="true"/>
+      <preferredSize width="543" height="320"/>
+    </properties>
     <border type="none"/>
     <children>
       <component id="83c81" class="javax.swing.JLabel">
