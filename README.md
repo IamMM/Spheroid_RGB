@@ -32,8 +32,8 @@ Channels to run over each ROI the following statistics:
 | 4   | 26          | 46.739     | 165.269         | 39           | 49.116      | 121.59           | 0.816      | 66.667          | 95.159         | 73.571              |
 
 - Multi Plot:
-    - plot the intensity of multiple profiles through the centroid of the spheroid (selected area)
-    
+    - plot the average intensity of multiple profiles through the centroid of the spheroid (selected area)
+
 ---
 
 Started from template [minimal Maven project](https://github.com/imagej/minimal-ij1-plugin/archive/master.zip) implementing an ImageJ 1.x plugin.

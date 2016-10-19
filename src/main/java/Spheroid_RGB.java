@@ -140,7 +140,7 @@ public class Spheroid_RGB implements PlugIn {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.pack();
         frame.setLocationRelativeTo(null); //center the frame on screen
-        setLookAndFeel();
+        setLookAndFeel(frame);
         setIcon();
         frame.setVisible(true);
         WindowManager.addWindow(frame);
@@ -372,7 +372,6 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 analyzeButtonActionPerformed();
-                initImageList();
             }
         });
 
@@ -388,6 +387,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 widthButtonAction(cellWidthField);
+                cellWidthFieldChanged();
             }
         });
 
@@ -510,7 +510,6 @@ public class Spheroid_RGB implements PlugIn {
             public void actionPerformed(ActionEvent e) {
                 runMultiPlot().plotAll();
                 showLines.setEnabled(true);
-                initImageList();
             }
         });
 
@@ -519,20 +518,19 @@ public class Spheroid_RGB implements PlugIn {
             public void actionPerformed(ActionEvent e) {
                 runMultiPlot().plotAverage();
                 showLines.setEnabled(true);
-                initImageList();
             }
         });
     }
 
     private void getGuiValues() {
         cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("\\D", "")); //make sure there are only digits
-        minDist = Double.parseDouble(minDistField.getText().replaceAll("\\D", ""));
+        minDist = Double.parseDouble(minDistField.getText()); //.replaceAll("\\D", "")
         threshold = thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
         total = totalCheckBox.getSelectedIndex();
     }
 
-    private void setLookAndFeel() {
+    private void setLookAndFeel(JFrame frame) {
         try {
             UIManager.setLookAndFeel(
                     UIManager.getSystemLookAndFeelClassName());
@@ -549,7 +547,7 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     public void setIcon() {
-        ImageIcon img = new ImageIcon("img/icon_SN33267.png");
+        ImageIcon img = new ImageIcon("icon/icon_SN33267.png");
         frame.setIconImage(img.getImage());
     }
 

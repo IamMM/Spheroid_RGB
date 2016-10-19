@@ -315,6 +315,7 @@
                         </constraints>
                         <properties>
                           <text value="line length"/>
+                          <toolTipText value="recommended minimum distance = cell width / 2"/>
                         </properties>
                       </component>
                       <component id="ab173" class="javax.swing.JButton" binding="lineLengthButton" default-binding="true">
