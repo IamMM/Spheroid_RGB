@@ -289,6 +289,7 @@
                         <properties>
                           <labelFor value="5fe3f"/>
                           <text value="minimum distance"/>
+                          <toolTipText value="recommended: cell width / 2"/>
                         </properties>
                       </component>
                       <component id="5fe3f" class="javax.swing.JTextField" binding="minDistField">
