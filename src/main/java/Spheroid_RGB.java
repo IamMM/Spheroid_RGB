@@ -10,8 +10,6 @@ import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
-import jdk.nashorn.internal.runtime.regexp.RegExp;
-import sun.misc.Regexp;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -178,6 +176,7 @@ public class Spheroid_RGB implements PlugIn {
 
     private Multi_Plot runMultiPlot() {
         checkImageType();
+
         if (imageIsGray){
             return new Multi_Plot(image,profileSlider.getValue());
         } else {
@@ -508,16 +507,24 @@ public class Spheroid_RGB implements PlugIn {
         plotAllButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                runMultiPlot().plotAll();
-                showLines.setEnabled(true);
+                if(image.getRoi() == null) {
+                    IJ.showMessage("Nothing to do.", "No Roi selected");
+                } else {
+                    runMultiPlot().plotAll();
+                    showLines.setEnabled(true);
+                }
             }
         });
 
         plotAverageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                runMultiPlot().plotAverage();
-                showLines.setEnabled(true);
+                if(image.getRoi() == null) {
+                    IJ.showMessage("Nothing to do.", "No Roi selected");
+                } else {
+                    runMultiPlot().plotAverage();
+                    showLines.setEnabled(true);
+                }
             }
         });
     }
