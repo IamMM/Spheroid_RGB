@@ -31,7 +31,9 @@ Channels to run over each ROI the following statistics:
 | 3   | 121         | 30.319     | 101.421         | 227          | 38.442      | 86.009           | 4.626      | 53.304          | 78.87          | 84.803              |
 | 4   | 26          | 46.739     | 165.269         | 39           | 49.116      | 121.59           | 0.816      | 66.667          | 95.159         | 73.571              |
 
-
+- Multi Plot:
+    - plot the intensity of multiple profiles through the centroid of the spheroid (selected area)
+    
 ---
 
 Started from template [minimal Maven project](https://github.com/imagej/minimal-ij1-plugin/archive/master.zip) implementing an ImageJ 1.x plugin.
