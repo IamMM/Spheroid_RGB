@@ -283,7 +283,7 @@ public class Spheroid_RGB implements PlugIn {
         String input = cellWidthField.getText();
         if(input.isEmpty()) minDistField.setText("0.0");
         else {
-            String clean = input.replaceAll("\\D", ""); // http://www.regular-expressions.info/shorthand.html
+            String clean = input.replaceAll("[^\\d.]", ""); // http://www.regular-expressions.info/shorthand.html
             minDistField.setText(Double.toString(Double.parseDouble(clean) / 2));
         }
     }
@@ -530,8 +530,8 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void getGuiValues() {
-        cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("\\D", "")); //make sure there are only digits
-        minDist = Double.parseDouble(minDistField.getText()); //.replaceAll("\\D", "")
+        cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
+        minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
         threshold = thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
         total = totalCheckBox.getSelectedIndex();
