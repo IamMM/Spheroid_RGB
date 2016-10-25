@@ -25,6 +25,7 @@ class Multi_Plot {
     private ArrayList<double[]> profiles = new ArrayList<double[]>();
     private double yMax = 0;
     private String plotTitle;
+    private Color plotColor;
 
     Multi_Plot(ImagePlus image, int numberOfProfiles) {
         this.image = image;
@@ -32,6 +33,8 @@ class Multi_Plot {
         this.numberOfProfiles = numberOfProfiles;
         ANGLE = 180 / (double) numberOfProfiles;
         plotTitle = "Plot " + image.getTitle();
+
+        plotColor = Color.black;
 
         initCentroid();
         initLines();
@@ -46,12 +49,17 @@ class Multi_Plot {
         ANGLE = 180 / (double) numberOfProfiles;
         plotTitle = "Plot " + mask.getTitle() + " (" + image.getTitle() + ")";
 
-        //todo: if no roi selected ERROR
-        if(roi != null) {
-            initCentroid();
-            initLines();
-            showLines();
-        }
+        setPlotColor(image.getTitle());
+
+        initCentroid();
+        initLines();
+        showLines();
+    }
+
+    private void setPlotColor(String title) {
+        if (title.equals("red")) plotColor = Color.red;
+        if (title.equals("green")) plotColor = Color.green;
+        if (title.equals("blue")) plotColor = Color.blue;
     }
 
     private void initCentroid() {
@@ -129,16 +137,18 @@ class Multi_Plot {
         Plot plot = new Plot(plotTitle,"Distance","Intensity");
         plot.setLimits(0, x.length, 0, yMax);
         plot.setLineWidth(1);
-        plot.setColor(Color.red);
+        plot.setColor(Color.gray);
 
         for (double[] y : profiles) {
             plot.addPoints(x,y,PlotWindow.LINE);
         }
 
-        plot.setColor(Color.blue);
+        plot.setColor(plotColor);
         plot.setLineWidth(2);
         plot.addPoints(x, avgProfile(profiles), PlotWindow.LINE);
 
         plot.show();
+
+        image.setRoi(roi);
     }
 }

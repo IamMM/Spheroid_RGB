@@ -91,6 +91,7 @@ public class Spheroid_RGB implements PlugIn {
 
     // multi plot
     private int plotChannel;
+    private Multi_Plot multiPlot;
 
     public Spheroid_RGB() {
         initActionListeners();
@@ -174,34 +175,39 @@ public class Spheroid_RGB implements PlugIn {
         }
     }
 
-    private Multi_Plot runMultiPlot() {
-        checkImageType();
-
-        if (imageIsGray){
-            return new Multi_Plot(image,profileSlider.getValue());
-        } else {
+    private void runMultiPlot() {
+        if (image.getType() == ImagePlus.COLOR_RGB) {
             rgb = ChannelSplitter.split(image);
             setChannelLut();
-            return new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue());
+            multiPlot =  new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue());
+        } else {
+            multiPlot = new Multi_Plot(image,profileSlider.getValue());
         }
+
     }
 
     // check if Image is RGB
-    private void checkImageType() {
+    private boolean checkImageType() {
         int type = image.getType();
-        if (type == ImagePlus.GRAY8) {
-            imageIsGray = true;
-            PEAKS_COLOR = Color.RED;
-        } else if (type == ImagePlus.GRAY16)
-            IJ.showMessage("16-bit gray scale image not supported");
-        else if (type == ImagePlus.GRAY32)
-            IJ.showMessage("32-bit gray scale image not supported");
-        else if (type == ImagePlus.COLOR_RGB) {
-            imageIsGray = false;
-            rgb = ChannelSplitter.split(image);
-            setChannelLut();
-        } else {
-            IJ.showMessage("not supported");
+
+        switch (type){
+            case ImagePlus.GRAY8:
+                imageIsGray = true;
+                PEAKS_COLOR = Color.RED;
+                return true;
+            case ImagePlus.GRAY16:
+                IJ.showMessage("16-bit gray scale image not supported");
+                return false;
+            case ImagePlus.GRAY32:
+                IJ.showMessage("32-bit gray scale image not supported");
+                return false;
+            case ImagePlus.COLOR_RGB:
+                imageIsGray = false;
+                rgb = ChannelSplitter.split(image);
+                setChannelLut();
+                return true;
+            default: IJ.showMessage("not supported");
+                return false;
         }
     }
 
@@ -316,8 +322,8 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void analyzeButtonActionPerformed() {
-        checkImageType();
-        runAnalyzer();
+        if(checkImageType())
+            runAnalyzer();
     }
 
     /********************************************************
@@ -510,7 +516,8 @@ public class Spheroid_RGB implements PlugIn {
                 if(image.getRoi() == null) {
                     IJ.showMessage("Nothing to do.", "No Roi selected");
                 } else {
-                    runMultiPlot().plotAll();
+                    runMultiPlot();
+                    multiPlot.plotAll();
                     showLines.setEnabled(true);
                 }
             }
@@ -522,7 +529,8 @@ public class Spheroid_RGB implements PlugIn {
                 if(image.getRoi() == null) {
                     IJ.showMessage("Nothing to do.", "No Roi selected");
                 } else {
-                    runMultiPlot().plotAverage();
+                    runMultiPlot();
+                    multiPlot.plotAverage();
                     showLines.setEnabled(true);
                 }
             }
