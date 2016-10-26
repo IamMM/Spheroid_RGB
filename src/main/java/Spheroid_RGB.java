@@ -117,7 +117,7 @@ public class Spheroid_RGB implements PlugIn {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-        ImagePlus image = IJ.openImage("img/SN33267.tif");
+        ImagePlus image = IJ.openImage("img/test.png");
 //        ImagePlus image = IJ.openImage("img/SN33267.tif");
         image.show();
 

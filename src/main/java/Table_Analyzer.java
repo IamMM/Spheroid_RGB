@@ -1,6 +1,7 @@
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Calibration;
+import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
 import ij.process.ImageProcessor;
@@ -112,7 +113,11 @@ class Table_Analyzer extends Spheroid_RGB {
             Analyzer.setResultsTable(resultsTable);
         }
 
-        HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
+        ArrayList<ImagePlus> channel = new ArrayList<ImagePlus>();
+
+        if (takeR) channel.add(rgb[0]);
+        if (takeG) channel.add(rgb[1]);
+        if (takeB) channel.add(rgb[2]);
 
         //count cells and get meanPeak intensity from selected channels for each WiseRoi from WiseRoi Manager
         ImageStatistics imageStats;
@@ -120,20 +125,24 @@ class Table_Analyzer extends Spheroid_RGB {
         for (Roi currRoi : roiManager.getRoisAsArray()) {
             resultsTable.incrementCounter();
             resultsTable.addValue("ROI", currRoi.getName());
-            for (ImagePlus currChannel : channel.keySet()) {
+            for (ImagePlus currChannel : channel) {
                 currChannel.setRoi(currRoi);
 
                 double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor());
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
             }
 
-            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, calibration);
+            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), Measurements.AREA, calibration);
             resultsTable.addValue("area (" + calibration.getUnit() + ")", imageStats.area);
 
             //ratio
             if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
                 resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(2, row)));
+
+                ImageProcessor ip1 = channel.get(0).getProcessor();
+                ImageProcessor ip2 = channel.get(1).getProcessor();
+                resultsTable.addValue("ratio mean NEW (%)", ratioMean(ip1, ip2));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
 
@@ -252,6 +261,24 @@ class Table_Analyzer extends Spheroid_RGB {
         }
 
         return  sum / (double)longPixelCount;
+    }
+
+    private double ratioMean (ImageProcessor ip1, ImageProcessor ip2) {
+        byte[] pix1 = (byte[]) ip1.getPixels();
+        byte[] pix2 = (byte[]) ip2.getPixels();
+
+        long sum = 0;
+        int pixLength = pix1.length;
+        for (int i = 0; i < pixLength; i++) {
+            int value1 = pix1[i] & 0xff;
+            int value2 = pix2[i] & 0xff;
+
+//            System.out.println(value1 + " : " + value2);
+
+            sum += value1 + value2;
+        }
+
+        return sum / pixLength;
     }
 
 }
