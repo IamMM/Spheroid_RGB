@@ -18,6 +18,7 @@ class Multi_Plot {
     private ImagePlus image;
     private Roi roi;
     private double yCentroid;
+    private double xCentroid;
     private ArrayList<Roi> lines =  new ArrayList<Roi>();
     private int numberOfProfiles;
     private double ANGLE;
@@ -27,7 +28,7 @@ class Multi_Plot {
     private String plotTitle;
     private Color plotColor;
 
-    Multi_Plot(ImagePlus image, int numberOfProfiles) {
+    Multi_Plot(ImagePlus image, int numberOfProfiles, boolean diameter, int profileLength) {
         this.image = image;
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
@@ -37,39 +38,45 @@ class Multi_Plot {
         plotColor = Color.black;
 
         initCentroid();
-        initLines();
+        initLines(diameter, profileLength);
         showLines();
     }
 
-    Multi_Plot(ImagePlus image, ImagePlus mask, int numberOfProfiles) {
+    Multi_Plot(ImagePlus image, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength) {
         this.image = image;
         image.setRoi(mask.getRoi());
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
-        ANGLE = 180 / (double) numberOfProfiles;
+        if(diameter) ANGLE = 180 / (double) numberOfProfiles;
+        else ANGLE = 360 / (double) numberOfProfiles;
         plotTitle = "Plot " + mask.getTitle() + " (" + image.getTitle() + ")";
 
         setPlotColor(image.getTitle());
 
         initCentroid();
-        initLines();
+        initLines(diameter, profileLength);
         showLines();
     }
 
     private void setPlotColor(String title) {
         if (title.equals("red")) plotColor = Color.red;
-        if (title.equals("green")) plotColor = Color.green;
-        if (title.equals("blue")) plotColor = Color.blue;
+        else if (title.equals("green")) plotColor = Color.green;
+        else if (title.equals("blue")) plotColor = Color.blue;
     }
 
     private void initCentroid() {
         ImageStatistics stats = roi.getImage().getStatistics(Measurements.CENTROID);
         yCentroid = stats.yCentroid;
+        xCentroid = stats.xCentroid;
     }
 
-    private void initLines() {
+    private void initLines(boolean diameter, int profileLength) {
         Rectangle bounds = roi.getBounds();
-        Roi horizontal = new Line(bounds.x,yCentroid,bounds.x+bounds.getWidth(),yCentroid);
+        Roi horizontal;
+        int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
+        int x2 = (int) (bounds.x + bounds.getWidth() + profileLength * bounds.getWidth() / 100);
+        if(diameter) horizontal = new Line(x1, yCentroid, x2, yCentroid);
+        else horizontal = new Line(x1,yCentroid,xCentroid,yCentroid);
         for (int i = 0; i <numberOfProfiles;i++) {
             horizontal = RoiRotator.rotate(horizontal, ANGLE);
             lines.add(horizontal);
