@@ -234,6 +234,7 @@ class Table_Analyzer extends Spheroid_RGB {
 
     private double meanWithThreshold (ImageProcessor ip) {
         int[] histogram = ip.getHistogram();
+        long longPixelCount = 0;
         double sum = 0;
         int minThreshold = 0;
         int maxThreshold= 255;
@@ -243,12 +244,7 @@ class Table_Analyzer extends Spheroid_RGB {
 
         for(int i = minThreshold; i <= maxThreshold; i++) {
             sum += (double)i * (double)histogram[i];
-        }
-
-        //todo: check with jacqui if all pixels or only range for dividing
-        long longPixelCount = 0;
-        for(int count : histogram) {
-            longPixelCount += (long)count;
+            longPixelCount += (long)histogram[i];
         }
 
         return  sum / (double)longPixelCount;
