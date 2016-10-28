@@ -75,11 +75,24 @@ class Multi_Plot {
         Roi horizontal;
         int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
         int x2 = (int) (bounds.x + bounds.getWidth() + profileLength * bounds.getWidth() / 100);
-        if(diameter) horizontal = new Line(x1, yCentroid, x2, yCentroid);
-        else horizontal = new Line(x1,yCentroid,xCentroid,yCentroid);
-        for (int i = 0; i <numberOfProfiles;i++) {
-            horizontal = RoiRotator.rotate(horizontal, ANGLE);
-            lines.add(horizontal);
+        if(diameter) {
+            horizontal = new Line(x1, yCentroid, x2, yCentroid);
+            for (int i = 0; i <numberOfProfiles;i++) {
+                horizontal = RoiRotator.rotate(horizontal, ANGLE);
+                lines.add(horizontal);
+            }
+        }
+        else {
+            double newAngle = 0;
+            int radius = (int) bounds.getWidth() / 2;
+            for (int i = 0; i <numberOfProfiles;i++) {
+                double cos = Math.cos(Math.toRadians(newAngle));
+                double sin = Math.sin(Math.toRadians(newAngle));
+                int deltaX = (int) (cos * radius);
+                int deltaY = (int) (sin * radius);
+                lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
+                newAngle += ANGLE;
+            }
         }
     }
 
