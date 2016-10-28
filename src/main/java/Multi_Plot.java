@@ -32,7 +32,8 @@ class Multi_Plot {
         this.image = image;
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
-        ANGLE = 180 / (double) numberOfProfiles;
+        if(diameter) ANGLE = 180 / (double) numberOfProfiles;
+        else ANGLE = 360 / (double) numberOfProfiles;
         plotTitle = "Plot " + image.getTitle();
 
         plotColor = Color.black;
@@ -72,11 +73,10 @@ class Multi_Plot {
 
     private void initLines(boolean diameter, int profileLength) {
         Rectangle bounds = roi.getBounds();
-        Roi horizontal;
         int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
         int x2 = (int) (bounds.x + bounds.getWidth() + profileLength * bounds.getWidth() / 100);
         if(diameter) {
-            horizontal = new Line(x1, yCentroid, x2, yCentroid);
+            Roi horizontal = new Line(x1, yCentroid, x2, yCentroid);
             for (int i = 0; i <numberOfProfiles;i++) {
                 horizontal = RoiRotator.rotate(horizontal, ANGLE);
                 lines.add(horizontal);
@@ -84,12 +84,10 @@ class Multi_Plot {
         }
         else {
             double newAngle = 0;
-            int radius = (int) bounds.getWidth() / 2;
+            int radius = (int) (bounds.getWidth() / 2 + profileLength * bounds.getWidth() / 100);
             for (int i = 0; i <numberOfProfiles;i++) {
-                double cos = Math.cos(Math.toRadians(newAngle));
-                double sin = Math.sin(Math.toRadians(newAngle));
-                int deltaX = (int) (cos * radius);
-                int deltaY = (int) (sin * radius);
+                double deltaX = Math.cos(Math.toRadians(newAngle)) * radius;
+                double deltaY = Math.sin(Math.toRadians(newAngle)) * radius;
                 lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
                 newAngle += ANGLE;
             }
