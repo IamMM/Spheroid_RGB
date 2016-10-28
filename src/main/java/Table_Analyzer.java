@@ -1,6 +1,7 @@
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Calibration;
+import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
 import ij.process.ImageProcessor;
@@ -48,8 +49,10 @@ class Table_Analyzer extends Spheroid_RGB {
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
             }
 
-            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, calibration);
-            resultsTable.addValue("area (" + calibration.getUnit() + ")", imageStats.area);
+            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), Measurements.AREA, calibration);
+            String unit = calibration.getUnit();
+            if (unit.isEmpty()) unit = "pixel";
+            resultsTable.addValue("total area (" + unit + ")", imageStats.area);
 
             //ratio
             if(channel.size() == 2) {
@@ -128,7 +131,7 @@ class Table_Analyzer extends Spheroid_RGB {
 
             }
 
-            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, calibration);
+            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), Measurements.AREA, calibration);
             String unit = calibration.getUnit();
             if (unit.isEmpty()) unit = "pixel";
             resultsTable.addValue("total area (" + unit + ")", imageStats.area);

@@ -62,7 +62,7 @@ public class Spheroid_RGB implements PlugIn {
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.4.2 ";
+    private static final String VERSION = " v0.5.0 ";
     static Color PEAKS_COLOR = Color.WHITE;
     static final Color ROI_COLOR = Color.YELLOW;
 
@@ -119,7 +119,7 @@ public class Spheroid_RGB implements PlugIn {
 
         // open the Spheroid_RGB sample
         ImagePlus image = IJ.openImage("img/SN33267.tif");
-//        ImagePlus image = IJ.openImage("img/SN33267.tif");
+//        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -440,6 +440,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 darkPeaks = darkPeaksCheck.isSelected();
+                thresSlider.setInverted(darkPeaks);
             }
         });
 
