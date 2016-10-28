@@ -1,9 +1,3 @@
-/**
- * Created on January 17, 2006, 10:11 AM
- *
- * @author Thomas Kuo
- */
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
@@ -11,31 +5,27 @@ import ij.process.ImageProcessor;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class Nuclei_Counter {
+/**
+ * Created on January 17, 2006, 10:11 AM
+ * Edited by Maximilian M. on 27 October, 2016
+ * @author Thomas Kuo
+ *
+ */
+class Nuclei_Counter {
     // Input parameters with default values
     private int width;                     // Filter width
     private double min_dist;               // Min distance
     private double threshold;              // Threshold
     private boolean darkPeaks;             // Select dark or light peaks
-    private double sigma;                  // Standard Deviation
     private double variance;               // Variance
     private ImagePlus inputImage;            // ImagePlus for current image
     private ImageProcessor ip;             // ImageProcessor for current image
     private ImagePlus maskImp;             // ImagePlus for mask image (null if does not exist)
-    private int maskID;                    // ID for mask image
-    private static String maskName = null; // name for mask image
-
-    private static final String strNONE = "Use selected ROI";
-
-    double[] kernel;
 
     //output fields
     private ArrayList<Point> peaks;
-    private int numberOfCells;
-    private ImagePlus resultImage;
 
-
-    public Nuclei_Counter(ImagePlus imp, int width, double min_dist, double threshold, boolean darkPeaks, ImagePlus maskImp) {
+    Nuclei_Counter(ImagePlus imp, int width, double min_dist, double threshold, boolean darkPeaks, ImagePlus maskImp) {
         this.inputImage = imp;
         this.ip = imp.getProcessor();
 
@@ -46,18 +36,12 @@ public class Nuclei_Counter {
         this.threshold = threshold;
         this.darkPeaks = darkPeaks;
 
-        sigma = ((double) width - 1.0) / 3.0;
+        double sigma = ((double) width - 1.0) / 3.0;
         variance = sigma * sigma;
-
-        maskID = 0;
-        maskName = null;
-
-//        start();
     }
 
-    public void run() {
+    void run() {
         //ImagePlus impl;
-        boolean inputs;
         double image[][];
 
         // Set ROI
@@ -67,6 +51,7 @@ public class Nuclei_Counter {
         Rectangle r = ip.getRoi();
 
         // 2 Compute kernel
+        double[] kernel;
         IJ.showStatus("Finding Kernel");
         kernel = findKernel();
 
@@ -99,104 +84,35 @@ public class Nuclei_Counter {
             }
         }
 
-        // Get area
-        int numPixels = 0;
-        if (maskImp == null) {
-            // Process selected ROI
-            for (int i = 0; i < r.width; i++) {
-                for (int j = 0; j < r.height; j++) {
-                    if (!(ipMask != null && ipMask.getPixelValue(i, j) == 0)) {
-                        numPixels++;
-                    }
-                }
-            }
-        } else {
-            for (int i = 0; i < r.width; i++) {
-                for (int j = 0; j < r.height; j++) {
-                    if (!(ipMask != null && ipMask.getPixelValue(i, j) == 0)) {
-                        numPixels++;
-                    }
-                }
-            }
-        }
-
         // Get area if ROI selected.
-
         if (ipMask != null) {
             ipMask.dilate();
         }
 
         for (int i = 0; i < r.width; i++) {
             for (int j = 0; j < r.height; j++) {
-                if ((ipMask != null && ipMask.getPixelValue(i, j) == 0) || i < border || i >= r.width - border || j < border || j >= r.height - border) {
-                    mask[i][j] = false;
-                } else {
-                    mask[i][j] = true;
-                }
+                mask[i][j] = !((ipMask != null && ipMask.getPixelValue(i, j) == 0) || i < border || i >= r.width - border || j < border || j >= r.height - border);
             }
         }
 
         // Local Maximum
-
         peaks = find_local_max(image, r, Math.floor((double) width / 3.0), min_dist, mask);
 
-        // 5 results
-        numberOfCells = peaks.size();
-
-        ImageProcessor ipResults = (ip.duplicate()).convertToRGB();
-
         //transform roi related coordinates to image based coordinates
+        int numberOfCells = peaks.size();
         for (int i = 0; i < numberOfCells; i++) {
             Point pt = peaks.get(i);
             pt.x = pt.x + r.x;
             pt.y = pt.y + r.y;
             peaks.set(i,pt);
         }
-
-//        resultImage = new ImagePlus("Results " + inputImage.getTitle(), ipResults);
-//
-//        ipResults.setColor(java.awt.Color.WHITE);
-//        ipResults.setLineWidth(1);
-//
-//        Point pt;
-//        for (int i = 0; i < numberOfCells; i++) {
-//            pt = peaks.get(i);
-//
-//            ipResults.drawDot(pt.x + r.x, pt.y + r.y);
-//
-//            //IJ.write("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
-//        }
-//
-//        ipResults.setColor(java.awt.Color.yellow);
-//        ipResults.drawOval(r.x, r.y, r.width, r.height);
-
-//        IJ.write("Image: " + inputImage.getTitle());
-//
-//        // Read units
-//        Calibration cali = inputImage.getCalibration();
-//
-//        DecimalFormat densityForm = new DecimalFormat("###0.00");
-//
-//        if (cali == null) {
-//            IJ.write("Number of Cells: " + numberOfCells);
-//        } else {
-//            IJ.write("Number of Cells: " + numberOfCells + " in " + densityForm.format((double) numPixels * cali.pixelHeight * cali.pixelWidth) + " square " + cali.getUnits());
-//            IJ.write("Density: " + densityForm.format((double) peaks.size() / ((double) numPixels * cali.pixelHeight * cali.pixelWidth)) + " cells per square " + cali.getUnit());
-//        }
-//
-//        IJ.write(".........................................................................................");
-//
-//        resultImage.show();
-
-        return;
-
     }
 
     private double[] findKernel() {
         double[] hg = new double[width * width];
         double[] h = new double[width * width];
         double hgSum = 0, hSum = 0;
-        double kSum = 0, kProd = 1;
+        double kSum = 0;
         double bounds = ((double) width - 1.0) / 2.0;
         int index;
 
@@ -228,42 +144,12 @@ public class Nuclei_Counter {
             h[i] -= kOffset;
         }
 
-
         return h;
-    }
-
-    private double[][] filter2(double image[][], int width, int height, double[] kern, int kh, int kw) {
-        double[][] dr = new double[width][height];
-
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                dr[x][y] = 0;
-
-                for (int i = 0; i < kw; i++) {
-                    for (int j = 0; j < kh; j++) {
-
-                        try {
-                            if ((x + i - (kw - 1) / 2) >= 0 && (x + i - (kw - 1) / 2) < width &&
-                                    (y + j - (kw - 1) / 2) >= 0 && (y + j - (kw - 1) / 2) < height) {
-                                dr[x][y] += kern[i + kw * j] * image[(x + i - (kw - 1) / 2)][(y + j - (kw - 1) / 2)];
-                            }
-                        } catch (ArrayIndexOutOfBoundsException e) {
-                            IJ.showMessage("Array out of Bounds: (" + x + ", " + y + ") (" + i + ", " + j + ") ");
-                        }
-                    }
-                }
-
-            }
-        }
-
-        return dr;
     }
 
     private double[][] filter2(ImageProcessor ip, double[] kern, int kh, int kw) {
         int imgW = ip.getWidth();
         int imgH = ip.getHeight();
-
-        Rectangle r = ip.getRoi();
 
         byte[] pixels = (byte[]) ip.getPixels();
         double pix;
@@ -292,7 +178,6 @@ public class Nuclei_Counter {
                         }
                     }
                 }
-                //IJ.write(dr[x][y]+" ");
             }
         }
 
@@ -300,8 +185,8 @@ public class Nuclei_Counter {
     }
 
     private ArrayList<Point> find_local_max(double[][] image, Rectangle r, double epsilon, double min_dist, boolean[][] mask) {
-        ArrayList ind_n = new ArrayList();
-        ArrayList ind_n_ext = new ArrayList();
+        ArrayList<Point> ind_n = new ArrayList<Point>();
+        ArrayList<Point> ind_n_ext = new ArrayList<Point>();
 
         // prepare neighborhood indices
         double n_dim = epsilon;
@@ -313,7 +198,6 @@ public class Nuclei_Counter {
                 }
             }
         }
-        //int N_n = ind_n.size();
 
         // prepare extended neighborhood indices
         n_dim = min_dist;
@@ -321,14 +205,12 @@ public class Nuclei_Counter {
         for (int i = (int) (-n_dim); i <= n_dim; i++) {
             for (int j = (int) (-n_dim); j <= n_dim; j++) {
                 if ((i * i + j * j) <= min_dist * min_dist) {
-                    ind_n_ext.add(new Point((int) i, (int) j));
+                    ind_n_ext.add(new Point(i, j));
                 }
             }
         }
-        //int N_n_ext = ind_n_ext.size();
 
-        ArrayList<Point> peaks = new ArrayList();
-
+        ArrayList<Point> peaks = new ArrayList<Point>();
 
         double minimum = 0;
         while (true) {
@@ -351,18 +233,15 @@ public class Nuclei_Counter {
 
             // Verify it is a maximum
             boolean flag = true;
-            for (int i = 0; i < ind_n.size(); i++) {
+            for (Point ind_nPt : ind_n) {
 
                 if (!flag) break;
 
-                Point ind_nPt = (Point) ind_n.get(i);
                 int nx = x + ind_nPt.x;
                 int ny = y + ind_nPt.y;
 
-                try {
-                    flag = flag && (maximum >= image[nx + r.x][ny + r.y]);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                }
+                flag = (maximum >= image[nx + r.x][ny + r.y]);
+
             }
 
             if (flag) {
@@ -371,8 +250,7 @@ public class Nuclei_Counter {
                 mask[x][y] = false;
             }
 
-            for (int i = 0; i < ind_n_ext.size(); i++) {
-                Point ind_n_extPt = (Point) ind_n_ext.get(i);
+            for (Point ind_n_extPt : ind_n_ext) {
                 int nx = x + ind_n_extPt.x;
                 int ny = y + ind_n_extPt.y;
 
@@ -386,15 +264,7 @@ public class Nuclei_Counter {
         return peaks;
     }
 
-    public ImagePlus getResultImage() {
-        return resultImage;
-    }
-
-    public int getNumberOfCells() {
-        return numberOfCells;
-    }
-
-    public ArrayList<Point> getPeaks() {
+    ArrayList<Point> getPeaks() {
         return peaks;
     }
 }
