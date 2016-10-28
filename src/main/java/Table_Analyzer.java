@@ -17,9 +17,7 @@ import java.util.HashMap;
  */
 class Table_Analyzer extends Spheroid_RGB {
 
-    Table_Analyzer(){
-
-    }
+    private long numberOfPixelsAboveThres;
 
     void runCountAndMean() {
         //create Results table
@@ -125,15 +123,20 @@ class Table_Analyzer extends Spheroid_RGB {
 
                 double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor());
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
+                resultsTable.addValue("area (" + currChannel.getTitle() + ") within threshold", numberOfPixelsAboveThres);
+                resultsTable.addValue("integrated density (" + currChannel.getTitle() + ")", thresholdMean * numberOfPixelsAboveThres);
+
             }
 
             imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, calibration);
-            resultsTable.addValue("area (" + calibration.getUnit() + ")", imageStats.area);
+            String unit = calibration.getUnit();
+            if (unit.isEmpty()) unit = "pixel";
+            resultsTable.addValue("total area (" + unit + ")", imageStats.area);
 
             //ratio
             if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(2, row)));
+                resultsTable.addValue("area fraction (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
 
@@ -234,7 +237,7 @@ class Table_Analyzer extends Spheroid_RGB {
 
     private double meanWithThreshold (ImageProcessor ip) {
         int[] histogram = ip.getHistogram();
-        long longPixelCount = 0;
+        numberOfPixelsAboveThres = 0;
         double sum = 0;
         int minThreshold = 0;
         int maxThreshold= 255;
@@ -244,10 +247,10 @@ class Table_Analyzer extends Spheroid_RGB {
 
         for(int i = minThreshold; i <= maxThreshold; i++) {
             sum += (double)i * (double)histogram[i];
-            longPixelCount += (long)histogram[i];
+            numberOfPixelsAboveThres += (long)histogram[i];
         }
 
-        return  sum / (double)longPixelCount;
+        return  sum / (double)numberOfPixelsAboveThres;
     }
 
 }
