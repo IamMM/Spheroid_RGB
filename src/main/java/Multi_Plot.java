@@ -2,9 +2,11 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.*;
 import ij.measure.Measurements;
+import ij.measure.ResultsTable;
 import ij.plugin.RoiRotator;
 import ij.process.ImageStatistics;
 
+import javax.xml.transform.Result;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -19,16 +21,17 @@ class Multi_Plot {
     private Roi roi;
     private double yCentroid;
     private double xCentroid;
-    private ArrayList<Roi> lines =  new ArrayList<Roi>();
+    private ArrayList<Roi> lines;
     private int numberOfProfiles;
     private double ANGLE;
     private ArrayList<ProfilePlot> profilePlots;
-    private ArrayList<double[]> profiles = new ArrayList<double[]>();
+    private ArrayList<double[]> profiles;
     private double yMax = 0;
     private String plotTitle;
     private Color plotColor;
+    private ResultsTable table;
 
-    Multi_Plot(ImagePlus image, int numberOfProfiles, boolean diameter, int profileLength) {
+    void run(ImagePlus image, int numberOfProfiles, boolean diameter, int profileLength) {
         this.image = image;
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
@@ -43,7 +46,7 @@ class Multi_Plot {
         showLines();
     }
 
-    Multi_Plot(ImagePlus image, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength) {
+    void run(ImagePlus image, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength) {
         this.image = image;
         image.setRoi(mask.getRoi());
         this.roi = image.getRoi();
@@ -72,6 +75,7 @@ class Multi_Plot {
     }
 
     private void initLines(boolean diameter, int profileLength) {
+        lines =  new ArrayList<Roi>();
         Rectangle bounds = roi.getBounds();
         int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
         int x2 = (int) (bounds.x + bounds.getWidth() + profileLength * bounds.getWidth() / 100);
@@ -106,6 +110,7 @@ class Multi_Plot {
 
     private void createAllPlots() {
         profilePlots = new ArrayList<ProfilePlot>();
+        profiles = new ArrayList<double[]>();
         for (Roi l : lines) {
             image.setRoi(l);
             ProfilePlot profilePlot = new ProfilePlot(image);
@@ -161,12 +166,100 @@ class Multi_Plot {
             plot.addPoints(x,y,PlotWindow.LINE);
         }
 
+        //average plot
+        double[] avg = avgProfile(profiles);
         plot.setColor(plotColor);
         plot.setLineWidth(2);
-        plot.addPoints(x, avgProfile(profiles), PlotWindow.LINE);
+        plot.addPoints(x, avg, PlotWindow.LINE);
+
+        double[] max = getMaxCoordinates(avg);
+//        double[] min = getMinGradient(avg, (int) max[0]);
+        double[] bounds = getRightGradientChange(avg);
+        plot.setLineWidth(1);
+        plot.setColor(Color.BLACK);
+        plot.addPoints(new double[]{max[0]}, new double[]{max[1]}, PlotWindow.X);
+        plot.addPoints(new double[]{bounds[0]}, new double[]{bounds[1]}, PlotWindow.X);
+        plot.drawLine(bounds[0],0,bounds[0],bounds[1]);
+        plot.drawLine(0,max[1],max[0],max[1]);
 
         plot.show();
 
+        addValuesToResultsTable(max,bounds);
+
         image.setRoi(roi);
+    }
+
+    private void addValuesToResultsTable(double[]max, double[]bounds) {
+        if (table==null){
+            table = new ResultsTable();
+        }
+        table.incrementCounter();
+        table.addValue("Plot", plotTitle);
+        table.addValue("max x", max[0]);
+        table.addValue("max y", max[1]);
+        table.addValue("bounds x", bounds[0]);
+        table.addValue("bounds y", bounds[1]);
+        table.show("Plot Values");
+    }
+
+    private double[] getMaxCoordinates(double[] values) {
+        double x = 0;
+        double y = 0; //value
+
+        for (int i = 0; i < values.length; i++) {
+            if(values[i] > y) {
+                y = values[i];
+                x = i;
+            }
+        }
+
+        return new double[]{x, y};
+    }
+
+    private double[] getMinGradient(double[] values, int max) {
+        double gradient;
+        double x;
+        double y;
+        int span = values.length / 16;
+        double precision = 0.01;
+
+        for (int i = max + span; i < values.length; i++) {
+            gradient = (values[i] - values[i-span]) / span;
+            System.out.println(i - span + ": " + gradient);
+            if (gradient < precision && gradient > -precision) {
+                x = i - span;
+                y = values[i-span];
+                return new double[]{x, y};
+            } else if (i == values.length - 1) {
+                return new double[]{i, values[i]};
+            }
+        }
+
+        return null;
+    }
+
+    private double[] getRightGradientChange(double[] values) {
+        double gradient;
+        double x;
+        double y;
+        int span = values.length / 16;
+        double precision = 0.1;
+
+        for (int i = values.length - 1; i > span; i--) {
+            gradient = (values[i] - values[i-span]) / span;
+            System.out.println(i - span + ": " + gradient);
+            if (gradient < -precision) {
+                if(i == values.length - 1) {
+                    IJ.showMessage("No Bounds", "Please make the profile lines longer.");
+                    return new double[]{values.length - 1, values[values.length-1]};
+                } else {
+                    x = i - span;
+                    y = values[i - span];
+                    return new double[]{x, y};
+                }
+            }
+        }
+
+        return null;
     }
 }

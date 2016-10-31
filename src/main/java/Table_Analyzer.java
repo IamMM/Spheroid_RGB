@@ -143,11 +143,12 @@ class Table_Analyzer extends Spheroid_RGB {
             //ratio
             if(channel.size() == 2) {
                 int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(2, row)));
+                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
 
                 ImageProcessor ip1 = channel.get(0).getProcessor();
                 ImageProcessor ip2 = channel.get(1).getProcessor();
                 resultsTable.addValue("ratio mean NEW (%)", ratioMean(ip1, ip2));
+
                 resultsTable.addValue("area fraction (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
@@ -269,18 +270,30 @@ class Table_Analyzer extends Spheroid_RGB {
         byte[] pix1 = (byte[]) ip1.getPixels();
         byte[] pix2 = (byte[]) ip2.getPixels();
 
+        int width = ip1.getWidth();
+        int height = ip1.getHeight();
+        Rectangle roi = ip1.getRoi();
+
         long sum = 0;
-        int pixLength = pix1.length;
-        for (int i = 0; i < pixLength; i++) {
-            int value1 = pix1[i] & 0xff;
-            int value2 = pix2[i] & 0xff;
+        int numberOfPixels = 0;
+        for (int y = 0; y < width; y++) {
+            for (int x = 0; x < height; x++) {
+                if (roi.contains(x,y)) {
+                    int pos = y * width + x;
 
-//            System.out.println(value1 + " : " + value2);
+                    int value1 = pix1[pos] & 0xff;
+                    int value2 = pix2[pos] & 0xff;
 
-            sum += value1 + value2;
+//                    System.out.println(value1 + " : " + value2);
+
+                    if(value2 > 0) sum += value1 / value2;
+                    numberOfPixels++;
+                }
+            }
+
         }
 
-        return sum / pixLength;
+        return sum / (double) numberOfPixels;
     }
 
 }

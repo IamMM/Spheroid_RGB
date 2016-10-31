@@ -47,7 +47,7 @@ public class Spheroid_RGB implements PlugIn {
     private JButton plotAverageButton;
     private JCheckBox showLines;
     private JSlider profileSlider;
-    private JLabel profileTextField;
+    private JLabel profileLabel;
     private JRadioButton redRadioButton;
     private JRadioButton greenRadioButton;
     private JRadioButton blueRadioButton;
@@ -98,6 +98,7 @@ public class Spheroid_RGB implements PlugIn {
         initActionListeners();
         initImageList();
         initComponents();
+        multiPlot = new Multi_Plot();
     }
 
     /**
@@ -118,6 +119,7 @@ public class Spheroid_RGB implements PlugIn {
         new ImageJ();
 
         // open the Spheroid_RGB sample
+//        ImagePlus image = IJ.openImage("img/test.png");
         ImagePlus image = IJ.openImage("img/SN33267.tif");
 //        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
@@ -180,9 +182,9 @@ public class Spheroid_RGB implements PlugIn {
         if (image.getType() == ImagePlus.COLOR_RGB) {
             rgb = ChannelSplitter.split(image);
             setChannelLut();
-            multiPlot =  new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue(), diameter, profileLengthSlider.getValue());
+            multiPlot.run(rgb[plotChannel], image, profileSlider.getValue(), diameter, profileLengthSlider.getValue());
         } else {
-            multiPlot = new Multi_Plot(image,profileSlider.getValue(), diameter, profileLengthSlider.getValue());
+            multiPlot.run(image,profileSlider.getValue(), diameter, profileLengthSlider.getValue());
         }
 
     }
