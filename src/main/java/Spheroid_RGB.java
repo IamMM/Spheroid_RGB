@@ -15,10 +15,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 
 /**
  * Created on october 2016
@@ -59,10 +56,13 @@ public class Spheroid_RGB implements PlugIn {
     private JPanel innerCountPanel;
     private JButton averageButton;
     private JButton minimumButton;
+    private JSlider profileLengthSlider;
+    private JLabel lineLengthLabel;
+    private JButton diameterButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.4.0 ";
+    private static final String VERSION = " v0.5.0 ";
     static Color PEAKS_COLOR = Color.WHITE;
     static final Color ROI_COLOR = Color.YELLOW;
 
@@ -92,6 +92,7 @@ public class Spheroid_RGB implements PlugIn {
     // multi plot
     private int plotChannel;
     private Multi_Plot multiPlot;
+    private boolean diameter = true;
 
     public Spheroid_RGB() {
         initActionListeners();
@@ -117,8 +118,8 @@ public class Spheroid_RGB implements PlugIn {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-        ImagePlus image = IJ.openImage("img/test.png");
-//        ImagePlus image = IJ.openImage("img/SN33267.tif");
+        ImagePlus image = IJ.openImage("img/SN33267.tif");
+//        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -179,9 +180,9 @@ public class Spheroid_RGB implements PlugIn {
         if (image.getType() == ImagePlus.COLOR_RGB) {
             rgb = ChannelSplitter.split(image);
             setChannelLut();
-            multiPlot =  new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue());
+            multiPlot =  new Multi_Plot(rgb[plotChannel], image, profileSlider.getValue(), diameter, profileLengthSlider.getValue());
         } else {
-            multiPlot = new Multi_Plot(image,profileSlider.getValue());
+            multiPlot = new Multi_Plot(image,profileSlider.getValue(), diameter, profileLengthSlider.getValue());
         }
 
     }
@@ -439,6 +440,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 darkPeaks = darkPeaksCheck.isSelected();
+                thresSlider.setInverted(darkPeaks);
             }
         });
 
@@ -499,7 +501,7 @@ public class Spheroid_RGB implements PlugIn {
         profileSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                profileTextField.setText(profileSlider.getValue() + " lines");
+                profileLabel.setText(profileSlider.getValue() + " lines");
             }
         });
 
@@ -535,6 +537,37 @@ public class Spheroid_RGB implements PlugIn {
                 }
             }
         });
+
+        diameterButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(diameter){
+                    diameter = false;
+                    diameterButton.setText("radius");
+                }else {
+                    diameter = true;
+                    diameterButton.setText("diameter");
+                }
+            }
+        });
+
+        profileLengthSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int value = profileLengthSlider.getValue();
+                if (value > 0) lineLengthLabel.setText("+" + value + " %");
+                else lineLengthLabel.setText(value + " %");
+            }
+        });
+
+        lineLengthLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                profileLengthSlider.setValue(0);
+            }
+        });
+
     }
 
     private void getGuiValues() {

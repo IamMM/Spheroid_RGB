@@ -18,9 +18,7 @@ import java.util.HashMap;
  */
 class Table_Analyzer extends Spheroid_RGB {
 
-    Table_Analyzer(){
-
-    }
+    private long numberOfPixelsAboveThres;
 
     void runCountAndMean() {
         //create Results table
@@ -51,8 +49,10 @@ class Table_Analyzer extends Spheroid_RGB {
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
             }
 
-            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), 0, calibration);
-            resultsTable.addValue("area (" + calibration.getUnit() + ")", imageStats.area);
+            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), Measurements.AREA, calibration);
+            String unit = calibration.getUnit();
+            if (unit.isEmpty()) unit = "pixel";
+            resultsTable.addValue("total area (" + unit + ")", imageStats.area);
 
             //ratio
             if(channel.size() == 2) {
@@ -130,10 +130,15 @@ class Table_Analyzer extends Spheroid_RGB {
 
                 double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor());
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
+                resultsTable.addValue("area (" + currChannel.getTitle() + ") within threshold", numberOfPixelsAboveThres);
+                resultsTable.addValue("integrated density (" + currChannel.getTitle() + ")", thresholdMean * numberOfPixelsAboveThres);
+
             }
 
             imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), Measurements.AREA, calibration);
-            resultsTable.addValue("area (" + calibration.getUnit() + ")", imageStats.area);
+            String unit = calibration.getUnit();
+            if (unit.isEmpty()) unit = "pixel";
+            resultsTable.addValue("total area (" + unit + ")", imageStats.area);
 
             //ratio
             if(channel.size() == 2) {
@@ -143,6 +148,7 @@ class Table_Analyzer extends Spheroid_RGB {
                 ImageProcessor ip1 = channel.get(0).getProcessor();
                 ImageProcessor ip2 = channel.get(1).getProcessor();
                 resultsTable.addValue("ratio mean NEW (%)", ratioMean(ip1, ip2));
+                resultsTable.addValue("area fraction (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
             } else if (channel.size() == 3) {
                 int row = resultsTable.getCounter() - 1;
 
@@ -243,6 +249,7 @@ class Table_Analyzer extends Spheroid_RGB {
 
     private double meanWithThreshold (ImageProcessor ip) {
         int[] histogram = ip.getHistogram();
+        numberOfPixelsAboveThres = 0;
         double sum = 0;
         int minThreshold = 0;
         int maxThreshold= 255;
@@ -252,15 +259,10 @@ class Table_Analyzer extends Spheroid_RGB {
 
         for(int i = minThreshold; i <= maxThreshold; i++) {
             sum += (double)i * (double)histogram[i];
+            numberOfPixelsAboveThres += (long)histogram[i];
         }
 
-        //todo: check with jacqui if all pixels or only range for dividing
-        long longPixelCount = 0;
-        for(int count : histogram) {
-            longPixelCount += (long)count;
-        }
-
-        return  sum / (double)longPixelCount;
+        return  sum / (double)numberOfPixelsAboveThres;
     }
 
     private double ratioMean (ImageProcessor ip1, ImageProcessor ip2) {
