@@ -59,6 +59,7 @@ public class Spheroid_RGB implements PlugIn {
     private JSlider profileLengthSlider;
     private JLabel lineLengthLabel;
     private JButton diameterButton;
+    private JCheckBox showSelectedChannel;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -99,6 +100,7 @@ public class Spheroid_RGB implements PlugIn {
         initImageList();
         initComponents();
         multiPlot = new Multi_Plot();
+
     }
 
     /**
@@ -182,9 +184,9 @@ public class Spheroid_RGB implements PlugIn {
         if (image.getType() == ImagePlus.COLOR_RGB) {
             rgb = ChannelSplitter.split(image);
             setChannelLut();
-            multiPlot.run(rgb[plotChannel], image, profileSlider.getValue(), diameter, profileLengthSlider.getValue());
+            multiPlot.run(rgb[plotChannel], image, profileSlider.getValue(), diameter, profileLengthSlider.getValue(), showLines.isSelected(), showSelectedChannel.isSelected());
         } else {
-            multiPlot.run(image,profileSlider.getValue(), diameter, profileLengthSlider.getValue());
+            multiPlot.run(image,profileSlider.getValue(), diameter, profileLengthSlider.getValue(), showLines.isSelected());
         }
 
     }

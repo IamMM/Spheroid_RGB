@@ -6,7 +6,6 @@ import ij.measure.ResultsTable;
 import ij.plugin.RoiRotator;
 import ij.process.ImageStatistics;
 
-import javax.xml.transform.Result;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -15,51 +14,56 @@ import java.util.ArrayList;
  *
  * @author Maximilian Maske
  */
-class Multi_Plot {
+class Multi_Plot{
 
     private ImagePlus image;
+    private ImagePlus mask;
     private Roi roi;
     private double yCentroid;
     private double xCentroid;
     private ArrayList<Roi> lines;
     private int numberOfProfiles;
-    private double ANGLE;
     private ArrayList<ProfilePlot> profilePlots;
     private ArrayList<double[]> profiles;
-    private double yMax = 0;
+    private double yMax;
     private String plotTitle;
     private Color plotColor;
     private ResultsTable table;
 
-    void run(ImagePlus image, int numberOfProfiles, boolean diameter, int profileLength) {
+    void run(ImagePlus image, int numberOfProfiles, boolean diameter, int profileLength,  boolean showLines) {
         this.image = image;
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
-        if(diameter) ANGLE = 180 / (double) numberOfProfiles;
-        else ANGLE = 360 / (double) numberOfProfiles;
+
+        double angle;
+        if(diameter) angle = 180 / (double) numberOfProfiles;
+        else angle = 360 / (double) numberOfProfiles;
         plotTitle = "Plot " + image.getTitle();
 
         plotColor = Color.black;
 
         initCentroid();
-        initLines(diameter, profileLength);
-        showLines();
+        initLines(diameter, profileLength, angle);
+        if (showLines) showLines(image);
     }
 
-    void run(ImagePlus image, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength) {
+    void run(ImagePlus image, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, boolean showLines, boolean showChannel) {
         this.image = image;
+        this.mask = mask;
         image.setRoi(mask.getRoi());
         this.roi = image.getRoi();
         this.numberOfProfiles = numberOfProfiles;
-        if(diameter) ANGLE = 180 / (double) numberOfProfiles;
-        else ANGLE = 360 / (double) numberOfProfiles;
+        double angle;
+        if(diameter) angle = 180 / (double) numberOfProfiles;
+        else angle = 360 / (double) numberOfProfiles;
         plotTitle = "Plot " + mask.getTitle() + " (" + image.getTitle() + ")";
 
         setPlotColor(image.getTitle());
 
         initCentroid();
-        initLines(diameter, profileLength);
-        showLines();
+        initLines(diameter, profileLength, angle);
+        if (showChannel) showLines(image);
+        if (showLines) showLines(mask);
     }
 
     private void setPlotColor(String title) {
@@ -74,7 +78,7 @@ class Multi_Plot {
         xCentroid = stats.xCentroid;
     }
 
-    private void initLines(boolean diameter, int profileLength) {
+    private void initLines(boolean diameter, int profileLength, double angle) {
         lines =  new ArrayList<Roi>();
         Rectangle bounds = roi.getBounds();
         int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
@@ -82,7 +86,7 @@ class Multi_Plot {
         if(diameter) {
             Roi horizontal = new Line(x1, yCentroid, x2, yCentroid);
             for (int i = 0; i <numberOfProfiles;i++) {
-                horizontal = RoiRotator.rotate(horizontal, ANGLE);
+                horizontal = RoiRotator.rotate(horizontal, angle);
                 lines.add(horizontal);
             }
         }
@@ -93,12 +97,12 @@ class Multi_Plot {
                 double deltaX = Math.cos(Math.toRadians(newAngle)) * radius;
                 double deltaY = Math.sin(Math.toRadians(newAngle)) * radius;
                 lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
-                newAngle += ANGLE;
+                newAngle += angle;
             }
         }
     }
 
-    private void showLines() {
+    private void showLines(ImagePlus image) {
         Overlay overlay = new Overlay();
         for (Roi l : lines) {
             overlay.add(l);
@@ -109,6 +113,7 @@ class Multi_Plot {
     }
 
     private void createAllPlots() {
+        yMax = 0;
         profilePlots = new ArrayList<ProfilePlot>();
         profiles = new ArrayList<double[]>();
         for (Roi l : lines) {
@@ -146,6 +151,7 @@ class Multi_Plot {
             p.createWindow();
         }
         image.setRoi(roi);
+        mask.setRoi(roi);
     }
     
     void plotAverage() {
@@ -173,20 +179,21 @@ class Multi_Plot {
         plot.addPoints(x, avg, PlotWindow.LINE);
 
         double[] max = getMaxCoordinates(avg);
-//        double[] min = getMinGradient(avg, (int) max[0]);
         double[] bounds = getRightGradientChange(avg);
         plot.setLineWidth(1);
-        plot.setColor(Color.BLACK);
+        plot.setColor(Color.darkGray);
+        plot.drawLine(bounds[0],0,bounds[0],yMax);
+        plot.drawDottedLine(0, max[1] ,max[0], max[1], 2);
+        plot.setColor(Color.black);
         plot.addPoints(new double[]{max[0]}, new double[]{max[1]}, PlotWindow.X);
         plot.addPoints(new double[]{bounds[0]}, new double[]{bounds[1]}, PlotWindow.X);
-        plot.drawLine(bounds[0],0,bounds[0],bounds[1]);
-        plot.drawLine(0,max[1],max[0],max[1]);
 
         plot.show();
 
         addValuesToResultsTable(max,bounds);
 
         image.setRoi(roi);
+        mask.setRoi(roi);
     }
 
     private void addValuesToResultsTable(double[]max, double[]bounds) {
@@ -199,12 +206,12 @@ class Multi_Plot {
         table.addValue("max y", max[1]);
         table.addValue("bounds x", bounds[0]);
         table.addValue("bounds y", bounds[1]);
-        table.show("Plot Values");
+        table.show("Plot Results");
     }
 
     private double[] getMaxCoordinates(double[] values) {
         double x = 0;
-        double y = 0; //value
+        double y = 0;
 
         for (int i = 0; i < values.length; i++) {
             if(values[i] > y) {
@@ -216,19 +223,17 @@ class Multi_Plot {
         return new double[]{x, y};
     }
 
-    private double[] getMinGradient(double[] values, int max) {
+    private double[] getMinGradientLeftFromMax(double[] values, int max) {
         double gradient;
-        double x;
-        double y;
         int span = values.length / 16;
-        double precision = 0.01;
+        double precision = 0.1;
 
         for (int i = max + span; i < values.length; i++) {
             gradient = (values[i] - values[i-span]) / span;
             System.out.println(i - span + ": " + gradient);
             if (gradient < precision && gradient > -precision) {
-                x = i - span;
-                y = values[i-span];
+                double x = i - span;
+                double y = values[i-span];
                 return new double[]{x, y};
             } else if (i == values.length - 1) {
                 return new double[]{i, values[i]};
@@ -240,26 +245,23 @@ class Multi_Plot {
 
     private double[] getRightGradientChange(double[] values) {
         double gradient;
-        double x;
-        double y;
         int span = values.length / 16;
         double precision = 0.1;
 
         for (int i = values.length - 1; i > span; i--) {
             gradient = (values[i] - values[i-span]) / span;
-            System.out.println(i - span + ": " + gradient);
-            if (gradient < -precision) {
+//            System.out.println(i - span + ": " + gradient);
+            if (gradient < -precision || gradient > precision) {
                 if(i == values.length - 1) {
-                    IJ.showMessage("No Bounds", "Please make the profile lines longer.");
-                    return new double[]{values.length - 1, values[values.length-1]};
+                    IJ.showMessage("No Bounds", "The gradient on the very edge is not 0\nTry to variate the length of the profile lines.");
+                    break;
                 } else {
-                    x = i - span;
-                    y = values[i - span];
+                    double x = i - span;
+                    double y = values[i - span];
                     return new double[]{x, y};
                 }
             }
         }
-
-        return null;
+        return new double[]{values.length - 1, values[values.length-1]};
     }
 }
