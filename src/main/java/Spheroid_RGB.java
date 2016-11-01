@@ -79,6 +79,7 @@ public class Spheroid_RGB implements PlugIn {
     static boolean darkPeaks;
 
     // rgb channels
+    private Table_Analyzer table_analyzer;
     static ImagePlus[] rgb;
     static boolean takeR;
     static boolean takeG;
@@ -99,8 +100,8 @@ public class Spheroid_RGB implements PlugIn {
         initActionListeners();
         initImageList();
         initComponents();
+        setImage();
         multiPlot = new Multi_Plot();
-
     }
 
     /**
@@ -122,8 +123,8 @@ public class Spheroid_RGB implements PlugIn {
 
         // open the Spheroid_RGB sample
 //        ImagePlus image = IJ.openImage("img/test.png");
-        ImagePlus image = IJ.openImage("img/SN33267.tif");
-//        ImagePlus image = IJ.openImage("img/EdU.tif");
+//        ImagePlus image = IJ.openImage("img/SN33267.tif");
+        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -151,9 +152,11 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void runAnalyzer() {
-        if(WindowManager.getCurrentImage() != null) {
-            image = WindowManager.getCurrentImage();
-        }else {
+        if (table_analyzer == null) table_analyzer = new Table_Analyzer();
+
+        setImage();
+
+        if(WindowManager.getCurrentImage() == null || image == null) {
             IJ.showMessage("No images open");
             return;
         }
@@ -172,7 +175,6 @@ public class Spheroid_RGB implements PlugIn {
             return;
         }
 
-        Table_Analyzer table_analyzer = new Table_Analyzer();
         if(countCellsCheckBox.isSelected()) {
             table_analyzer.runCountAndMean();
         }else {
@@ -191,7 +193,7 @@ public class Spheroid_RGB implements PlugIn {
 
     }
 
-    // check if Image is RGB
+    // check if Image is RGB or 8bit
     private boolean checkImageType() {
         int type = image.getType();
 
@@ -267,6 +269,22 @@ public class Spheroid_RGB implements PlugIn {
      *														*
      ********************************************************/
 
+    private void setImage() {
+        image = WindowManager.getImage((String) imgList.getSelectedItem());
+
+        if(image == null || imgList.getItemCount() != WindowManager.getImageCount()) {
+            initImageList();
+            image = WindowManager.getImage((String) imgList.getSelectedItem());
+        }
+
+        if(imgList.getItemCount() != 0) {
+            WindowManager.setCurrentWindow(WindowManager.getImage((String) imgList.getSelectedItem()).getWindow());
+//                    WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
+        } else {
+            IJ.showMessage("No images open", "It seems like you closed all image windows.");
+        }
+    }
+
     private void openButtonAction() {
         OpenDialog od = new OpenDialog("Open..", "");
         String directory = od.getDirectory();
@@ -302,6 +320,7 @@ public class Spheroid_RGB implements PlugIn {
     private void maximumButtonAction() {
         Roi roi = image.getRoi();
 
+        if (roi != null)
         if (roi.isArea()) {
             ImageStatistics stats = roi.getImage().getStatistics();
             thresSlider.setValue((int) Math.ceil(stats.max));
@@ -311,6 +330,7 @@ public class Spheroid_RGB implements PlugIn {
     private void averageButtonAction() {
         Roi roi = image.getRoi();
 
+        if (roi != null)
         if (roi.isArea()) {
             ImageStatistics stats = roi.getImage().getStatistics();
             thresSlider.setValue((int) Math.ceil(stats.mean));
@@ -319,7 +339,7 @@ public class Spheroid_RGB implements PlugIn {
 
     private void minimumButtonAction() {
         Roi roi = image.getRoi();
-
+        if (roi != null)
         if (roi.isArea()) {
             ImageStatistics stats = roi.getImage().getStatistics();
             thresSlider.setValue((int) Math.ceil(stats.min));
@@ -349,19 +369,7 @@ public class Spheroid_RGB implements PlugIn {
         imgList.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                image = WindowManager.getImage((String) imgList.getSelectedItem());
-
-                if(image == null || imgList.getItemCount() != WindowManager.getImageCount()) {
-                    initImageList();
-                    image = WindowManager.getCurrentImage();
-                }
-
-                if(imgList.getItemCount() != 0) {
-                    WindowManager.setCurrentWindow(WindowManager.getImage((String) imgList.getSelectedItem()).getWindow());
-//                    WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
-                } else {
-                    IJ.showMessage("No images open", "It seems like you closed all image windows.");
-                }
+                setImage();
             }
         });
 
