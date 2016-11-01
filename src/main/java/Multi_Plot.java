@@ -180,6 +180,7 @@ class Multi_Plot{
 
         double[] max = getMaxCoordinates(avg);
         double[] bounds = getRightGradientChange(avg);
+        double area = getArea(avg, bounds[0]);
         plot.setLineWidth(1);
         plot.setColor(Color.darkGray);
         plot.drawLine(bounds[0],0,bounds[0],yMax);
@@ -190,22 +191,22 @@ class Multi_Plot{
 
         plot.show();
 
-        addValuesToResultsTable(max,bounds);
+        addValuesToResultsTable(max,bounds, area);
 
         image.setRoi(roi);
         mask.setRoi(roi);
     }
 
-    private void addValuesToResultsTable(double[]max, double[]bounds) {
-        if (table==null){
-            table = new ResultsTable();
-        }
+    private void addValuesToResultsTable(double[]max, double[]bounds, double area) {
+        if (table==null) table = new ResultsTable();
         table.incrementCounter();
         table.addValue("Plot", plotTitle);
         table.addValue("max x", max[0]);
         table.addValue("max y", max[1]);
         table.addValue("bounds x", bounds[0]);
         table.addValue("bounds y", bounds[1]);
+        table.addValue("area", area);
+
         table.show("Plot Results");
     }
 
@@ -263,5 +264,13 @@ class Multi_Plot{
             }
         }
         return new double[]{values.length - 1, values[values.length-1]};
+    }
+
+    public double getArea(double[] values, double bounds) {
+        double area = 0;
+        for (int i = 0; i < bounds; i++) {
+            area += values[i];
+        }
+        return area;
     }
 }
