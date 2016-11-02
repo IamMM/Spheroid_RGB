@@ -124,10 +124,11 @@ class Multi_Plot{
                 if(profilePlot.getMax() > yMax) {
                     yMax = profilePlot.getMax();
                 }
-                if(profilePlot.getProfile().length > xMax) xMax = profilePlot.getProfile().length;
+                int length = profilePlot.getProfile().length;
+                if(length > xMax) xMax = length;
+                currChannel.setRoi(roi);
             }
             listOfAllProfiles.put(currChannel, profiles);
-            IJ.run("Select None");
         }
         return listOfAllProfiles;
     }
