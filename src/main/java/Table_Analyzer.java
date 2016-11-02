@@ -93,7 +93,7 @@ class Table_Analyzer extends Spheroid_RGB {
         }
 
         //Create and collect result images
-        ArrayList<ImagePlus> resultImages = new ArrayList<ImagePlus>();
+        ArrayList<ImagePlus> resultImages = new ArrayList<>();
         for (ImagePlus currChannel : channel.keySet()) {
             resultImages.add(new ImagePlus("Results " + currChannel.getTitle(), channel.get(currChannel)));
         }
@@ -113,7 +113,7 @@ class Table_Analyzer extends Spheroid_RGB {
             Analyzer.setResultsTable(resultsTable);
         }
 
-        ArrayList<ImagePlus> channel = new ArrayList<ImagePlus>();
+        ArrayList<ImagePlus> channel = new ArrayList<>();
 
         if (takeR) channel.add(rgb[0]);
         if (takeG) channel.add(rgb[1]);
@@ -184,7 +184,7 @@ class Table_Analyzer extends Spheroid_RGB {
      * Every Channel = 8bit ImagePlus and points to an RGB ImageProcessor for the result image
      */
     private HashMap<ImagePlus, ImageProcessor> initChannelMap() {
-        HashMap<ImagePlus, ImageProcessor> channel = new HashMap<ImagePlus, ImageProcessor>();
+        HashMap<ImagePlus, ImageProcessor> channel = new HashMap<>();
         if(imageIsGray) {
             ImageProcessor results = (image.getProcessor().duplicate()).convertToRGB();
             channel.put(image, results);

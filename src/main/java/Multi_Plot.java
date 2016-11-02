@@ -8,6 +8,7 @@ import ij.process.ImageStatistics;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created on 14/10/2016.
@@ -16,60 +17,48 @@ import java.util.ArrayList;
  */
 class Multi_Plot{
 
-    private ImagePlus image;
     private ImagePlus mask;
     private Roi roi;
     private double yCentroid;
     private double xCentroid;
     private ArrayList<Roi> lines;
     private int numberOfProfiles;
-    private ArrayList<ProfilePlot> profilePlots;
-    private ArrayList<double[]> profiles;
     private double yMax;
+    private int xMax;
     private String plotTitle;
-    private Color plotColor;
     private ResultsTable table;
 
-    void run(ImagePlus image, int numberOfProfiles, boolean diameter, int profileLength,  boolean showLines) {
-        this.image = image;
-        this.roi = image.getRoi();
-        this.numberOfProfiles = numberOfProfiles;
+    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, boolean showLines, boolean showChannel, boolean plotGray) {
+        yMax = 0;
+        xMax = 0;
 
-        double angle;
-        if(diameter) angle = 180 / (double) numberOfProfiles;
-        else angle = 360 / (double) numberOfProfiles;
-        plotTitle = "Plot " + image.getTitle();
-
-        plotColor = Color.black;
-
-        initCentroid();
-        initLines(diameter, profileLength, angle);
-        if (showLines) showLines(image);
-    }
-
-    void run(ImagePlus image, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, boolean showLines, boolean showChannel) {
-        this.image = image;
         this.mask = mask;
-        image.setRoi(mask.getRoi());
-        this.roi = image.getRoi();
+        this.roi = mask.getRoi();
         this.numberOfProfiles = numberOfProfiles;
         double angle;
         if(diameter) angle = 180 / (double) numberOfProfiles;
         else angle = 360 / (double) numberOfProfiles;
-        plotTitle = "Plot " + mask.getTitle() + " (" + image.getTitle() + ")";
 
-        setPlotColor(image.getTitle());
+        plotTitle = "Plot " + mask.getTitle();
 
         initCentroid();
         initLines(diameter, profileLength, angle);
-        if (showChannel) showLines(image);
+        HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
+        plotAverage(listOfAllProfiles, plotGray);
+
+        if (showChannel) showLines(channel);
         if (showLines) showLines(mask);
+
     }
 
-    private void setPlotColor(String title) {
-        if (title.equals("red")) plotColor = Color.red;
-        else if (title.equals("green")) plotColor = Color.green;
-        else if (title.equals("blue")) plotColor = Color.blue;
+
+    private Color toColor(String color) {
+        switch (color) {
+            case "red": return Color.red;
+            case "green": return Color.green;
+            case "blue": return Color.blue;
+            default: return Color.black;
+        }
     }
 
     private void initCentroid() {
@@ -79,7 +68,7 @@ class Multi_Plot{
     }
 
     private void initLines(boolean diameter, int profileLength, double angle) {
-        lines =  new ArrayList<Roi>();
+        lines =  new ArrayList<>();
         Rectangle bounds = roi.getBounds();
         int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
         int x2 = (int) (bounds.x + bounds.getWidth() + profileLength * bounds.getWidth() / 100);
@@ -112,20 +101,35 @@ class Multi_Plot{
         image.show();
     }
 
-    private void createAllPlots() {
-        yMax = 0;
-        profilePlots = new ArrayList<ProfilePlot>();
-        profiles = new ArrayList<double[]>();
-        for (Roi l : lines) {
-            image.setRoi(l);
-            ProfilePlot profilePlot = new ProfilePlot(image);
-            profiles.add(profilePlot.getProfile());
-            if(profilePlot.getMax() > yMax) {
-                yMax = profilePlot.getMax();
+    private void showLines(ArrayList<ImagePlus> channel) {
+        for (ImagePlus currChannel : channel) {
+            Overlay overlay = new Overlay();
+            for (Roi l : lines) {
+                overlay.add(l);
             }
-            profilePlots.add(profilePlot);
+
+            currChannel.setOverlay(overlay);
+            currChannel.show();
         }
-        IJ.run("Select None");
+    }
+
+    private HashMap<ImagePlus , ArrayList<double[]>> createAllPlots(ArrayList<ImagePlus> channel) {
+        HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = new HashMap<>();
+        for (ImagePlus currChannel : channel) {
+            ArrayList<double[]> profiles = new ArrayList<>();
+            for (Roi l : lines) {
+                currChannel.setRoi(l);
+                ProfilePlot profilePlot = new ProfilePlot(currChannel);
+                profiles.add(profilePlot.getProfile());
+                if(profilePlot.getMax() > yMax) {
+                    yMax = profilePlot.getMax();
+                }
+                if(profilePlot.getProfile().length > xMax) xMax = profilePlot.getProfile().length;
+            }
+            listOfAllProfiles.put(currChannel, profiles);
+            IJ.run("Select None");
+        }
+        return listOfAllProfiles;
     }
 
     private double[] avgProfile(ArrayList<double[]> profiles) {
@@ -145,57 +149,74 @@ class Multi_Plot{
         return avg;
     }
 
-    void plotAll() {
-        createAllPlots();
-        for (ProfilePlot p : profilePlots) {
-            p.createWindow();
-        }
-        image.setRoi(roi);
-        mask.setRoi(roi);
-    }
-    
-    void plotAverage() {
-       createAllPlots();
+//    void plotAll() {
+//        createAllPlots();
+//        for (ProfilePlot p : profilePlots) {
+//            p.createWindow();
+//        }
+//        image.setRoi(roi);
+//        mask.setRoi(roi);
+//    }
 
-        double[] x = new double[profiles.get(0).length];
-        for (int i = 0; i < x.length; i++) {
+    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotGray) {
+        // init x values 0 .. xMax
+        double[] x = new double[xMax];
+        for (int i = 0; i < xMax; i++) {
             x[i] = (double) i;
         }
 
         PlotWindow.noGridLines = false; // draw grid lines
         Plot plot = new Plot(plotTitle,"Distance","Intensity");
-        plot.setLimits(0, x.length, 0, yMax);
-        plot.setLineWidth(1);
-        plot.setColor(Color.gray);
+        plot.setLimits(0, xMax, 0, yMax);
 
-        for (double[] y : profiles) {
-            plot.addPoints(x,y,PlotWindow.LINE);
+
+        // avg all profiles of all channels
+        ArrayList<double[]> avgList = new ArrayList<>();
+        double[] bounds = new double[]{xMax};
+        for (ImagePlus currChannel :listOfAllProfiles.keySet()){
+            // all plots
+            ArrayList<double[]> profiles = listOfAllProfiles.get(currChannel);
+            if(plotGray) {
+                plot.setLineWidth(1);
+                plot.setColor(Color.gray);
+                for (double[] y : profiles) {
+                    plot.addPoints(x, y, PlotWindow.LINE);
+                }
+            }
+
+            //average plot
+            double[] avg = avgProfile(profiles);
+            Color avgColor = toColor(currChannel.getTitle());
+            plot.setColor(avgColor);
+            plot.setLineWidth(2);
+
+            plot.addPoints(x, avg, PlotWindow.LINE);
+            avgList.add(avg);
+
+            double[] max = getMaxCoordinates(avg);
+            if(currChannel.getTitle().contains("blue")) {
+                bounds = getRightGradientChange(avg);
+                plot.setColor(Color.darkGray);
+                plot.setLineWidth(1);
+                plot.drawLine(bounds[0],0,bounds[0],yMax);
+            }
+
+            plot.setLineWidth(1);
+            plot.setColor(Color.darkGray);
+            plot.drawDottedLine(0, max[1] ,max[0], max[1], 2);
         }
 
-        //average plot
-        double[] avg = avgProfile(profiles);
-        plot.setColor(plotColor);
-        plot.setLineWidth(2);
-        plot.addPoints(x, avg, PlotWindow.LINE);
-
-        double[] max = getMaxCoordinates(avg);
-        double[] bounds = getRightGradientChange(avg);
-        double area = getArea(avg, bounds[0]);
-        plot.setLineWidth(1);
-        plot.setColor(Color.darkGray);
-        plot.drawLine(bounds[0],0,bounds[0],yMax);
-        plot.drawDottedLine(0, max[1] ,max[0], max[1], 2);
-        plot.setColor(Color.black);
-        plot.addPoints(new double[]{max[0]}, new double[]{max[1]}, PlotWindow.X);
-        plot.addPoints(new double[]{bounds[0]}, new double[]{bounds[1]}, PlotWindow.X);
+        for (double[] avg : avgList) {
+            double[] max = getMaxCoordinates(avg);
+            double area = getArea(avg, bounds[0]);
+            addValuesToResultsTable(max, bounds, area);
+        }
 
         plot.show();
 
-        addValuesToResultsTable(max,bounds, area);
-
-        image.setRoi(roi);
         mask.setRoi(roi);
     }
+
 
     private void addValuesToResultsTable(double[]max, double[]bounds, double area) {
         if (table==null) table = new ResultsTable();
@@ -224,25 +245,25 @@ class Multi_Plot{
         return new double[]{x, y};
     }
 
-    private double[] getMinGradientLeftFromMax(double[] values, int max) {
-        double gradient;
-        int span = values.length / 16;
-        double precision = 0.1;
-
-        for (int i = max + span; i < values.length; i++) {
-            gradient = (values[i] - values[i-span]) / span;
-            System.out.println(i - span + ": " + gradient);
-            if (gradient < precision && gradient > -precision) {
-                double x = i - span;
-                double y = values[i-span];
-                return new double[]{x, y};
-            } else if (i == values.length - 1) {
-                return new double[]{i, values[i]};
-            }
-        }
-
-        return null;
-    }
+//    private double[] getMinGradientLeftFromMax(double[] values, int max) {
+//        double gradient;
+//        int span = values.length / 16;
+//        double precision = 0.1;
+//
+//        for (int i = max + span; i < values.length; i++) {
+//            gradient = (values[i] - values[i-span]) / span;
+//            System.out.println(i - span + ": " + gradient);
+//            if (gradient < precision && gradient > -precision) {
+//                double x = i - span;
+//                double y = values[i-span];
+//                return new double[]{x, y};
+//            } else if (i == values.length - 1) {
+//                return new double[]{i, values[i]};
+//            }
+//        }
+//
+//        return null;
+//    }
 
     private double[] getRightGradientChange(double[] values) {
         double gradient;
@@ -266,7 +287,7 @@ class Multi_Plot{
         return new double[]{values.length - 1, values[values.length-1]};
     }
 
-    public double getArea(double[] values, double bounds) {
+    private double getArea(double[] values, double bounds) {
         double area = 0;
         for (int i = 0; i < bounds; i++) {
             area += values[i];

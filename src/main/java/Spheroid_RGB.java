@@ -16,6 +16,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 
 /**
  * Created on october 2016
@@ -25,7 +26,7 @@ import java.awt.event.*;
 public class Spheroid_RGB implements PlugIn {
     // swing components
     private JFrame frame;
-    private JComboBox imgList;
+    private JComboBox<String> imgList;
     private JPanel mainPanel;
     private JButton openButton;
     private JButton lineLengthButton;
@@ -41,16 +42,12 @@ public class Spheroid_RGB implements PlugIn {
     private JTextField cellWidthField;
     private JTextField minDistField;
     private JCheckBox darkPeaksCheck;
-    private JComboBox totalCheckBox;
+    private JComboBox<String> totalCheckBox;
     private JButton lineLengthButtonMinDist;
-    private JButton plotAllButton;
     private JButton plotAverageButton;
     private JCheckBox showLines;
     private JSlider profileSlider;
     private JLabel profileLabel;
-    private JRadioButton redRadioButton;
-    private JRadioButton greenRadioButton;
-    private JRadioButton blueRadioButton;
     private JCheckBox countCellsCheckBox;
     private JPanel countPanel;
     private JPanel innerCountPanel;
@@ -60,6 +57,7 @@ public class Spheroid_RGB implements PlugIn {
     private JLabel lineLengthLabel;
     private JButton diameterButton;
     private JCheckBox showSelectedChannel;
+    private JCheckBox showAllGrayPlots;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -92,7 +90,6 @@ public class Spheroid_RGB implements PlugIn {
     private int startMode = 1;
 
     // multi plot
-    private int plotChannel;
     private Multi_Plot multiPlot;
     private boolean diameter = true;
 
@@ -101,7 +98,6 @@ public class Spheroid_RGB implements PlugIn {
         initImageList();
         initComponents();
         setImage();
-        multiPlot = new Multi_Plot();
     }
 
     /**
@@ -123,8 +119,8 @@ public class Spheroid_RGB implements PlugIn {
 
         // open the Spheroid_RGB sample
 //        ImagePlus image = IJ.openImage("img/test.png");
-//        ImagePlus image = IJ.openImage("img/SN33267.tif");
-        ImagePlus image = IJ.openImage("img/EdU.tif");
+        ImagePlus image = IJ.openImage("img/SN33267.tif");
+//        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -152,20 +148,19 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void runAnalyzer() {
-        if (table_analyzer == null) table_analyzer = new Table_Analyzer();
-
         setImage();
-
-        if(WindowManager.getCurrentImage() == null || image == null) {
-            IJ.showMessage("No images open");
-            return;
-        }
-
         getGuiValues();
+
+        if (table_analyzer == null) table_analyzer = new Table_Analyzer();
 
         roiManager = RoiManager.getInstance();
         if (roiManager == null) roiManager = new RoiManager();
 
+        // check if we got what we need
+        if(WindowManager.getCurrentImage() == null || image == null) {
+            IJ.showMessage("No images open");
+            return;
+        }
         if(!(takeR || takeG || takeB)) {
             IJ.showMessage("Nothing to do", "No Channel selected.");
             return;
@@ -183,14 +178,28 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void runMultiPlot() {
+        setImage();
+        getGuiValues();
+
+        if(multiPlot == null) multiPlot = new Multi_Plot();
+
+        // check if we got what we need
+        if(!(takeR || takeG || takeB)) {
+            IJ.showMessage("Nothing to do", "No Channel selected.");
+            return;
+        }
+
+        ArrayList<ImagePlus> channel = new ArrayList<>();
         if (image.getType() == ImagePlus.COLOR_RGB) {
             rgb = ChannelSplitter.split(image);
             setChannelLut();
-            multiPlot.run(rgb[plotChannel], image, profileSlider.getValue(), diameter, profileLengthSlider.getValue(), showLines.isSelected(), showSelectedChannel.isSelected());
+            if (takeR) channel.add(rgb[0]);
+            if (takeG) channel.add(rgb[1]);
+            if (takeB) channel.add(rgb[2]);
         } else {
-            multiPlot.run(image,profileSlider.getValue(), diameter, profileLengthSlider.getValue(), showLines.isSelected());
+            channel.add(image);
         }
-
+        multiPlot.run(channel, image, profileSlider.getValue(), diameter, profileLengthSlider.getValue(), showLines.isSelected(), showSelectedChannel.isSelected(), showAllGrayPlots.isSelected());
     }
 
     // check if Image is RGB or 8bit
@@ -248,6 +257,7 @@ public class Spheroid_RGB implements PlugIn {
             wandDialog.addChoice("Mode:", modes, modes[startMode]);
             wandDialog.addDialogListener(listener);
             wandDialog.setOKLabel("Add to Roi Manager");
+            wandDialog.setCancelLabel("Exit");
             IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], startTolerance, modes[startMode]);
             wandDialog.showDialog();
             if (wandDialog.wasOKed()) RoiManager.getInstance().addRoi(image.getRoi());
@@ -489,27 +499,6 @@ public class Spheroid_RGB implements PlugIn {
         });
 
         //Multi plot
-        redRadioButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                plotChannel = 0; //red
-            }
-        });
-
-        greenRadioButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                plotChannel = 1; //green
-            }
-        });
-
-        blueRadioButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                plotChannel = 2; //blue
-            }
-        });
-
         profileSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -524,19 +513,6 @@ public class Spheroid_RGB implements PlugIn {
             }
         });
 
-        plotAllButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(image.getRoi() == null) {
-                    IJ.showMessage("Nothing to do.", "No Roi selected");
-                } else {
-                    runMultiPlot();
-                    multiPlot.plotAll();
-                    showLines.setEnabled(true);
-                }
-            }
-        });
-
         plotAverageButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -544,8 +520,8 @@ public class Spheroid_RGB implements PlugIn {
                     IJ.showMessage("Nothing to do.", "No Roi selected");
                 } else {
                     runMultiPlot();
-                    multiPlot.plotAverage();
-                    showLines.setEnabled(true);
+//                    multiPlot.plotAverage();
+//                    showLines.setEnabled(true);
                 }
             }
         });
@@ -595,18 +571,12 @@ public class Spheroid_RGB implements PlugIn {
             UIManager.setLookAndFeel(
                     UIManager.getSystemLookAndFeelClassName());
             SwingUtilities.updateComponentTreeUI(frame);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (UnsupportedLookAndFeelException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void setIcon() {
+    private void setIcon() {
         ImageIcon img = new ImageIcon("icon/icon_SN33267.png");
         frame.setIconImage(img.getImage());
     }
@@ -624,11 +594,5 @@ public class Spheroid_RGB implements PlugIn {
         totalCheckBox.addItem("Red");
         totalCheckBox.addItem("Green");
         totalCheckBox.addItem("Blue");
-
-        // initialize radio button group
-        ButtonGroup group = new ButtonGroup();
-        group.add(redRadioButton);
-        group.add(greenRadioButton);
-        group.add(blueRadioButton);
     }
 }
