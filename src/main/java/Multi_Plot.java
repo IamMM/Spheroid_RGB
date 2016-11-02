@@ -28,7 +28,7 @@ class Multi_Plot{
     private String plotTitle;
     private ResultsTable table;
 
-    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, boolean showLines, boolean showChannel, boolean plotGray) {
+    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, boolean showLines, boolean showChannel, boolean plotAll) {
         yMax = 0;
         xMax = 0;
 
@@ -44,7 +44,7 @@ class Multi_Plot{
         initCentroid();
         initLines(diameter, profileLength, angle);
         HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
-        plotAverage(listOfAllProfiles, plotGray);
+        plotAverage(listOfAllProfiles, plotAll);
 
         if (showChannel) showLines(channel);
         if (showLines) showLines(mask);
@@ -150,16 +150,7 @@ class Multi_Plot{
         return avg;
     }
 
-//    void plotAll() {
-//        createAllPlots();
-//        for (ProfilePlot p : profilePlots) {
-//            p.createWindow();
-//        }
-//        image.setRoi(roi);
-//        mask.setRoi(roi);
-//    }
-
-    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotGray) {
+    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll) {
         // init x values 0 .. xMax
         double[] x = new double[xMax];
         for (int i = 0; i < xMax; i++) {
@@ -177,7 +168,7 @@ class Multi_Plot{
         for (ImagePlus currChannel :listOfAllProfiles.keySet()){
             // all plots
             ArrayList<double[]> profiles = listOfAllProfiles.get(currChannel);
-            if(plotGray) {
+            if(plotAll) {
                 plot.setLineWidth(1);
                 plot.setColor(Color.gray);
                 for (double[] y : profiles) {
