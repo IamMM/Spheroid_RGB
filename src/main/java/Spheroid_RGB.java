@@ -37,7 +37,6 @@ public class Spheroid_RGB implements PlugIn {
     private JCheckBox blueCheckBox;
     private JCheckBox greenCheckBox;
     private JButton analyzeButton;
-    private JButton cancelButton;
     private JLabel thresLabel;
     private JTextField cellWidthField;
     private JTextField minDistField;
@@ -488,13 +487,6 @@ public class Spheroid_RGB implements PlugIn {
             public void actionPerformed(ActionEvent e) {
                 takeB = blueCheckBox.isSelected();
                 totalCheckBox.setEnabled(takeR && takeG && takeB);
-            }
-        });
-
-        cancelButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                frame.dispose();
             }
         });
 
