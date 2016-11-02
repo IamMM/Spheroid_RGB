@@ -165,8 +165,14 @@ public class Spheroid_RGB implements PlugIn {
             return;
         }
         if (roiManager.getCount() == 0) {
-            IJ.showMessage("Nothing to do", "Roi Manager is empty.");
-            return;
+            Roi currRoi = image.getRoi();
+            if(currRoi != null) {
+                roiManager.addRoi(currRoi);
+            }
+            else {
+                IJ.showMessage("Nothing to do", "Roi Manager is empty.");
+                return;
+            }
         }
 
         if(countCellsCheckBox.isSelected()) {
