@@ -1,11 +1,9 @@
-import ij.IJ;
-import ij.ImageJ;
-import ij.ImagePlus;
-import ij.WindowManager;
+import ij.*;
 import ij.gui.*;
 import ij.io.OpenDialog;
 import ij.io.Opener;
 import ij.plugin.ChannelSplitter;
+import ij.plugin.EventListener;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageStatistics;
@@ -23,7 +21,7 @@ import java.util.ArrayList;
  *
  * @author Maximlian Maske
  */
-public class Spheroid_RGB implements PlugIn {
+public class Spheroid_RGB implements PlugIn, ImageListener {
     // swing components
     private JFrame frame;
     private JComboBox<String> imgList;
@@ -92,13 +90,6 @@ public class Spheroid_RGB implements PlugIn {
     private Multi_Plot multiPlot;
     private boolean diameter = true;
 
-    public Spheroid_RGB() {
-        initActionListeners();
-        initImageList();
-        initComponents();
-        setImage();
-    }
-
     /**
      * Main method for debugging.
      * For debugging, it is convenient to have a method that starts ImageJ, loads an
@@ -131,9 +122,16 @@ public class Spheroid_RGB implements PlugIn {
      */
     @Override
     public void run(String arg) {
+        ImagePlus.addImageListener(this);
+
         if(RoiManager.getInstance() == null) {
             new RoiManager();
         }
+
+        initActionListeners();
+        initImageList();
+        initComponents();
+        setImage();
 
         frame = new JFrame(TITLE + VERSION);
         frame.setContentPane(this.mainPanel);
@@ -147,7 +145,7 @@ public class Spheroid_RGB implements PlugIn {
     }
 
     private void runAnalyzer() {
-        setImage();
+//        setImage();
         getGuiValues();
 
         if (table_analyzer == null) table_analyzer = new Table_Analyzer();
@@ -285,18 +283,18 @@ public class Spheroid_RGB implements PlugIn {
      ********************************************************/
 
     private void setImage() {
-        image = WindowManager.getImage((String) imgList.getSelectedItem());
+        image = WindowManager.getImage(imgList.getItemAt(imgList.getSelectedIndex()));
 
-        if(image == null || imgList.getItemCount() != WindowManager.getImageCount()) {
+        if(image == null) {
             initImageList();
-            image = WindowManager.getImage((String) imgList.getSelectedItem());
+            image = WindowManager.getCurrentImage();
         }
 
         if(imgList.getItemCount() != 0) {
             WindowManager.setCurrentWindow(WindowManager.getImage((String) imgList.getSelectedItem()).getWindow());
-//                    WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
+            WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
         } else {
-            IJ.showMessage("No images open", "It seems like you closed all image windows.");
+            frame.dispose();
         }
     }
 
@@ -373,7 +371,6 @@ public class Spheroid_RGB implements PlugIn {
      ********************************************************/
 
     private void initActionListeners(){
-
         openButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -517,8 +514,6 @@ public class Spheroid_RGB implements PlugIn {
                     IJ.showMessage("Nothing to do.", "No Roi selected");
                 } else {
                     runMultiPlot();
-//                    multiPlot.plotAverage();
-//                    showLines.setEnabled(true);
                 }
             }
         });
@@ -592,5 +587,22 @@ public class Spheroid_RGB implements PlugIn {
         totalComboBox.addItem("Green");
         totalComboBox.addItem("Blue");
         totalComboBox.setSelectedIndex(2);
+    }
+
+    @Override
+    public void imageOpened(ImagePlus imagePlus) {
+        imgList.addItem(imagePlus.getTitle());
+        imgList.setSelectedIndex(imgList.getItemCount() - 1);
+        image = imagePlus;
+    }
+
+    @Override
+    public void imageClosed(ImagePlus imagePlus) {
+        imgList.removeItem(imagePlus.getTitle());
+    }
+
+    @Override
+    public void imageUpdated(ImagePlus imagePlus) {
+
     }
 }
