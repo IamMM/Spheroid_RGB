@@ -28,7 +28,7 @@ class Multi_Plot{
     private String plotTitle;
     private ResultsTable table;
 
-    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, boolean showLines, boolean showChannel, boolean plotAll) {
+    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, boolean showLines, boolean showChannel, boolean plotAll, String major) {
         yMax = 0;
         xMax = 0;
 
@@ -43,14 +43,11 @@ class Multi_Plot{
 
         initCentroid();
         initLines(diameter, profileLength, angle);
-        HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
-        plotAverage(listOfAllProfiles, plotAll);
-
         if (showChannel) showLines(channel);
         if (showLines) showLines(mask);
-
+        HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
+        plotAverage(listOfAllProfiles, plotAll, major);
     }
-
 
     private Color toColor(String color) {
         switch (color) {
@@ -150,7 +147,7 @@ class Multi_Plot{
         return avg;
     }
 
-    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll) {
+    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll, String major) {
         // init x values 0 .. xMax
         double[] x = new double[xMax];
         for (int i = 0; i < xMax; i++) {
@@ -186,7 +183,7 @@ class Multi_Plot{
             avgList.add(avg);
 
             double[] max = getMaxCoordinates(avg);
-            if(currChannel.getTitle().contains("blue")) {
+            if(currChannel.getTitle().equalsIgnoreCase(major)) {
                 bounds = getRightGradientChange(avg);
                 plot.setColor(Color.darkGray);
                 plot.setLineWidth(1);
@@ -199,9 +196,9 @@ class Multi_Plot{
         }
 
         for (double[] avg : avgList) {
-            double[] max = getMaxCoordinates(avg);
+            double max = getMaxCoordinates(avg)[0];
             double area = getArea(avg, bounds[0]);
-            addValuesToResultsTable(max, bounds, area);
+            addValuesToResultsTable(max, bounds[0], area);
         }
 
         plot.show();
@@ -210,14 +207,12 @@ class Multi_Plot{
     }
 
 
-    private void addValuesToResultsTable(double[]max, double[]bounds, double area) {
+    private void addValuesToResultsTable(double max, double bounds, double area) {
         if (table==null) table = new ResultsTable();
         table.incrementCounter();
         table.addValue("Plot", plotTitle);
-        table.addValue("max x", max[0]);
-        table.addValue("max y", max[1]);
-        table.addValue("bounds x", bounds[0]);
-        table.addValue("bounds y", bounds[1]);
+        table.addValue("max", max);
+        table.addValue("bounds", bounds);
         table.addValue("area", area);
 
         table.show("Plot Results");

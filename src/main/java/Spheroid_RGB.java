@@ -41,7 +41,7 @@ public class Spheroid_RGB implements PlugIn {
     private JTextField cellWidthField;
     private JTextField minDistField;
     private JCheckBox darkPeaksCheck;
-    private JComboBox<String> totalCheckBox;
+    private JComboBox<String> totalComboBox;
     private JButton lineLengthButtonMinDist;
     private JButton plotAverageButton;
     private JCheckBox showLines;
@@ -204,7 +204,7 @@ public class Spheroid_RGB implements PlugIn {
         } else {
             channel.add(image);
         }
-        multiPlot.run(channel, image, profileSlider.getValue(), diameter, profileLengthSlider.getValue(), showLines.isSelected(), showSelectedChannel.isSelected(), showAllGrayPlots.isSelected());
+        multiPlot.run(channel, image, profileSlider.getValue(), diameter, profileLengthSlider.getValue(), showLines.isSelected(), showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), (String) totalComboBox.getSelectedItem());
     }
 
     // check if Image is RGB or 8bit
@@ -475,8 +475,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 takeR = redCheckBox.isSelected();
-
-                totalCheckBox.setEnabled(takeR && takeG && takeB);
+                totalComboBox.setEnabled(takeR ? (takeG || takeB) : (takeG && takeB));
             }
         });
 
@@ -484,7 +483,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 takeG = greenCheckBox.isSelected();
-                totalCheckBox.setEnabled(takeR && takeG && takeB);
+                totalComboBox.setEnabled(takeR ? (takeG || takeB) : (takeG && takeB));
             }
         });
 
@@ -492,7 +491,7 @@ public class Spheroid_RGB implements PlugIn {
             @Override
             public void actionPerformed(ActionEvent e) {
                 takeB = blueCheckBox.isSelected();
-                totalCheckBox.setEnabled(takeR && takeG && takeB);
+                totalComboBox.setEnabled(takeR ? (takeG || takeB) : (takeG && takeB));
             }
         });
 
@@ -561,7 +560,7 @@ public class Spheroid_RGB implements PlugIn {
         minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
         threshold = thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
-        total = totalCheckBox.getSelectedIndex();
+        total = totalComboBox.getSelectedIndex();
     }
 
     private void setLookAndFeel(JFrame frame) {
@@ -589,8 +588,9 @@ public class Spheroid_RGB implements PlugIn {
 
     private void initComponents() {
         // initialize total combo box
-        totalCheckBox.addItem("Red");
-        totalCheckBox.addItem("Green");
-        totalCheckBox.addItem("Blue");
+        totalComboBox.addItem("Red");
+        totalComboBox.addItem("Green");
+        totalComboBox.addItem("Blue");
+        totalComboBox.setSelectedIndex(2);
     }
 }
