@@ -130,7 +130,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         initActionListeners();
         initImageList();
         initComponents();
-        setImage();
+        if(WindowManager.getImageCount() == 0) IJ.openImage("img/SN33267.tif").show();
+        else setImage();
 
         frame = new JFrame(TITLE + VERSION);
         frame.setContentPane(this.mainPanel);
@@ -597,7 +598,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     @Override
     public void imageClosed(ImagePlus imagePlus) {
-        imgList.removeItem(imagePlus.getTitle());
+        if(WindowManager.getImageCount() == 0) frame.dispose();
+        else imgList.removeItem(imagePlus.getTitle());
     }
 
     @Override
