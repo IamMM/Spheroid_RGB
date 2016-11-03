@@ -23,37 +23,41 @@ import java.util.ArrayList;
 public class Spheroid_RGB implements PlugIn, ImageListener {
     // swing components
     private JFrame frame;
-    private JComboBox<String> imgList;
     private JPanel mainPanel;
+    private JComboBox<String> imgList;
     private JButton openButton;
-    private JButton lineLengthButton;
-    private JSlider thresSlider;
-    private JButton maximumButton;
     private JButton magicSelectButton;
+    private JButton showChannelsButton;
     private JCheckBox redCheckBox;
-    private JCheckBox blueCheckBox;
     private JCheckBox greenCheckBox;
-    private JButton analyzeButton;
-    private JLabel thresLabel;
-    private JTextField cellWidthField;
-    private JTextField minDistField;
-    private JCheckBox darkPeaksCheck;
+    private JCheckBox blueCheckBox;
     private JComboBox<String> totalComboBox;
-    private JButton lineLengthButtonMinDist;
-    private JButton plotAverageButton;
-    private JCheckBox showLines;
-    private JSlider profileSlider;
-    private JLabel profileLabel;
     private JCheckBox countCellsCheckBox;
+    private JCheckBox meanCheckBox;
+    private JCheckBox areaCheckBox;
+    private JCheckBox integratedDensityCheckBox;
     private JPanel countPanel;
     private JPanel innerCountPanel;
+    private JTextField cellWidthField;
+    private JTextField minDistField;
+    private JButton lineLengthButton;
+    private JButton lineLengthButtonMinDist;
+    private JCheckBox darkPeaksCheck;
+    private JSlider thresSlider;
+    private JLabel thresLabel;
+    private JButton maximumButton;
     private JButton averageButton;
     private JButton minimumButton;
-    private JSlider profileLengthSlider;
+    private JButton analyzeButton;
+    private JCheckBox showLines;
+    private JSlider profileSlider;
     private JLabel lineLengthLabel;
+    private JLabel profileLabel;
+    private JSlider profileLengthSlider;
     private JButton diameterButton;
     private JCheckBox showSelectedChannel;
     private JCheckBox showAllGrayPlots;
+    private JButton plotButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -507,7 +511,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             }
         });
 
-        plotAverageButton.addActionListener(new ActionListener() {
+        plotButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(image.getRoi() == null) {
