@@ -4,6 +4,7 @@ import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
@@ -45,7 +46,7 @@ class Table_Analyzer extends Spheroid_RGB {
                 double mean = meanPeak((byte[])currChannel.getProcessor().getPixels(), peaks);
                 resultsTable.addValue("mean peak (" + currChannel.getTitle() + ")", mean);
 
-                double thresholdMean = mean(currRoi.getImage().getProcessor());
+                double thresholdMean = mean(currRoi.getImage().getProcessor().convertToByteProcessor());
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
             }
 
@@ -127,8 +128,7 @@ class Table_Analyzer extends Spheroid_RGB {
             resultsTable.addValue("ROI", currRoi.getName());
             for (ImagePlus currChannel : channel) {
                 currChannel.setRoi(currRoi);
-
-                double thresholdMean = mean(currRoi.getImage().getProcessor());
+                double thresholdMean = mean(currRoi.getImage().getProcessor().convertToByteProcessor());
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
                 resultsTable.addValue("area (" + currChannel.getTitle() + ") within threshold", numberOfPixelsAboveThres);
                 resultsTable.addValue("integrated density (" + currChannel.getTitle() + ")", thresholdMean * numberOfPixelsAboveThres);
@@ -145,8 +145,8 @@ class Table_Analyzer extends Spheroid_RGB {
                 int row = resultsTable.getCounter() - 1;
                 resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
 
-                ImageProcessor ip1 = channel.get(0).getProcessor();
-                ImageProcessor ip2 = channel.get(1).getProcessor();
+                ByteProcessor ip1 = channel.get(0).getProcessor().convertToByteProcessor();
+                ByteProcessor ip2 = channel.get(1).getProcessor().convertToByteProcessor();
                 resultsTable.addValue("ratio mean NEW (%)", ratioMean(ip1, ip2));
 
                 resultsTable.addValue("area fraction (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
@@ -268,7 +268,7 @@ class Table_Analyzer extends Spheroid_RGB {
         return  sum / (double)numberOfPixelsAboveThres;
     }
 
-    private double mean (ImageProcessor ip) {
+    private double mean (ByteProcessor ip) {
         byte[] pix1 = (byte[]) ip.getPixels();
         int width = ip.getWidth();
         int height = ip.getHeight();
@@ -299,7 +299,7 @@ class Table_Analyzer extends Spheroid_RGB {
         return sum / (double) numberOfPixelsAboveThres;
     }
 
-    private double ratioMean (ImageProcessor ip1, ImageProcessor ip2) {
+    private double ratioMean (ByteProcessor ip1, ByteProcessor ip2) {
         byte[] pix1 = (byte[]) ip1.getPixels();
         byte[] pix2 = (byte[]) ip2.getPixels();
 
