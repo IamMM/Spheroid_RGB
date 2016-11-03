@@ -7,7 +7,6 @@ import ij.plugin.RoiRotator;
 import ij.process.ImageStatistics;
 
 import java.awt.*;
-import java.awt.geom.Arc2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -169,8 +168,8 @@ class Multi_Plot{
 
 
         // avg all profiles of all channels
-        LinkedHashMap<String, Double> resultValues = new LinkedHashMap();
-        LinkedHashMap<String, double[]> avgList = new LinkedHashMap();
+        LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
+        LinkedHashMap<String, double[]> avgList = new LinkedHashMap<>();
 
         double[] majorBounds = new double[]{xMax, yMax};
         for (ImagePlus currChannel :listOfAllProfiles.keySet()){
