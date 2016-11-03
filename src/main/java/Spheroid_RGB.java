@@ -149,7 +149,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void runAnalyzer() {
-//        setImage();
         getGuiValues();
 
         if (table_analyzer == null) table_analyzer = new Table_Analyzer();
@@ -185,9 +184,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void runMultiPlot() {
-        setImage();
-        getGuiValues();
-
         if(multiPlot == null) multiPlot = new Multi_Plot();
 
         // check if we got what we need
@@ -298,7 +294,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             WindowManager.setCurrentWindow(WindowManager.getImage((String) imgList.getSelectedItem()).getWindow());
             WindowManager.toFront(WindowManager.getFrame(WindowManager.getCurrentImage().getTitle()));
         } else {
-            frame.dispose();
+            close();
         }
     }
 
@@ -593,16 +589,23 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         totalComboBox.setSelectedIndex(2);
     }
 
+    private void close() {
+        frame.dispose();
+        WindowManager.removeWindow(this.frame);
+    }
+
     @Override
     public void imageOpened(ImagePlus imagePlus) {
+        System.out.println("image opened");
         imgList.addItem(imagePlus.getTitle());
         imgList.setSelectedIndex(imgList.getItemCount() - 1);
         image = imagePlus;
+        checkImageType();
     }
 
     @Override
     public void imageClosed(ImagePlus imagePlus) {
-        if(WindowManager.getImageCount() == 0) frame.dispose();
+        if(WindowManager.getImageCount() == 0) close();
         else imgList.removeItem(imagePlus.getTitle());
     }
 
