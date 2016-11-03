@@ -194,8 +194,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
         ArrayList<ImagePlus> channel = new ArrayList<>();
         if (image.getType() == ImagePlus.COLOR_RGB) {
-            rgb = ChannelSplitter.split(image);
-            setChannelLut();
+            ImagePlus[] rgb = ChannelSplitter.split(image);
+            setChannelLut(rgb);
             if (takeR) channel.add(rgb[0]);
             if (takeG) channel.add(rgb[1]);
             if (takeB) channel.add(rgb[2]);
@@ -223,7 +223,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             case ImagePlus.COLOR_RGB:
                 imageIsGray = false;
                 rgb = ChannelSplitter.split(image);
-                setChannelLut();
+                setChannelLut(rgb);
                 return true;
             default: IJ.showMessage("not supported");
                 return false;
@@ -270,7 +270,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     // set suitable look up table for 8bit channel (pseudo color)
-    private void setChannelLut() {
+    private void setChannelLut(ImagePlus[] rgb) {
         rgb[0].setLut(LUT.createLutFromColor(Color.RED));
         rgb[1].setLut(LUT.createLutFromColor(Color.GREEN));
         rgb[2].setLut(LUT.createLutFromColor(Color.BLUE));
@@ -310,6 +310,17 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         image.show();
         imgList.addItem(image.getTitle());
         imgList.setSelectedIndex(imgList.getItemCount() - 1);
+    }
+
+    private void showSelectedChannels() {
+        checkImageType();
+        if (!imageIsGray) {
+            ImagePlus[] split = ChannelSplitter.split(image);
+            setChannelLut(split);
+            if (takeR) split[0].show();
+            if (takeG) split[1].show();
+            if (takeB) split[2].show();
+        }
     }
 
     private void widthButtonAction(JTextField field) {
@@ -438,6 +449,12 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 showMagicSelectDialog();
+            }
+        });
+        showChannelsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showSelectedChannels();
             }
         });
         maximumButton.addActionListener(new ActionListener() {
