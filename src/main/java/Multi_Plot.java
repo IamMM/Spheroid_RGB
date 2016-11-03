@@ -7,8 +7,10 @@ import ij.plugin.RoiRotator;
 import ij.process.ImageStatistics;
 
 import java.awt.*;
+import java.awt.geom.Arc2D;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * Created on 14/10/2016.
@@ -28,7 +30,7 @@ class Multi_Plot{
     private String plotTitle;
     private ResultsTable table;
 
-    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, String major, int custumYMax, boolean[] options) {
+    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, String major, int customYMax, boolean[] options) {
         yMax = 0;
         xMax = 0;
 
@@ -52,7 +54,7 @@ class Multi_Plot{
         if (showLines) showLines(mask);
         if (showChannel) showLines(channel);
         HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
-        if(!autoScale) yMax = custumYMax;
+        if(!autoScale) yMax = customYMax;
         plotAverage(listOfAllProfiles, plotAll, major);
     }
 
@@ -167,8 +169,10 @@ class Multi_Plot{
 
 
         // avg all profiles of all channels
-        ArrayList<double[]> avgList = new ArrayList<>();
-        double[] bounds = new double[]{xMax};
+        LinkedHashMap<String, Double> resultValues = new LinkedHashMap();
+        LinkedHashMap<String, double[]> avgList = new LinkedHashMap();
+
+        double[] majorBounds = new double[]{xMax, yMax};
         for (ImagePlus currChannel :listOfAllProfiles.keySet()){
             // all plots
             ArrayList<double[]> profiles = listOfAllProfiles.get(currChannel);
@@ -185,16 +189,21 @@ class Multi_Plot{
             Color avgColor = toColor(currChannel.getTitle());
             plot.setColor(avgColor);
             plot.setLineWidth(2);
-
             plot.addPoints(x, avg, PlotWindow.LINE);
-            avgList.add(avg);
+            avgList.put(currChannel.getTitle(), avg);
 
             double[] max = getMaxCoordinates(avg);
+            resultValues.put(currChannel.getTitle() + " max x", max[0]);
+            resultValues.put(currChannel.getTitle() + " max y", max[1]);
+
+            double[] bounds = getRightGradientChange(avg);
+            resultValues.put(currChannel.getTitle() + " bounds x", bounds[0]);
+            resultValues.put(currChannel.getTitle() + " bounds y", bounds[1]);
+            plot.setColor(Color.darkGray);
+            plot.setLineWidth(1);
+            plot.drawLine(bounds[0],0,bounds[0],yMax);
             if(currChannel.getTitle().equalsIgnoreCase(major)) {
-                bounds = getRightGradientChange(avg);
-                plot.setColor(Color.darkGray);
-                plot.setLineWidth(1);
-                plot.drawLine(bounds[0],0,bounds[0],yMax);
+                majorBounds = bounds;
             }
 
             plot.setLineWidth(1);
@@ -202,25 +211,24 @@ class Multi_Plot{
             plot.drawDottedLine(0, max[1] ,max[0], max[1], 2);
         }
 
-        for (double[] avg : avgList) {
-            double max = getMaxCoordinates(avg)[0];
-            double area = getArea(avg, bounds[0]);
-            addValuesToResultsTable(max, bounds[0], area);
+        for (String color : avgList.keySet()) {
+            double area = getArea(avgList.get(color), majorBounds[0]);
+            resultValues.put(color + " area (" + major + " bounds)", area);
         }
 
+        addValuesToResultsTable(resultValues);
         plot.show();
-
         mask.setRoi(roi);
     }
 
 
-    private void addValuesToResultsTable(double max, double bounds, double area) {
+    private void addValuesToResultsTable(LinkedHashMap<String, Double> results) {
         if (table==null) table = new ResultsTable();
         table.incrementCounter();
         table.addValue("Plot", plotTitle);
-        table.addValue("max", max);
-        table.addValue("bounds", bounds);
-        table.addValue("area", area);
+        for (String s : results.keySet()) {
+            table.addValue(s, results.get(s));
+        }
 
         table.show("Plot Results");
     }
