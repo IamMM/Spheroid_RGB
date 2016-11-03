@@ -28,7 +28,7 @@ class Multi_Plot{
     private String plotTitle;
     private ResultsTable table;
 
-    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, boolean showLines, boolean showChannel, boolean plotAll, String major) {
+    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, String major, int custumYMax, boolean[] options) {
         yMax = 0;
         xMax = 0;
 
@@ -41,11 +41,18 @@ class Multi_Plot{
 
         plotTitle = "Plot " + mask.getTitle();
 
+        // options
+        boolean showLines = options[0];
+        boolean showChannel = options[1];
+        boolean plotAll = options[2];
+        boolean autoScale = options[3];
+
         initCentroid();
         initLines(diameter, profileLength, angle);
-        if (showChannel) showLines(channel);
         if (showLines) showLines(mask);
+        if (showChannel) showLines(channel);
         HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
+        if(!autoScale) yMax = custumYMax;
         plotAverage(listOfAllProfiles, plotAll, major);
     }
 

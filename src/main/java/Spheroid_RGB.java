@@ -58,6 +58,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JCheckBox showSelectedChannel;
     private JCheckBox showAllGrayPlots;
     private JButton plotButton;
+    private JCheckBox autoScaleCheckBox;
+    private JTextField yAxisTextField;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -92,6 +94,10 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     // multi plot
     private Multi_Plot multiPlot;
     private boolean diameter = true;
+    private int yMax;
+
+    public Spheroid_RGB() {
+    }
 
     /**
      * Main method for debugging.
@@ -149,7 +155,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void runAnalyzer() {
-        getGuiValues();
+        getCountAndMeanValues();
 
         if (table_analyzer == null) table_analyzer = new Table_Analyzer();
 
@@ -184,6 +190,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void runMultiPlot() {
+        getPlotValues();
+
         if(multiPlot == null) multiPlot = new Multi_Plot();
 
         // check if we got what we need
@@ -192,6 +200,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             return;
         }
 
+        // check image type (color or not) all supported
         ArrayList<ImagePlus> channel = new ArrayList<>();
         if (image.getType() == ImagePlus.COLOR_RGB) {
             ImagePlus[] rgb = ChannelSplitter.split(image);
@@ -202,7 +211,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         } else {
             channel.add(image);
         }
-        multiPlot.run(channel, image, profileSlider.getValue(), diameter, profileLengthSlider.getValue(), showLines.isSelected(), showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), (String) totalComboBox.getSelectedItem());
+        boolean[] options = new boolean[]{showLines.isSelected(), showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
+        multiPlot.run(channel, image, profileSlider.getValue(), diameter, profileLengthSlider.getValue(), (String) totalComboBox.getSelectedItem(), yMax, options);
     }
 
     // check if Image is RGB or 8bit
@@ -524,6 +534,13 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             }
         });
 
+        autoScaleCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                yAxisTextField.setEnabled(!autoScaleCheckBox.isSelected());
+            }
+        });
+
         plotButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -567,12 +584,16 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     }
 
-    private void getGuiValues() {
+    private void getCountAndMeanValues() {
         cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
         minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
         threshold = thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
         total = totalComboBox.getSelectedIndex();
+    }
+
+    private void getPlotValues() {
+        if (!autoScaleCheckBox.isSelected()) yMax = Integer.parseInt(yAxisTextField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
     }
 
     private void setLookAndFeel(JFrame frame) {
