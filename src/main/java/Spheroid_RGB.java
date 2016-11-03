@@ -3,7 +3,6 @@ import ij.gui.*;
 import ij.io.OpenDialog;
 import ij.io.Opener;
 import ij.plugin.ChannelSplitter;
-import ij.plugin.EventListener;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageStatistics;
