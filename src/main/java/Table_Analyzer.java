@@ -45,7 +45,7 @@ class Table_Analyzer extends Spheroid_RGB {
                 double mean = meanPeak((byte[])currChannel.getProcessor().getPixels(), peaks);
                 resultsTable.addValue("mean peak (" + currChannel.getTitle() + ")", mean);
 
-                double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor());
+                double thresholdMean = mean(currRoi.getImage().getProcessor());
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
             }
 
@@ -128,7 +128,7 @@ class Table_Analyzer extends Spheroid_RGB {
             for (ImagePlus currChannel : channel) {
                 currChannel.setRoi(currRoi);
 
-                double thresholdMean = meanWithThreshold(currRoi.getImage().getProcessor());
+                double thresholdMean = mean(currRoi.getImage().getProcessor());
                 resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
                 resultsTable.addValue("area (" + currChannel.getTitle() + ") within threshold", numberOfPixelsAboveThres);
                 resultsTable.addValue("integrated density (" + currChannel.getTitle() + ")", thresholdMean * numberOfPixelsAboveThres);
@@ -248,6 +248,8 @@ class Table_Analyzer extends Spheroid_RGB {
         return sum / peaks.size();
     }
 
+
+    // bug in this method: different results on same roi when varying count
     private double meanWithThreshold (ImageProcessor ip) {
         int[] histogram = ip.getHistogram();
         numberOfPixelsAboveThres = 0;
@@ -264,6 +266,37 @@ class Table_Analyzer extends Spheroid_RGB {
         }
 
         return  sum / (double)numberOfPixelsAboveThres;
+    }
+
+    private double mean (ImageProcessor ip) {
+        byte[] pix1 = (byte[]) ip.getPixels();
+        int width = ip.getWidth();
+        int height = ip.getHeight();
+        Rectangle roi = ip.getRoi();
+        long sum = 0;
+        numberOfPixelsAboveThres = 0;
+
+        int minThreshold = 0;
+        int maxThreshold= 255;
+
+        if(darkPeaks) maxThreshold -= threshold;
+        else minThreshold = threshold;
+
+        for (int y = 0; y < width; y++) {
+            for (int x = 0; x < height; x++) {
+                if (roi.contains(x,y)) {
+                    int pos = y * width + x;
+                    int value1 = pix1[pos] & 0xff;
+
+                    if (value1 >= minThreshold && value1 <= maxThreshold) {
+                        sum += value1;
+                        numberOfPixelsAboveThres++;
+                    }
+                }
+            }
+        }
+
+        return sum / (double) numberOfPixelsAboveThres;
     }
 
     private double ratioMean (ImageProcessor ip1, ImageProcessor ip2) {
