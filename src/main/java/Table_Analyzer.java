@@ -3,7 +3,6 @@ import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
-import ij.plugin.Histogram;
 import ij.plugin.filter.Analyzer;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
@@ -209,9 +208,7 @@ class Table_Analyzer extends Spheroid_RGB {
                 int row = resultsTable.getCounter() - 1;
                 resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
 
-                ByteProcessor ip1 = channel.get(0).getProcessor().convertToByteProcessor();
-                ByteProcessor ip2 = channel.get(1).getProcessor().convertToByteProcessor();
-                resultsTable.addValue("ratio mean NEW (%)", ratioMean(ip1, ip2));
+                resultsTable.addValue("ratio mean NEW (%)", roiMeanRatio(channel.get(0), channel.get(1)));
 
                 resultsTable.addValue("area fraction (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
             } else if (channel.size() == 3) {
@@ -368,34 +365,38 @@ class Table_Analyzer extends Spheroid_RGB {
         return sum/numberOfPixelsAboveThres;
     }
 
-    private double ratioMean (ByteProcessor ip1, ByteProcessor ip2) {
-        byte[] pix1 = (byte[]) ip1.getPixels();
-        byte[] pix2 = (byte[]) ip2.getPixels();
+    private double roiMeanRatio(ImagePlus imp1, ImagePlus imp2) {
+        Roi roi = imp1.getRoi();
+        if (roi!=null && !roi.isArea()) roi = null;
+        ImageProcessor ip1 = imp1.getProcessor();
+        ImageProcessor ip2 = imp2.getProcessor();
+        ImageProcessor mask = roi!=null?roi.getMask():null;
+        Rectangle r = roi!=null ? roi.getBounds() : new Rectangle(0,0,ip1.getWidth(),ip1.getHeight());
 
-        int width = ip1.getWidth();
-        int height = ip1.getHeight();
-        Rectangle roi = ip1.getRoi();
+        double sum = 0;
+        int count = 0;
 
-        long sum = 0;
-        int numberOfPixels = 0;
-        for (int y = 0; y < width; y++) {
-            for (int x = 0; x < height; x++) {
-                if (roi.contains(x,y)) {
-                    int pos = y * width + x;
+        int minThreshold = 0;
+        int maxThreshold= 255;
 
-                    int value1 = pix1[pos] & 0xff;
-                    int value2 = pix2[pos] & 0xff;
+        if(darkPeaks) maxThreshold -= threshold;
+        else minThreshold = threshold;
 
-//                    System.out.println(value1 + " : " + value2);
+        for (int y=0; y<r.height; y++) {
+            for (int x=0; x<r.width; x++) {
+                if (mask==null||mask.getPixel(x,y)!=0) {
 
-                    if(value2 > 0) sum += value1 / value2;
-                    numberOfPixels++;
+                    float value1 = ip1.getPixelValue(x+r.x, y+r.y);
+                    float value2 = ip2.getPixelValue(x+r.x, y+r.y);
+
+                    if (value1 >= minThreshold && value1 <= maxThreshold && value2 > minThreshold && value2 <= maxThreshold) {
+                        sum += value1 / value2;
+                        count++;
+                    }
                 }
             }
-
         }
-
-        return sum / (double) numberOfPixels;
+        return sum/count;
     }
 
 }
