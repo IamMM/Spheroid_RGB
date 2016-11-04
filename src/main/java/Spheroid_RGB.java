@@ -60,6 +60,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JButton plotButton;
     private JCheckBox autoScaleCheckBox;
     private JTextField yAxisTextField;
+    private JCheckBox cleanTableCheckBox;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -117,8 +118,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-//        ImagePlus image = IJ.openImage("img/test.png");
-        ImagePlus image = IJ.openImage("img/SN33267.tif");
+        ImagePlus image = IJ.openImage("img/test.png");
+//        ImagePlus image = IJ.openImage("img/SN33267.tif");
 //        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
@@ -182,11 +183,15 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             }
         }
 
-        if(countCellsCheckBox.isSelected()) {
-            table_analyzer.runCountAndMean();
-        }else {
-            table_analyzer.runMean();
-        }
+        boolean[] options = new boolean[]{countCellsCheckBox.isSelected(), meanCheckBox.isSelected(), areaCheckBox.isSelected(), integratedDensityCheckBox.isSelected(), cleanTableCheckBox.isSelected()};
+
+        table_analyzer.run(image, options);
+
+//        if(countCellsCheckBox.isSelected()) {
+//            table_analyzer.run(image, );
+//        }else {
+//            table_analyzer.runMean();
+//        }
     }
 
     private void runMultiPlot() {
@@ -634,7 +639,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     @Override
     public void imageOpened(ImagePlus imagePlus) {
-        System.out.println("image opened");
         imgList.addItem(imagePlus.getTitle());
         imgList.setSelectedIndex(imgList.getItemCount() - 1);
         image = imagePlus;
