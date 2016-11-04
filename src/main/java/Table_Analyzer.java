@@ -31,6 +31,8 @@ class Table_Analyzer extends Spheroid_RGB {
         boolean idIsSelected = options[3]; //id = integrated density
         boolean cleanTable = options[4];
 
+        if(cleanTable) table = new ResultsTable();
+
         HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
 
         //image stats
@@ -58,7 +60,7 @@ class Table_Analyzer extends Spheroid_RGB {
                 resultValues.put("total area (pixel)", (double) totalNumberOfPixels);
                 if(calibration.scaled()) resultValues.put("total area (" + calibration.getUnit() + ")", calibration.getX(totalNumberOfPixels));
             }
-            addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues, cleanTable);
+            addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues);
         }
 
         // show count result images
@@ -71,8 +73,8 @@ class Table_Analyzer extends Spheroid_RGB {
         roiManager.runCommand(image, "Show All");
     }
 
-    private void addValuesToResultsTable(String imgTitle, String roiTitle, LinkedHashMap<String, Double> results, boolean cleanTable) {
-        if (table==null || cleanTable) table = new ResultsTable();
+    private void addValuesToResultsTable(String imgTitle, String roiTitle, LinkedHashMap<String, Double> results) {
+        if (table==null) table = new ResultsTable();
         table.incrementCounter();
         table.addValue("Image", imgTitle);
         table.addValue("ROI", roiTitle);

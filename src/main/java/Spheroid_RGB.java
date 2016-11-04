@@ -64,7 +64,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.5.0 ";
+    private static final String VERSION = " v0.6.0 ";
     static Color PEAKS_COLOR = Color.WHITE;
     static final Color ROI_COLOR = Color.YELLOW;
 
@@ -134,6 +134,14 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     public void run(String arg) {
         ImagePlus.addImageListener(this);
 
+        if(WindowManager.getImageCount() == 0) {
+            IJ.showMessage("no image"); //IJ.openImage("img/EdU.tif").show();
+            return;
+//            Opener opener = new Opener(); //todo open example image here
+//            opener.openImage("img/Edu.tif").show();
+        }
+        else setImage();
+
         if(RoiManager.getInstance() == null) {
             new RoiManager();
         }
@@ -141,8 +149,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         initActionListeners();
         initImageList();
         initComponents();
-        if(WindowManager.getImageCount() == 0) IJ.openImage("img/SN33267.tif").show();
-        else setImage();
 
         frame = new JFrame(TITLE + VERSION);
         frame.setContentPane(this.mainPanel);
