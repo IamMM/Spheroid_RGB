@@ -4,14 +4,15 @@ import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Analyzer;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
 import java.awt.*;
+import java.nio.channels.Pipe;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 /**
  * Created on 17/10/2016.
@@ -24,12 +25,16 @@ class Table_Analyzer extends Spheroid_RGB {
     private long numberOfPixelsAboveThres;
     private long totalNumberOfPixels;
 
-    void run (ImagePlus image, boolean[] options) {
+    void run (ImagePlus image, boolean[] options, String major) {
         boolean countIsSelected = options[0];
         boolean meanIsSelected = options[1];
         boolean areaIsSelected = options[2];
         boolean idIsSelected = options[3]; //id = integrated density
-        boolean cleanTable = options[4];
+        boolean ratioMeanIsSelected = options[4];
+        boolean ratioValuesIsSelected = options[5];
+        boolean cleanTable = options[6];
+
+        major = major.toLowerCase();
 
         if(cleanTable) table = new ResultsTable();
 
@@ -41,24 +46,35 @@ class Table_Analyzer extends Spheroid_RGB {
             LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
             for (ImagePlus currChannel : channel.keySet()) {
                 currChannel.setRoi(currRoi);
-
+                String title = currChannel.getTitle().toLowerCase();
                 if(countIsSelected) {
                     ArrayList<Point> peaks = rumNucleiCounter(currChannel, channel.get(currChannel));
-                    resultValues.put("count (" + currChannel.getTitle() + ")", (double) peaks.size());
+                    resultValues.put("count (" + title + ")", (double) peaks.size());
 
                     double meanPeak = meanPeak((byte[]) currChannel.getProcessor().getPixels(), peaks);
-                    resultValues.put("mean peak (" + currChannel.getTitle() + ")", meanPeak);
+                    resultValues.put("peaks mean (" + title + ")", meanPeak);
                 }
 
                 double thresholdMean = roiMean(currChannel);
-                if(meanIsSelected) resultValues.put("mean (" + currChannel.getTitle() + ")", thresholdMean);
-                if(areaIsSelected) resultValues.put("number of pixels (" + currChannel.getTitle() + ")", (double) numberOfPixelsAboveThres);
-                if(idIsSelected) resultValues.put("integrated density (" + currChannel.getTitle() + ")", thresholdMean * numberOfPixelsAboveThres);
+                if(meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
+                if(areaIsSelected) resultValues.put("area (" + title + ")", (double) numberOfPixelsAboveThres);
+                if(idIsSelected) resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThres);
             }
 
             if(areaIsSelected) {
                 resultValues.put("total area (pixel)", (double) totalNumberOfPixels);
                 if(calibration.scaled()) resultValues.put("total area (" + calibration.getUnit() + ")", calibration.getX(totalNumberOfPixels));
+            }
+
+            // todo: peaks mean ratio, count ratio, mean ratio, ratio mean NEW, area fraction
+            if(channel.size() >= 2) {
+                if (ratioValuesIsSelected && countIsSelected) {
+                    resultValues.put("count ratio", ratio(resultValues, "count", major));
+                    resultValues.put("peaks mean ratio", ratio(resultValues, "peaks mean", major));
+                }
+                if (ratioValuesIsSelected && meanIsSelected) resultValues.put("mean ratio", ratio(resultValues, "mean", major));
+                if (ratioValuesIsSelected && areaIsSelected) resultValues.put("area fraction", ratio(resultValues, "area", major));
+                if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channel.keySet(), major));
             }
             addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues);
         }
@@ -71,6 +87,19 @@ class Table_Analyzer extends Spheroid_RGB {
         }
 
         roiManager.runCommand(image, "Show All");
+    }
+
+    private double ratio(LinkedHashMap<String, Double> resultValues, String key, String major) {
+        double majorValue = resultValues.get(key + " (" + major + ")");
+        System.out.println(majorValue);
+        double minorValue = 0;
+        for (String heading : resultValues.keySet()) {
+            if (heading.contains(key) && !heading.contains(major)) {
+                minorValue = resultValues.get(heading);
+                break;
+            }
+        }
+        return minorValue / majorValue;
     }
 
     private void addValuesToResultsTable(String imgTitle, String roiTitle, LinkedHashMap<String, Double> results) {
@@ -372,7 +401,7 @@ class Table_Analyzer extends Spheroid_RGB {
         if (roi!=null && !roi.isArea()) roi = null;
         ImageProcessor ip1 = imp1.getProcessor();
         ImageProcessor ip2 = imp2.getProcessor();
-        ImageProcessor mask = roi!=null?roi.getMask():null;
+        ImageProcessor mask = roi!=null ? roi.getMask() : null;
         Rectangle r = roi!=null ? roi.getBounds() : new Rectangle(0,0,ip1.getWidth(),ip1.getHeight());
 
         double sum = 0;
@@ -401,4 +430,50 @@ class Table_Analyzer extends Spheroid_RGB {
         return sum/count;
     }
 
+    private double roiMeanRatio(Set<ImagePlus> channels, String majorTitle) {
+        if(channels.size() < 2) return 0;
+        ImagePlus[] impArray = new ImagePlus[channels.size()];
+        channels.toArray(impArray);
+        ImagePlus minor_imp;
+        ImagePlus major_imp;
+        if( impArray[0].getTitle().equalsIgnoreCase(majorTitle)) {
+            major_imp = impArray[0];
+            minor_imp = impArray[1];
+        } else {
+            major_imp = impArray[1];
+            minor_imp = impArray[0];
+        }
+
+        Roi roi = major_imp.getRoi();
+        if (roi!=null && !roi.isArea()) roi = null;
+        ImageProcessor minor_ip = minor_imp.getProcessor();
+        ImageProcessor major_ip = major_imp.getProcessor();
+        ImageProcessor mask = roi!=null ? roi.getMask() : null;
+        Rectangle r = roi!=null ? roi.getBounds() : new Rectangle(0,0,minor_ip.getWidth(),minor_ip.getHeight());
+
+        double sum = 0;
+        int count = 0;
+
+        int minThreshold = 0;
+        int maxThreshold= 255;
+
+        if(darkPeaks) maxThreshold -= threshold;
+        else minThreshold = threshold;
+
+        for (int y=0; y<r.height; y++) {
+            for (int x=0; x<r.width; x++) {
+                if (mask==null||mask.getPixel(x,y)!=0) {
+
+                    float value1 = minor_ip.getPixelValue(x+r.x, y+r.y);
+                    float value2 = major_ip.getPixelValue(x+r.x, y+r.y);
+
+                    if (value1 >= minThreshold && value1 <= maxThreshold && value2 > minThreshold && value2 <= maxThreshold) {
+                        sum += value1 / value2;
+                        count++;
+                    }
+                }
+            }
+        }
+        return sum/count;
+    }
 }

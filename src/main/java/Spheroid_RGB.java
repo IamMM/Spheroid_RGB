@@ -61,6 +61,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JCheckBox autoScaleCheckBox;
     private JTextField yAxisTextField;
     private JCheckBox cleanTableCheckBox;
+    private JCheckBox ratioMeanCheckBox;
+    private JCheckBox valueRatiosCheckBox;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -118,9 +120,9 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-        ImagePlus image = IJ.openImage("img/test.png");
+//        ImagePlus image = IJ.openImage("img/test.png");
 //        ImagePlus image = IJ.openImage("img/SN33267.tif");
-//        ImagePlus image = IJ.openImage("img/EdU.tif");
+        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -189,9 +191,12 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             }
         }
 
-        boolean[] options = new boolean[]{countCellsCheckBox.isSelected(), meanCheckBox.isSelected(), areaCheckBox.isSelected(), integratedDensityCheckBox.isSelected(), cleanTableCheckBox.isSelected()};
+        boolean[] options = new boolean[]
+                {countCellsCheckBox.isSelected(), meanCheckBox.isSelected(), areaCheckBox.isSelected(),
+                        integratedDensityCheckBox.isSelected(), ratioMeanCheckBox.isSelected(),
+                        valueRatiosCheckBox.isSelected(), cleanTableCheckBox.isSelected()};
 
-        table_analyzer.run(image, options);
+        table_analyzer.run(image, options, (String) totalComboBox.getSelectedItem());
 
 //        if(countCellsCheckBox.isSelected()) {
 //            table_analyzer.run(image, );
