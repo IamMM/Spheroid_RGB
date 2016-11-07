@@ -1,6 +1,7 @@
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.*;
+import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.RoiRotator;
@@ -68,8 +69,13 @@ class Multi_Plot{
 
     private void initCentroid() {
         ImageStatistics stats = roi.getImage().getStatistics(Measurements.CENTROID);
-        yCentroid = stats.yCentroid;
         xCentroid = stats.xCentroid;
+        yCentroid = stats.yCentroid;
+        Calibration calibration = roi.getImage().getCalibration();
+        if (calibration.scaled()) {
+            xCentroid = calibration.getRawY(xCentroid);
+            yCentroid = calibration.getRawY(yCentroid);
+        }
     }
 
     private void initLines(boolean diameter, int profileLength, double angle) {
