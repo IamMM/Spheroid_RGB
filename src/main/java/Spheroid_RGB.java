@@ -36,7 +36,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JCheckBox meanCheckBox;
     private JCheckBox areaCheckBox;
     private JCheckBox integratedDensityCheckBox;
-    private JPanel countPanel;
     private JPanel innerCountPanel;
     private JTextField cellWidthField;
     private JTextField minDistField;
@@ -54,7 +53,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JLabel lineLengthLabel;
     private JLabel profileLabel;
     private JSlider profileLengthSlider;
-    private JButton diameterButton;
+    private JButton radiusButton;
     private JCheckBox showSelectedChannel;
     private JCheckBox showAllGrayPlots;
     private JButton plotButton;
@@ -87,7 +86,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     static boolean takeR;
     static boolean takeG;
     static boolean takeB;
-    static int total;
     static boolean imageIsGray;
 
     // magic selection
@@ -96,11 +94,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     // multi plot
     private Multi_Plot multiPlot;
-    private boolean diameter = true;
+    private boolean radius = true;
     private int yMax;
-
-    public Spheroid_RGB() {
-    }
 
     /**
      * Main method for debugging.
@@ -121,8 +116,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
         // open the Spheroid_RGB sample
 //        ImagePlus image = IJ.openImage("img/test.png");
-//        ImagePlus image = IJ.openImage("img/SN33267.tif");
-        ImagePlus image = IJ.openImage("img/EdU.tif");
+        ImagePlus image = IJ.openImage("img/SN33267.tif");
+//        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -137,12 +132,22 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         ImagePlus.addImageListener(this);
 
         if(WindowManager.getImageCount() == 0) {
-            IJ.showMessage("no image"); //IJ.openImage("img/EdU.tif").show();
+            IJ.showMessage("no image open");
             return;
-//            Opener opener = new Opener(); //todo open example image here
-//            opener.openImage("img/Edu.tif").show();
+
+//            URL url = null;
+//            try {
+//                url = getClass().getResource("/img/EdU.tif");
+//                Image image = Toolkit.getDefaultToolkit().getImage(url);
+//                ImagePlus imp = new ImagePlus("/img/EdU.tif", image);
+//                imp.show();
+//            }catch (Exception e) {
+//                String msg = e.getMessage();
+//                if (msg==null || msg.equals(""))
+//                    msg = "" + e;
+//                IJ.showMessage("Spheroid RGB", msg + "\n \n" + url);
+//            }
         }
-        else setImage();
 
         if(RoiManager.getInstance() == null) {
             new RoiManager();
@@ -150,6 +155,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
         initActionListeners();
         initImageList();
+        setImage();
         initComponents();
 
         frame = new JFrame(TITLE + VERSION);
@@ -228,7 +234,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             channel.add(image);
         }
         boolean[] options = new boolean[]{showLines.isSelected(), showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
-        multiPlot.run(channel, image, profileSlider.getValue(), diameter, profileLengthSlider.getValue(), (String) totalComboBox.getSelectedItem(), yMax, options);
+        multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), (String) totalComboBox.getSelectedItem(), yMax, options);
     }
 
     // check if Image is RGB or 8bit
@@ -332,10 +338,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
         Opener opener = new Opener();
         image = opener.openImage(directory, name);
-//        WindowManager.setCurrentWindow(WindowManager.getImage(name).getWindow());
         image.show();
-        imgList.addItem(image.getTitle());
-        imgList.setSelectedIndex(imgList.getItemCount() - 1);
     }
 
     private void showSelectedChannels() {
@@ -425,10 +428,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         countCellsCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for (Component c : countPanel.getComponents()) {
-                    c.setEnabled(countCellsCheckBox.isSelected());
-                }
-
                 for (Component c : innerCountPanel.getComponents()) {
                     c.setEnabled(countCellsCheckBox.isSelected());
                 }
@@ -568,15 +567,15 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             }
         });
 
-        diameterButton.addActionListener(new ActionListener() {
+        radiusButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(diameter){
-                    diameter = false;
-                    diameterButton.setText("radius");
+                if(radius){
+                    radius = false;
+                    radiusButton.setText("diameter");
                 }else {
-                    diameter = true;
-                    diameterButton.setText("diameter");
+                    radius = true;
+                    radiusButton.setText("radius");
                 }
             }
         });
@@ -605,7 +604,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
         threshold = thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
-        total = totalComboBox.getSelectedIndex();
     }
 
     private void getPlotValues() {
@@ -641,11 +639,16 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         totalComboBox.addItem("Green");
         totalComboBox.addItem("Blue");
         totalComboBox.setSelectedIndex(2);
+
+        // disable all count related components
+        for (Component c : innerCountPanel.getComponents()) {
+            c.setEnabled(false);
+        }
     }
 
     private void close() {
-        frame.dispose();
         WindowManager.removeWindow(this.frame);
+        this.frame.dispose();
     }
 
     @Override

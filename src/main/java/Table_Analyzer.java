@@ -1,14 +1,10 @@
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.measure.Calibration;
-import ij.measure.Measurements;
 import ij.measure.ResultsTable;
-import ij.plugin.filter.Analyzer;
 import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
 
 import java.awt.*;
-import java.nio.channels.Pipe;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -66,8 +62,8 @@ class Table_Analyzer extends Spheroid_RGB {
                 if(calibration.scaled()) resultValues.put("total area (" + calibration.getUnit() + ")", calibration.getX(totalNumberOfPixels));
             }
 
-            // todo: peaks mean ratio, count ratio, mean ratio, ratio mean NEW, area fraction
-            if(channel.size() >= 2) {
+            // ratio values
+            if(channel.size() == 2) {
                 if (ratioValuesIsSelected && countIsSelected) {
                     resultValues.put("count ratio", ratio(resultValues, "count", major));
                     resultValues.put("peaks mean ratio", ratio(resultValues, "peaks mean", major));
@@ -76,6 +72,7 @@ class Table_Analyzer extends Spheroid_RGB {
                 if (ratioValuesIsSelected && areaIsSelected) resultValues.put("area fraction", ratio(resultValues, "area", major));
                 if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channel.keySet(), major));
             }
+
             addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues);
         }
 
@@ -91,7 +88,6 @@ class Table_Analyzer extends Spheroid_RGB {
 
     private double ratio(LinkedHashMap<String, Double> resultValues, String key, String major) {
         double majorValue = resultValues.get(key + " (" + major + ")");
-        System.out.println(majorValue);
         double minorValue = 0;
         for (String heading : resultValues.keySet()) {
             if (heading.contains(key) && !heading.contains(major)) {
@@ -112,164 +108,6 @@ class Table_Analyzer extends Spheroid_RGB {
         }
 
         table.show("Count and Mean Results");
-    }
-
-
-    void runCountAndMean() {
-        //create Results table
-        ResultsTable resultsTable = Analyzer.getResultsTable();
-        if (resultsTable == null) {
-            resultsTable = new ResultsTable();
-            Analyzer.setResultsTable(resultsTable);
-        }
-
-        HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
-
-        //count cells and get meanPeak intensity from selected channels for each Roi from Roi Manager
-        ImageStatistics imageStats;
-        Calibration calibration = image.getCalibration();
-        for (Roi currRoi : roiManager.getRoisAsArray()) {
-            resultsTable.incrementCounter();
-            resultsTable.addValue("ROI", currRoi.getName());
-            for (ImagePlus currChannel : channel.keySet()) {
-                currChannel.setRoi(currRoi);
-
-                ArrayList<Point> peaks = rumNucleiCounter(currChannel, channel.get(currChannel));
-                resultsTable.addValue("count (" + currChannel.getTitle() + ")", peaks.size());
-
-                double mean = meanPeak((byte[])currChannel.getProcessor().getPixels(), peaks);
-                resultsTable.addValue("mean peak (" + currChannel.getTitle() + ")", mean);
-
-                double thresholdMean = roiMean(currChannel);
-                resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
-            }
-
-            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), Measurements.AREA, calibration);
-            String unit = calibration.getUnit();
-            if (unit.isEmpty()) unit = "pixel";
-            resultsTable.addValue("total area (" + unit + ")", imageStats.area);
-
-            //ratio
-            if(channel.size() == 2) {
-                int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("count ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
-                resultsTable.addValue("mean peak ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
-                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(3, row), resultsTable.getValueAsDouble(6, row)));
-            } else if (channel.size() == 3) {
-                int row = resultsTable.getCounter() - 1;
-
-                String major = "(red)";
-                String minor1 = "(green)";
-                String minor2 = "(blue)";
-                if (total == 1) {
-                    major = "(green)";
-                    minor1 = "(red)";
-                }
-                if (total == 2) {
-                    major = "(blue)";
-                    minor2 = "(red)";
-                }
-
-                //count ratioMinMax
-                resultsTable.addValue("count " + minor1 + ":" + major
-                        , (resultsTable.getValue("count " + minor1, row) / resultsTable.getValue("count " + major, row)) * 100);
-                resultsTable.addValue("count " + minor2 + ":" + major
-                        , (resultsTable.getValue("count " + minor2, row) / resultsTable.getValue("count " + major, row)) * 100);
-                //intensity ratioMinMax
-                resultsTable.addValue("intensity " + minor1 + ":" + major
-                        , (resultsTable.getValue("mean " + minor1, row) / resultsTable.getValue("mean " + major, row)) * 100);
-                resultsTable.addValue("intensity " + minor2 + ":" + major
-                        , (resultsTable.getValue("mean " + minor2, row) / resultsTable.getValue("mean " + major, row)) * 100);
-
-            }
-
-            resultsTable.addResults();
-            resultsTable.updateResults();
-        }
-
-        //Create and collect result images
-        ArrayList<ImagePlus> resultImages = new ArrayList<>();
-        for (ImagePlus currChannel : channel.keySet()) {
-            resultImages.add(new ImagePlus("Results " + currChannel.getTitle(), channel.get(currChannel)));
-        }
-
-        for (ImagePlus currImage : resultImages) {
-            currImage.show();
-        }
-
-        roiManager.runCommand(image, "Show All");
-    }
-
-    void runMean() {
-        //create Results table
-        ResultsTable resultsTable = Analyzer.getResultsTable();
-        if (resultsTable == null) {
-            resultsTable = new ResultsTable();
-            Analyzer.setResultsTable(resultsTable);
-        }
-
-        ArrayList<ImagePlus> channel = new ArrayList<>();
-
-        if (takeR) channel.add(rgb[0]);
-        if (takeG) channel.add(rgb[1]);
-        if (takeB) channel.add(rgb[2]);
-
-        //count cells and get meanPeak intensity from selected channels for each WiseRoi from WiseRoi Manager
-        ImageStatistics imageStats;
-        Calibration calibration = image.getCalibration();
-        for (Roi currRoi : roiManager.getRoisAsArray()) {
-            resultsTable.incrementCounter();
-            resultsTable.addValue("ROI", currRoi.getName());
-            for (ImagePlus currChannel : channel) {
-                currChannel.setRoi(currRoi);
-                double thresholdMean = roiMean(currChannel);
-                resultsTable.addValue("mean (" + currChannel.getTitle() + ")", thresholdMean);
-                resultsTable.addValue("area (" + currChannel.getTitle() + ") within threshold", numberOfPixelsAboveThres);
-                resultsTable.addValue("integrated density (" + currChannel.getTitle() + ")", thresholdMean * numberOfPixelsAboveThres);
-
-            }
-
-            imageStats = ImageStatistics.getStatistics(currRoi.getImage().getProcessor(), Measurements.AREA, calibration);
-            String unit = calibration.getUnit();
-            if (unit.isEmpty()) unit = "pixel";
-            resultsTable.addValue("total area (" + unit + ")", imageStats.area);
-
-            //ratio
-            if(channel.size() == 2) {
-                int row = resultsTable.getCounter() - 1;
-                resultsTable.addValue("mean ratio (%)", ratioMinMax(resultsTable.getValueAsDouble(1, row), resultsTable.getValueAsDouble(4, row)));
-
-                resultsTable.addValue("ratio mean NEW (%)", roiMeanRatio(channel.get(0), channel.get(1)));
-
-                resultsTable.addValue("area fraction (%)", ratioMinMax(resultsTable.getValueAsDouble(2, row), resultsTable.getValueAsDouble(5, row)));
-            } else if (channel.size() == 3) {
-                int row = resultsTable.getCounter() - 1;
-
-                String major = "(red)";
-                String minor1 = "(green)";
-                String minor2 = "(blue)";
-                if (total == 1) {
-                    major = "(green)";
-                    minor1 = "(red)";
-                }
-                if (total == 2) {
-                    major = "(blue)";
-                    minor2 = "(red)";
-                }
-
-                //intensity ratioMinMax
-                resultsTable.addValue("intensity " + minor1 + ":" + major
-                        , (resultsTable.getValue("mean " + minor1, row) / resultsTable.getValue("mean " + major, row)) * 100);
-                resultsTable.addValue("intensity " + minor2 + ":" + major
-                        , (resultsTable.getValue("mean " + minor2, row) / resultsTable.getValue("mean " + major, row)) * 100);
-
-            }
-
-            resultsTable.addResults();
-            resultsTable.updateResults();
-        }
-
-        roiManager.runCommand(image, "Show All");
     }
 
     /**
@@ -297,17 +135,8 @@ class Table_Analyzer extends Spheroid_RGB {
         return channel;
     }
 
-    /**
-     * @param c1 component 1
-     * @param c2 component 2
-     * @return percentage with assumption that grater value is 100%
-     */
-    private double ratioMinMax(double c1, double c2) {
-        return (Math.min(c1,c2) / Math.max(c1, c2)) * 100;
-    }
-
     private ArrayList<Point> rumNucleiCounter(ImagePlus imp, ImageProcessor ipResults) {
-        //min distance = cell width / 2 as recommended AND maskImp = null (ROI)
+        //maskImp = null (ROI)
         Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, cellWidth, minDist, doubleThreshold , darkPeaks, null);
         nucleiCounter.run();
         ArrayList<Point> peaks = nucleiCounter.getPeaks();
@@ -394,40 +223,6 @@ class Table_Analyzer extends Spheroid_RGB {
             }
         }
         return sum/numberOfPixelsAboveThres;
-    }
-
-    private double roiMeanRatio(ImagePlus imp1, ImagePlus imp2) {
-        Roi roi = imp1.getRoi();
-        if (roi!=null && !roi.isArea()) roi = null;
-        ImageProcessor ip1 = imp1.getProcessor();
-        ImageProcessor ip2 = imp2.getProcessor();
-        ImageProcessor mask = roi!=null ? roi.getMask() : null;
-        Rectangle r = roi!=null ? roi.getBounds() : new Rectangle(0,0,ip1.getWidth(),ip1.getHeight());
-
-        double sum = 0;
-        int count = 0;
-
-        int minThreshold = 0;
-        int maxThreshold= 255;
-
-        if(darkPeaks) maxThreshold -= threshold;
-        else minThreshold = threshold;
-
-        for (int y=0; y<r.height; y++) {
-            for (int x=0; x<r.width; x++) {
-                if (mask==null||mask.getPixel(x,y)!=0) {
-
-                    float value1 = ip1.getPixelValue(x+r.x, y+r.y);
-                    float value2 = ip2.getPixelValue(x+r.x, y+r.y);
-
-                    if (value1 >= minThreshold && value1 <= maxThreshold && value2 > minThreshold && value2 <= maxThreshold) {
-                        sum += value1 / value2;
-                        count++;
-                    }
-                }
-            }
-        }
-        return sum/count;
     }
 
     private double roiMeanRatio(Set<ImagePlus> channels, String majorTitle) {

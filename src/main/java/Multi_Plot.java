@@ -30,7 +30,7 @@ class Multi_Plot{
     private String plotTitle;
     private ResultsTable table;
 
-    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean diameter, int profileLength, String major, int customYMax, boolean[] options) {
+    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean radius, int profileLength, String major, int customYMax, boolean[] options) {
         yMax = 0;
         xMax = 0;
 
@@ -38,8 +38,8 @@ class Multi_Plot{
         this.roi = mask.getRoi();
         this.numberOfProfiles = numberOfProfiles;
         double angle;
-        if(diameter) angle = 180 / (double) numberOfProfiles;
-        else angle = 360 / (double) numberOfProfiles;
+        if(radius) angle = 360 / (double) numberOfProfiles;
+        else angle = 180 / (double) numberOfProfiles;
 
         plotTitle = "Plot " + mask.getTitle();
 
@@ -50,12 +50,12 @@ class Multi_Plot{
         boolean autoScale = options[3];
 
         initCentroid();
-        initLines(diameter, profileLength, angle);
+        initLines(radius, profileLength, angle);
         if (showLines) showLines(mask);
         if (showChannel) showLines(channel);
         HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
         if(!autoScale) yMax = customYMax;
-        plotAverage(listOfAllProfiles, plotAll, major);
+        plotAverage(listOfAllProfiles, plotAll, major.toLowerCase());
     }
 
     private Color toColor(String color) {
@@ -73,17 +73,17 @@ class Multi_Plot{
         yCentroid = stats.yCentroid;
         Calibration calibration = roi.getImage().getCalibration();
         if (calibration.scaled()) {
-            xCentroid = calibration.getRawY(xCentroid);
+            xCentroid = calibration.getRawX(xCentroid);
             yCentroid = calibration.getRawY(yCentroid);
         }
     }
 
-    private void initLines(boolean diameter, int profileLength, double angle) {
+    private void initLines(boolean radius, int profileLength, double angle) {
         lines =  new ArrayList<>();
         Rectangle bounds = roi.getBounds();
         int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
         int x2 = (int) (bounds.x + bounds.getWidth() + profileLength * bounds.getWidth() / 100);
-        if(diameter) {
+        if(!radius) {
             Roi horizontal = new Line(x1, yCentroid, x2, yCentroid);
             for (int i = 0; i <numberOfProfiles;i++) {
                 horizontal = RoiRotator.rotate(horizontal, angle);
@@ -92,10 +92,10 @@ class Multi_Plot{
         }
         else {
             double newAngle = 0;
-            int radius = (int) (bounds.getWidth() / 2 + profileLength * bounds.getWidth() / 100);
+            int r = (int) (bounds.getWidth() / 2 + profileLength * bounds.getWidth() / 100);
             for (int i = 0; i <numberOfProfiles;i++) {
-                double deltaX = Math.cos(Math.toRadians(newAngle)) * radius;
-                double deltaY = Math.sin(Math.toRadians(newAngle)) * radius;
+                double deltaX = Math.cos(Math.toRadians(newAngle)) * r;
+                double deltaY = Math.sin(Math.toRadians(newAngle)) * r;
                 lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
                 newAngle += angle;
             }
@@ -274,19 +274,19 @@ class Multi_Plot{
 
     private double[] getRightGradientChange(double[] values) {
         double gradient;
-        int span = values.length / 16;
+        int deltaX = values.length / 16; // span dependent from profile line length
         double precision = 0.1;
 
-        for (int i = values.length - 1; i > span; i--) {
-            gradient = (values[i] - values[i-span]) / span;
+        for (int i = values.length - 1; i > deltaX; i--) {
+            gradient = (values[i] - values[i-deltaX]) / deltaX; // deltaY / deltaX
 //            System.out.println(i - span + ": " + gradient);
             if (gradient < -precision || gradient > precision) {
                 if(i == values.length - 1) {
                     IJ.showMessage("No Bounds", "The gradient on the very edge is not 0\nTry to variate the length of the profile lines.");
                     break;
                 } else {
-                    double x = i - span;
-                    double y = values[i - span];
+                    double x = i - deltaX;
+                    double y = values[i - deltaX];
                     return new double[]{x, y};
                 }
             }
