@@ -62,7 +62,7 @@ class Nuclei_Counter {
 
         for (int i = 0; i < ip.getWidth(); i++) {
             for (int j = 0; j < ip.getHeight(); j++) {
-                if (image[i][j] <= threshold) image[i][j] = 0; // used to be: '= threshold;'
+                if (image[i][j] < threshold) image[i][j] = 0; // used to be: '= threshold;'
 //                image[i][j] -= threshold;
             }
         }

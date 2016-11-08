@@ -602,7 +602,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private void getCountAndMeanValues() {
         cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
         minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
-        threshold = thresSlider.getValue();
+        threshold = thresSlider.getValue() > 0 ? thresSlider.getValue() + 1 : thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
     }
 
@@ -656,7 +656,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         imgList.addItem(imagePlus.getTitle());
         imgList.setSelectedIndex(imgList.getItemCount() - 1);
         image = imagePlus;
-        checkImageType();
     }
 
     @Override
