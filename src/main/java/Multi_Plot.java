@@ -55,6 +55,7 @@ class Multi_Plot{
         initCentroid();
         initLines(radius, profileLength, angle);
         if (showLines) showLines(mask);
+        else mask.setOverlay(null);
         if (showChannel) showLines(channel);
         HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
         if(!autoScale) yMax = customYMax;
