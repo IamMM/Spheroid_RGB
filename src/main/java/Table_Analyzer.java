@@ -21,13 +21,13 @@ class Table_Analyzer extends Spheroid_RGB {
     private long totalNumberOfPixels;
 
     void run (ImagePlus image, boolean[] options, String major) {
-        boolean countIsSelected = options[0];
-        boolean meanIsSelected = options[1];
-        boolean areaIsSelected = options[2];
-        boolean idIsSelected = options[3]; //id = integrated density
-        boolean ratioMeanIsSelected = options[4];
-        boolean ratioValuesIsSelected = options[5];
-        boolean cleanTable = options[6];
+        boolean cleanTable = options[0];
+        boolean countIsSelected = options[1];
+        boolean meanIsSelected = options[2];
+        boolean areaIsSelected = options[3];
+        boolean idIsSelected = options[4]; //id = integrated density
+        boolean ratioMeanIsSelected = options[5];
+        boolean ratioValuesIsSelected = options[6];
 
         major = major.toLowerCase();
 

@@ -198,9 +198,9 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         }
 
         boolean[] options = new boolean[]
-                {countCellsCheckBox.isSelected(), meanCheckBox.isSelected(), areaCheckBox.isSelected(),
+                {cleanTableCheckBox.isSelected(), countCellsCheckBox.isSelected(), meanCheckBox.isSelected(), areaCheckBox.isSelected(),
                         integratedDensityCheckBox.isSelected(), ratioMeanCheckBox.isSelected(),
-                        valueRatiosCheckBox.isSelected(), cleanTableCheckBox.isSelected()};
+                        valueRatiosCheckBox.isSelected()};
 
         table_analyzer.run(image, options, (String) totalComboBox.getSelectedItem());
 
@@ -233,7 +233,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         } else {
             channel.add(image);
         }
-        boolean[] options = new boolean[]{showLines.isSelected(), showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
+        boolean[] options = new boolean[]{cleanTableCheckBox.isSelected(), showLines.isSelected(),
+                showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
         multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), (String) totalComboBox.getSelectedItem(), yMax, options);
     }
 

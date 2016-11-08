@@ -44,10 +44,13 @@ class Multi_Plot{
         plotTitle = "Plot " + mask.getTitle();
 
         // options
-        boolean showLines = options[0];
-        boolean showChannel = options[1];
-        boolean plotAll = options[2];
-        boolean autoScale = options[3];
+        boolean cleanTable = options[0];
+        boolean showLines = options[1];
+        boolean showChannel = options[2];
+        boolean plotAll = options[3];
+        boolean autoScale = options[4];
+
+        if(cleanTable) table = new ResultsTable();
 
         initCentroid();
         initLines(radius, profileLength, angle);
