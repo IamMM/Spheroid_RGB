@@ -34,7 +34,7 @@ class Table_Analyzer extends Spheroid_RGB {
 
         if(cleanTable) table = new ResultsTable();
 
-        HashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
+        LinkedHashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
 
         //image stats
         Calibration calibration = image.getCalibration();
@@ -113,8 +113,8 @@ class Table_Analyzer extends Spheroid_RGB {
     /**
      * Every Channel = 8bit ImagePlus and points to an RGB ImageProcessor for the result image
      */
-    private HashMap<ImagePlus, ImageProcessor> initChannelMap() {
-        HashMap<ImagePlus, ImageProcessor> channel = new HashMap<>();
+    private LinkedHashMap<ImagePlus, ImageProcessor> initChannelMap() {
+        LinkedHashMap<ImagePlus, ImageProcessor> channel = new LinkedHashMap<>();
         if(imageIsGray) {
             ImageProcessor results = (image.getProcessor().duplicate()).convertToRGB();
             channel.put(image, results);
