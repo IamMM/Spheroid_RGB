@@ -118,8 +118,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
         // open the Spheroid_RGB sample
 //        ImagePlus image = IJ.openImage("img/test.png");
-        ImagePlus image = IJ.openImage("img/SN33267.tif");
-//        ImagePlus image = IJ.openImage("img/EdU.tif");
+//        ImagePlus image = IJ.openImage("img/SN33267.tif");
+        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -137,17 +137,18 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             IJ.showMessage("no image open");
             return;
 
-//            URL url = null;
+//            URL url = null; //todo open example image
 //            try {
-//                url = getClass().getResource("/img/EdU.tif");
+//                url = getClass().getClassLoader().getResource("img/EdU.tif");
 //                Image image = Toolkit.getDefaultToolkit().getImage(url);
-//                ImagePlus imp = new ImagePlus("/img/EdU.tif", image);
+//                ImagePlus imp = new ImagePlus("/img/EdU.jpg", image);
 //                imp.show();
 //            }catch (Exception e) {
 //                String msg = e.getMessage();
 //                if (msg==null || msg.equals(""))
 //                    msg = "" + e;
 //                IJ.showMessage("Spheroid RGB", msg + "\n \n" + url);
+//                return;
 //            }
         }
 
@@ -205,12 +206,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
                         valueRatiosCheckBox.isSelected()};
 
         table_analyzer.run(image, options, (String) totalComboBox.getSelectedItem());
-
-//        if(countCellsCheckBox.isSelected()) {
-//            table_analyzer.run(image, );
-//        }else {
-//            table_analyzer.runMean();
-//        }
     }
 
     private void runMultiPlot() {
@@ -309,7 +304,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         rgb[0].setLut(LUT.createLutFromColor(Color.RED));
         rgb[1].setLut(LUT.createLutFromColor(Color.GREEN));
         rgb[2].setLut(LUT.createLutFromColor(Color.BLUE));
-        }
+    }
 
     /********************************************************
      * 														*
@@ -562,7 +557,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(image.getRoi() == null) {
-                    IJ.showMessage("Nothing to do.", "No Roi selected");
+                    IJ.showMessage("Nothing to do.", "No active ROI selected");
                 } else {
                     runMultiPlot();
                 }
