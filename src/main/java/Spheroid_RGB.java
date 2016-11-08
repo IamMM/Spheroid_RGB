@@ -5,6 +5,7 @@ import ij.io.Opener;
 import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
+import ij.process.AutoThresholder;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
 
@@ -45,8 +46,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JSlider thresSlider;
     private JLabel thresLabel;
     private JButton maximumButton;
-    private JButton averageButton;
-    private JButton minimumButton;
+    private JComboBox<String> autoThresholdComboBox;
     private JButton analyzeButton;
     private JCheckBox showLines;
     private JSlider profileSlider;
@@ -62,6 +62,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JCheckBox cleanTableCheckBox;
     private JCheckBox ratioMeanCheckBox;
     private JCheckBox valueRatiosCheckBox;
+    private JButton minButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -96,6 +97,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private Multi_Plot multiPlot;
     private boolean radius = true;
     private int yMax;
+
 
     /**
      * Main method for debugging.
@@ -153,10 +155,10 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             new RoiManager();
         }
 
-        initActionListeners();
-        initImageList();
-        setImage();
         initComponents();
+        initImageList();
+        initActionListeners();
+        setImage();
 
         frame = new JFrame(TITLE + VERSION);
         frame.setContentPane(this.mainPanel);
@@ -381,22 +383,21 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         }
     }
 
-    private void averageButtonAction() {
-        Roi roi = image.getRoi();
-
-        if (roi != null)
-        if (roi.isArea()) {
-            ImageStatistics stats = roi.getImage().getStatistics();
-            thresSlider.setValue((int) Math.ceil(stats.mean));
-        }
-    }
-
     private void minimumButtonAction() {
         Roi roi = image.getRoi();
+
         if (roi != null)
-        if (roi.isArea()) {
-            ImageStatistics stats = roi.getImage().getStatistics();
-            thresSlider.setValue((int) Math.ceil(stats.min));
+            if (roi.isArea()) {
+                ImageStatistics stats = roi.getImage().getStatistics();
+                thresSlider.setValue((int) Math.ceil(stats.min));
+            }
+    }
+
+    private void autoThresholdAction(String method) {
+        if(image != null) {
+            AutoThresholder autoThresholder = new AutoThresholder();
+            int auto = autoThresholder.getThreshold(method, image.getProcessor().convertToByteProcessor().getHistogram());
+            thresSlider.setValue(auto);
         }
     }
 
@@ -489,20 +490,20 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
                 maximumButtonAction();
             }
         });
-        averageButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                averageButtonAction();
-            }
-        });
-
-        minimumButton.addActionListener(new ActionListener() {
+        minButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 minimumButtonAction();
             }
         });
 
+        autoThresholdComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                autoThresholdAction((String) autoThresholdComboBox.getSelectedItem());
+            }
+        });
+        
         darkPeaksCheck.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -640,6 +641,12 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         totalComboBox.addItem("Green");
         totalComboBox.addItem("Blue");
         totalComboBox.setSelectedIndex(2);
+
+        // initialize auto threhold combo box
+        String[] methods = AutoThresholder.getMethods();
+        for (String method : methods) {
+            autoThresholdComboBox.addItem(method);
+        }
 
         // disable all count related components
         for (Component c : innerCountPanel.getComponents()) {

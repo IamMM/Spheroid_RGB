@@ -296,7 +296,7 @@
                           </component>
                         </children>
                       </grid>
-                      <grid id="458b7" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                      <grid id="458b7" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                         <margin top="0" left="0" bottom="0" right="0"/>
                         <constraints>
                           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -304,31 +304,38 @@
                         <properties/>
                         <border type="none"/>
                         <children>
-                          <component id="39e2" class="javax.swing.JButton" binding="averageButton" default-binding="true">
-                            <constraints>
-                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <text value="average"/>
-                              <toolTipText value="of area selection"/>
-                            </properties>
-                          </component>
                           <component id="d1bd2" class="javax.swing.JButton" binding="maximumButton" default-binding="true">
                             <constraints>
-                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                             </constraints>
                             <properties>
-                              <text value="maximum"/>
-                              <toolTipText value="of area selection"/>
+                              <text value="max"/>
+                              <toolTipText value="maximum of area selection"/>
                             </properties>
                           </component>
-                          <component id="58648" class="javax.swing.JButton" binding="minimumButton" default-binding="true">
+                          <component id="eb7bf" class="javax.swing.JSeparator">
                             <constraints>
-                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
                             </constraints>
                             <properties>
-                              <text value="minimum"/>
-                              <toolTipText value="of area selection"/>
+                              <orientation value="1"/>
+                            </properties>
+                          </component>
+                          <component id="c580b" class="javax.swing.JComboBox" binding="autoThresholdComboBox" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <toolTipText value="automatic threshold of whole image"/>
+                            </properties>
+                          </component>
+                          <component id="712fe" class="javax.swing.JButton" binding="minButton" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="min"/>
+                              <toolTipText value="minimum of area selection"/>
                             </properties>
                           </component>
                         </children>
