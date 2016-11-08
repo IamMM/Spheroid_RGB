@@ -6,7 +6,6 @@ import ij.process.ImageProcessor;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
@@ -63,13 +62,13 @@ class Table_Analyzer extends Spheroid_RGB {
             }
 
             // ratio values
-            if(channel.size() == 2) {
+            if(channel.size() >= 2) {
                 if (ratioValuesIsSelected && countIsSelected) {
-                    resultValues.put("count ratio", ratio(resultValues, "count", major));
-                    resultValues.put("peaks mean ratio", ratio(resultValues, "peaks mean", major));
+                    resultValues.putAll(ratio(resultValues, "count", major));
+                    resultValues.putAll(ratio(resultValues, "peaks mean", major));
                 }
-                if (ratioValuesIsSelected && meanIsSelected) resultValues.put("mean ratio", ratio(resultValues, "mean", major));
-                if (ratioValuesIsSelected && areaIsSelected) resultValues.put("area fraction", ratio(resultValues, "area", major));
+                if (ratioValuesIsSelected && meanIsSelected) resultValues.putAll(ratio(resultValues, "mean", major));
+                if (ratioValuesIsSelected && areaIsSelected) resultValues.putAll(ratio(resultValues, "area", major));
                 if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channel.keySet(), major));
             }
 
@@ -86,16 +85,20 @@ class Table_Analyzer extends Spheroid_RGB {
         roiManager.runCommand(image, "Show All");
     }
 
-    private double ratio(LinkedHashMap<String, Double> resultValues, String key, String major) {
-        double majorValue = resultValues.get(key + " (" + major + ")");
-        double minorValue = 0;
+    private LinkedHashMap<String, Double> ratio(LinkedHashMap<String, Double> resultValues, String key, String major) {
+        LinkedHashMap<String, Double> ratioValues = new LinkedHashMap<>();
+
+        String majorHeading = key + " (" + major + ")";
+        if (resultValues.get(majorHeading) == null) return ratioValues;
+
+        double majorValue = resultValues.get(majorHeading);
         for (String heading : resultValues.keySet()) {
-            if (heading.contains(key) && !heading.contains(major)) {
-                minorValue = resultValues.get(heading);
-                break;
+            if (heading.startsWith(key) && !heading.contains(major)) {
+                double ratio = resultValues.get(heading) / majorValue;
+                ratioValues.put(heading + ":" + majorHeading, ratio);
             }
         }
-        return minorValue / majorValue;
+        return ratioValues;
     }
 
     private void addValuesToResultsTable(String imgTitle, String roiTitle, LinkedHashMap<String, Double> results) {
