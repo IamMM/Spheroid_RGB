@@ -396,7 +396,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private void autoThresholdAction(String method) {
         if(image != null) {
             AutoThresholder autoThresholder = new AutoThresholder();
-            int auto = autoThresholder.getThreshold(method, image.getProcessor().convertToByteProcessor().getHistogram());
+            int auto = autoThresholder.getThreshold(method, image.getProcessor().getHistogram());
             thresSlider.setValue(auto);
         }
     }
@@ -503,7 +503,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
                 autoThresholdAction((String) autoThresholdComboBox.getSelectedItem());
             }
         });
-        
+
         darkPeaksCheck.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
