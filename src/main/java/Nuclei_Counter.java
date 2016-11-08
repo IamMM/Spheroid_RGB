@@ -18,7 +18,7 @@ class Nuclei_Counter {
     private double threshold;              // Threshold
     private boolean darkPeaks;             // Select dark or light peaks
     private double variance;               // Variance
-    private ImagePlus inputImage;            // ImagePlus for current image
+    private ImagePlus inputImage;          // ImagePlus for current image
     private ImageProcessor ip;             // ImageProcessor for current image
     private ImagePlus maskImp;             // ImagePlus for mask image (null if does not exist)
 
@@ -62,8 +62,8 @@ class Nuclei_Counter {
 
         for (int i = 0; i < ip.getWidth(); i++) {
             for (int j = 0; j < ip.getHeight(); j++) {
-                if (image[i][j] < threshold) image[i][j] = threshold;
-                image[i][j] -= threshold;
+                if (image[i][j] <= threshold) image[i][j] = 0; // used to be: '= threshold;'
+//                image[i][j] -= threshold;
             }
         }
 
