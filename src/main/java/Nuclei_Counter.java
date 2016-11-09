@@ -185,8 +185,8 @@ class Nuclei_Counter {
     }
 
     private ArrayList<Point> find_local_max(double[][] image, Rectangle r, double epsilon, double min_dist, boolean[][] mask) {
-        ArrayList<Point> ind_n = new ArrayList<Point>();
-        ArrayList<Point> ind_n_ext = new ArrayList<Point>();
+        ArrayList<Point> ind_n = new ArrayList<>();
+        ArrayList<Point> ind_n_ext = new ArrayList<>();
 
         // prepare neighborhood indices
         double n_dim = epsilon;
@@ -210,7 +210,7 @@ class Nuclei_Counter {
             }
         }
 
-        ArrayList<Point> peaks = new ArrayList<Point>();
+        ArrayList<Point> peaks = new ArrayList<>();
 
         double minimum = 0;
         while (true) {

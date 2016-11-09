@@ -117,9 +117,9 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-//        ImagePlus image = IJ.openImage("img/test.png");
+        ImagePlus image = IJ.openImage("img/test.png");
 //        ImagePlus image = IJ.openImage("img/SN33267.tif");
-        ImagePlus image = IJ.openImage("img/EdU.tif");
+//        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -340,8 +340,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void showSelectedChannels() {
-        checkImageType();
-        if (!imageIsGray) {
+        if (image.getType() == ImagePlus.COLOR_RGB) {
             ImagePlus[] split = ChannelSplitter.split(image);
             setChannelLut(split);
             if (takeR) split[0].show();
@@ -370,7 +369,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     private void maximumButtonAction() {
         Roi roi = image.getRoi();
-
         if (roi != null)
         if (roi.isArea()) {
             ImageStatistics stats = roi.getImage().getStatistics();
@@ -599,7 +597,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private void getCountAndMeanValues() {
         cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
         minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
-        threshold = thresSlider.getValue() > 0 ? thresSlider.getValue() + 1 : thresSlider.getValue();
+        threshold = thresSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
     }
 

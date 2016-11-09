@@ -258,6 +258,8 @@ class Table_Analyzer extends Spheroid_RGB {
         if(darkPeaks) maxThreshold -= threshold;
         else minThreshold = threshold;
 
+        if(minThreshold == 0) minThreshold++;
+
         for (int y=0; y<r.height; y++) {
             for (int x=0; x<r.width; x++) {
                 if (mask==null||mask.getPixel(x,y)!=0) {
@@ -265,7 +267,7 @@ class Table_Analyzer extends Spheroid_RGB {
                     float value1 = minor_ip.getPixelValue(x+r.x, y+r.y);
                     float value2 = major_ip.getPixelValue(x+r.x, y+r.y);
 
-                    if (value1 >= minThreshold && value1 <= maxThreshold && value2 > minThreshold && value2 <= maxThreshold) {
+                    if (value1 >= minThreshold && value1 <= maxThreshold && value2 >= minThreshold && value2 <= maxThreshold) {
                         sum += value1 / value2;
                         count++;
                     }
