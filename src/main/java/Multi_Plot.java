@@ -59,7 +59,7 @@ class Multi_Plot{
         if (showChannel) showLines(channel);
         HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
         if(!autoScale) yMax = customYMax;
-        plotAverage(listOfAllProfiles, plotAll, major.toLowerCase());
+        plotAverage(listOfAllProfiles, plotAll, major.toLowerCase(), radius);
     }
 
     private Color toColor(String color) {
@@ -165,7 +165,7 @@ class Multi_Plot{
         return avg;
     }
 
-    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll, String major) {
+    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll, String major, boolean radius) {
         // init x values 0 .. xMax
         double[] x = new double[xMax];
         for (int i = 0; i < xMax; i++) {
@@ -201,31 +201,35 @@ class Multi_Plot{
             plot.addPoints(x, avg, PlotWindow.LINE);
             avgList.put(currChannel.getTitle(), avg);
 
-            double[] max = getMaxCoordinates(avg);
-            resultValues.put(currChannel.getTitle() + " max x", max[0]);
-            resultValues.put(currChannel.getTitle() + " max y", max[1]);
+            if (radius) {
+                double[] max = getMaxCoordinates(avg);
+                resultValues.put(currChannel.getTitle() + " max x", max[0]);
+                resultValues.put(currChannel.getTitle() + " max y", max[1]);
 
-            double[] bounds = getRightGradientChange(avg);
-            resultValues.put(currChannel.getTitle() + " bounds x", bounds[0]);
-            resultValues.put(currChannel.getTitle() + " bounds y", bounds[1]);
-            plot.setColor(Color.darkGray);
-            plot.setLineWidth(1);
-            plot.drawLine(bounds[0],0,bounds[0],yMax);
-            if(currChannel.getTitle().equalsIgnoreCase(major)) {
-                majorBounds = bounds;
+                double[] bounds = getRightGradientChange(avg);
+                resultValues.put(currChannel.getTitle() + " bounds x", bounds[0]);
+                resultValues.put(currChannel.getTitle() + " bounds y", bounds[1]);
+                plot.setColor(Color.darkGray);
+                plot.setLineWidth(1);
+                plot.drawLine(bounds[0], 0, bounds[0], yMax);
+                if (currChannel.getTitle().equalsIgnoreCase(major)) {
+                    majorBounds = bounds;
+                }
+
+                plot.setLineWidth(1);
+                plot.setColor(Color.darkGray);
+                plot.drawDottedLine(0, max[1], max[0], max[1], 2);
             }
-
-            plot.setLineWidth(1);
-            plot.setColor(Color.darkGray);
-            plot.drawDottedLine(0, max[1] ,max[0], max[1], 2);
         }
 
-        for (String color : avgList.keySet()) {
-            double area = getArea(avgList.get(color), majorBounds[0]);
-            resultValues.put(color + " area (" + major + " bounds)", area);
+        if (radius) {
+            for (String color : avgList.keySet()) {
+                double area = getArea(avgList.get(color), majorBounds[0]);
+                resultValues.put(color + " area (" + major + " bounds)", area);
+            }
+            addValuesToResultsTable(resultValues);
         }
 
-        addValuesToResultsTable(resultValues);
         plot.show();
         mask.setRoi(roi);
     }
