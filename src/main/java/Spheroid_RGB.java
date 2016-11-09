@@ -369,11 +369,24 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     private void maximumButtonAction() {
         Roi roi = image.getRoi();
+        int max = 0;
         if (roi != null)
         if (roi.isArea()) {
             ImageStatistics stats = roi.getImage().getStatistics();
-            thresholdSlider.setValue((int) Math.ceil(stats.max));
+            max = ((int) Math.ceil(stats.max));
+            if (image.getType() == ImagePlus.COLOR_RGB) {
+                ImagePlus[] split = ChannelSplitter.split(image);
+                for (ImagePlus channel : split) {
+                    channel.setRoi(roi);
+                    roi = channel.getRoi();
+                    stats = roi.getImage().getStatistics();
+                    int channelMax = (int) Math.ceil(stats.max);
+                    if (channelMax > max) max = channelMax;
+                }
+            }
+            thresholdSlider.setValue(max);
         }
+
     }
 
     private void minimumButtonAction() {
