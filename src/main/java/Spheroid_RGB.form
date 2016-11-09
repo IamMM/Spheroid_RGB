@@ -265,7 +265,7 @@
                         <properties/>
                         <border type="none"/>
                         <children>
-                          <component id="3077" class="javax.swing.JSlider" binding="thresSlider" default-binding="true">
+                          <component id="3077" class="javax.swing.JSlider" binding="thresholdSlider" default-binding="true">
                             <constraints>
                               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                                 <preferred-size width="50" height="-1"/>
@@ -284,7 +284,7 @@
                               <text value="threshold"/>
                             </properties>
                           </component>
-                          <component id="1e7bb" class="javax.swing.JLabel" binding="thresLabel">
+                          <component id="1e7bb" class="javax.swing.JLabel" binding="thresholdLabel">
                             <constraints>
                               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
                                 <minimum-size width="20" height="-1"/>

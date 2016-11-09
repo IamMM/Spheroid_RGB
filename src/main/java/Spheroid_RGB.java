@@ -43,8 +43,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JButton lineLengthButton;
     private JButton lineLengthButtonMinDist;
     private JCheckBox darkPeaksCheck;
-    private JSlider thresSlider;
-    private JLabel thresLabel;
+    private JSlider thresholdSlider;
+    private JLabel thresholdLabel;
     private JButton maximumButton;
     private JComboBox<String> autoThresholdComboBox;
     private JButton analyzeButton;
@@ -372,7 +372,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         if (roi != null)
         if (roi.isArea()) {
             ImageStatistics stats = roi.getImage().getStatistics();
-            thresSlider.setValue((int) Math.ceil(stats.max));
+            thresholdSlider.setValue((int) Math.ceil(stats.max));
         }
     }
 
@@ -382,7 +382,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         if (roi != null)
             if (roi.isArea()) {
                 ImageStatistics stats = roi.getImage().getStatistics();
-                thresSlider.setValue((int) Math.ceil(stats.min));
+                thresholdSlider.setValue((int) Math.ceil(stats.min));
             }
     }
 
@@ -390,7 +390,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         if(image != null) {
             AutoThresholder autoThresholder = new AutoThresholder();
             int auto = autoThresholder.getThreshold(method, image.getProcessor().getHistogram());
-            thresSlider.setValue(auto);
+            thresholdSlider.setValue(auto);
         }
     }
 
@@ -459,10 +459,10 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             }
         });
 
-        thresSlider.addChangeListener(new ChangeListener() {
+        thresholdSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                thresLabel.setText(thresSlider.getValue() + "");
+                thresholdLabel.setText(thresholdSlider.getValue() + "");
             }
         });
         magicSelectButton.addActionListener(new ActionListener() {
@@ -501,7 +501,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             @Override
             public void actionPerformed(ActionEvent e) {
                 darkPeaks = darkPeaksCheck.isSelected();
-                thresSlider.setInverted(darkPeaks);
+                thresholdSlider.setInverted(darkPeaks);
             }
         });
 
@@ -597,7 +597,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private void getCountAndMeanValues() {
         cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
         minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
-        threshold = thresSlider.getValue();
+        threshold = thresholdSlider.getValue();
         doubleThreshold = 10 * ((double)threshold /255);
     }
 
@@ -635,7 +635,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         totalComboBox.addItem("Blue");
         totalComboBox.setSelectedIndex(2);
 
-        // initialize auto threhold combo box
+        // initialize auto threshold combo box
         String[] methods = AutoThresholder.getMethods();
         for (String method : methods) {
             autoThresholdComboBox.addItem(method);

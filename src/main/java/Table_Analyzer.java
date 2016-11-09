@@ -17,7 +17,7 @@ import java.util.Set;
 class Table_Analyzer extends Spheroid_RGB {
 
     private ResultsTable table;
-    private long numberOfPixelsAboveThres;
+    private long numberOfPixelsAboveThreshold;
     private long totalNumberOfPixels;
 
     void run (ImagePlus image, boolean[] options, String major) {
@@ -52,8 +52,8 @@ class Table_Analyzer extends Spheroid_RGB {
 
                 double thresholdMean = roiMean(currChannel);
                 if(meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
-                if(areaIsSelected) resultValues.put("area (" + title + ")", (double) numberOfPixelsAboveThres);
-                if(idIsSelected) resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThres);
+                if(areaIsSelected) resultValues.put("area (" + title + ")", (double) numberOfPixelsAboveThreshold);
+                if(idIsSelected) resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThreshold);
             }
 
             if(areaIsSelected) {
@@ -176,7 +176,7 @@ class Table_Analyzer extends Spheroid_RGB {
     // mean of all pixels in image
 //    private double meanWithThreshold (ImageProcessor ip) {
 //        int[] histogram = ip.getHistogram();
-//        numberOfPixelsAboveThres = 0;
+//        numberOfPixelsAboveThreshold = 0;
 //        double sum = 0;
 //        int minThreshold = 0;
 //        int maxThreshold= 255;
@@ -186,14 +186,14 @@ class Table_Analyzer extends Spheroid_RGB {
 //
 //        for(int i = minThreshold; i <= maxThreshold; i++) {
 //            sum += (double)i * (double)histogram[i];
-//            numberOfPixelsAboveThres += (long)histogram[i];
+//            numberOfPixelsAboveThreshold += (long)histogram[i];
 //        }
 //
 //        for (int count : histogram) {
 //            totalNumberOfPixels += count;
 //        }
 //
-//        return  sum / (double)numberOfPixelsAboveThres;
+//        return  sum / (double)numberOfPixelsAboveThreshold;
 //    }
 
     private double roiMean(ImagePlus imp) {
@@ -204,7 +204,7 @@ class Table_Analyzer extends Spheroid_RGB {
         Rectangle r = roi!=null ? roi.getBounds() : new Rectangle(0,0,ip.getWidth(),ip.getHeight());
 
         double sum = 0;
-        numberOfPixelsAboveThres = 0;
+        numberOfPixelsAboveThreshold = 0;
         totalNumberOfPixels = 0;
 
         int minThreshold = 0;
@@ -220,12 +220,12 @@ class Table_Analyzer extends Spheroid_RGB {
                     float value = ip.getPixelValue(x+r.x, y+r.y);
                     if (value >= minThreshold && value <= maxThreshold) {
                         sum += value;
-                        numberOfPixelsAboveThres++;
+                        numberOfPixelsAboveThreshold++;
                     }
                 }
             }
         }
-        return sum/numberOfPixelsAboveThres;
+        return sum/ numberOfPixelsAboveThreshold;
     }
 
     private double roiMeanRatio(Set<ImagePlus> channels, String majorTitle) {
@@ -252,13 +252,11 @@ class Table_Analyzer extends Spheroid_RGB {
         double sum = 0;
         int count = 0;
 
-        int minThreshold = 0;
+        int minThreshold = 1;
         int maxThreshold= 255;
 
         if(darkPeaks) maxThreshold -= threshold;
-        else minThreshold = threshold;
-
-        if(minThreshold == 0) minThreshold++;
+        else if(threshold > 0) minThreshold = threshold;
 
         for (int y=0; y<r.height; y++) {
             for (int x=0; x<r.width; x++) {
