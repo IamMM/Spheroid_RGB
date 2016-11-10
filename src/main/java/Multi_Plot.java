@@ -82,26 +82,27 @@ class Multi_Plot{
         }
     }
 
-    private void initLines(boolean radius, int profileLength, double angle) {
+    private void initLines(boolean radiusMode, int profileLength, double angle) {
         lines =  new ArrayList<>();
         Rectangle bounds = roi.getBounds();
-        int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
-        int x2 = (int) (bounds.x + bounds.getWidth() + profileLength * bounds.getWidth() / 100);
-        if(!radius) {
+        double diameter = bounds.getWidth() > bounds.getHeight() ? bounds.getWidth() : bounds.getHeight();
+        int radius = (int) (diameter / 2); // radius
+        if (radiusMode) {
+            double newAngle = 0;
+            radius += profileLength * diameter / 100; // scale
+            for (int i = 0; i <numberOfProfiles;i++) {
+                double deltaX = Math.cos(Math.toRadians(newAngle)) * radius;
+                double deltaY = Math.sin(Math.toRadians(newAngle)) * radius;
+                lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
+                newAngle += angle;
+            }
+        } else {
+            int x1 = (int) (xCentroid - radius - profileLength * diameter / 100);
+            int x2 = (int) (xCentroid + radius + profileLength * diameter / 100);
             Roi horizontal = new Line(x1, yCentroid, x2, yCentroid);
             for (int i = 0; i <numberOfProfiles;i++) {
                 horizontal = RoiRotator.rotate(horizontal, angle);
                 lines.add(horizontal);
-            }
-        }
-        else {
-            double newAngle = 0;
-            int r = (int) (bounds.getWidth() / 2 + profileLength * bounds.getWidth() / 100);
-            for (int i = 0; i <numberOfProfiles;i++) {
-                double deltaX = Math.cos(Math.toRadians(newAngle)) * r;
-                double deltaY = Math.sin(Math.toRadians(newAngle)) * r;
-                lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
-                newAngle += angle;
             }
         }
     }
