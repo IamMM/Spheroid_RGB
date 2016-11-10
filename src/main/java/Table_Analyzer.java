@@ -1,8 +1,11 @@
 import ij.ImagePlus;
+import ij.gui.Plot;
 import ij.gui.Roi;
 import ij.measure.Calibration;
+import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -48,6 +51,11 @@ class Table_Analyzer extends Spheroid_RGB {
 
                     double meanPeak = meanPeak((byte[]) currChannel.getProcessor().getPixels(), peaks);
                     resultValues.put("peaks mean (" + title + ")", meanPeak);
+
+                    countDistanceFunction(peaks, currRoi, 1);
+                    countDistanceFunction(peaks, currRoi, 5);
+                    countDistanceFunction(peaks, currRoi, 10);
+                    countDistanceFunction(peaks, currRoi, 20);
                 }
 
                 double thresholdMean = roiMean(currChannel);
@@ -253,7 +261,7 @@ class Table_Analyzer extends Spheroid_RGB {
         int count = 0;
 
         int minThreshold = 1;
-        int maxThreshold= 255;
+        int maxThreshold = 255;
 
         if(darkPeaks) maxThreshold -= threshold;
         else if(threshold > 0) minThreshold = threshold;
@@ -273,5 +281,60 @@ class Table_Analyzer extends Spheroid_RGB {
             }
         }
         return sum/count;
+    }
+
+    private void countDistanceFunction(ArrayList<Point> peaks, Roi roi, int quantification) {
+        // find centroid from roi
+        ImageStatistics stats = roi.getImage().getStatistics(Measurements.CENTROID);
+        double xCentroid = stats.xCentroid;
+        double yCentroid = stats.yCentroid;
+        Calibration calibration = roi.getImage().getCalibration();
+        if (calibration.scaled()) {
+            xCentroid = calibration.getRawX(xCentroid);
+            yCentroid = calibration.getRawY(yCentroid);
+        }
+
+        // measure distances from each point to centroid
+        int height = (int) (roi.getBounds().getHeight());
+        int width = (int) (roi.getBounds().getWidth());
+        int bounds = height > width ? height : width;
+        double[] count = new double[bounds];
+
+        for (Point p : peaks) {
+            double a2 = (xCentroid - p.x) *(xCentroid - p.x);
+            double b2 = (yCentroid - p.y) * (yCentroid - p.y);
+            int distance = (int) Math.round(Math.sqrt(a2 + b2));
+            distance = distance - (distance % quantification);
+            count[distance]++;
+        }
+
+        // count max
+        double countMax = 0;
+        for (double c :count) {
+            countMax = c > countMax ?  c : countMax;
+        }
+
+        // find values pairs
+        LinkedHashMap<Double, Double> valuePairs = new LinkedHashMap<>();
+        for (int i = 0; i < bounds; i++) {
+            double c = count[i];
+            if (c > 0) valuePairs.put((double) i, c);
+        }
+
+        // init y and x values
+        double[] x = new double[valuePairs.size()];
+        double[] y = new double[valuePairs.size()];
+        int index = 0;
+        for (Double X : valuePairs.keySet()) {
+            x[index] = X;
+            y[index] = valuePairs.get(X);
+            index++;
+        }
+
+        // plot
+        Plot plot = new Plot("Count Distance | Quantification factor: " + quantification,"Distance from Centroid","Count");
+        plot.setLimits(0, bounds / 2, 0, countMax);
+        plot.addPoints(x, y, Plot.LINE);
+        plot.show();
     }
 }
