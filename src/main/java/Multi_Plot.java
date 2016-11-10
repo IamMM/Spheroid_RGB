@@ -87,9 +87,9 @@ class Multi_Plot{
         Rectangle bounds = roi.getBounds();
         double diameter = bounds.getWidth() > bounds.getHeight() ? bounds.getWidth() : bounds.getHeight();
         int radius = (int) (diameter / 2); // radius
+        radius += profileLength * diameter / 100; // scale
         if (radiusMode) {
             double newAngle = 0;
-            radius += profileLength * diameter / 100; // scale
             for (int i = 0; i <numberOfProfiles;i++) {
                 double deltaX = Math.cos(Math.toRadians(newAngle)) * radius;
                 double deltaY = Math.sin(Math.toRadians(newAngle)) * radius;
@@ -97,9 +97,7 @@ class Multi_Plot{
                 newAngle += angle;
             }
         } else {
-            int x1 = (int) (xCentroid - radius - profileLength * diameter / 100);
-            int x2 = (int) (xCentroid + radius + profileLength * diameter / 100);
-            Roi horizontal = new Line(x1, yCentroid, x2, yCentroid);
+            Roi horizontal = new Line(xCentroid - radius, yCentroid, xCentroid + radius, yCentroid);
             for (int i = 0; i <numberOfProfiles;i++) {
                 horizontal = RoiRotator.rotate(horizontal, angle);
                 lines.add(horizontal);
