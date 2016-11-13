@@ -52,8 +52,11 @@ class Table_Analyzer extends Spheroid_RGB {
 
                 double thresholdMean = roiMean(currChannel);
                 if(meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
-                if(areaIsSelected) resultValues.put("area (" + title + ")",
-                        calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
+                if(areaIsSelected) {
+                    resultValues.put("area (" + title + ")", calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
+                    resultValues.put("area fraction (" + title + ":total)",
+                            calibration.getY(calibration.getX(numberOfPixelsAboveThreshold/(double)totalNumberOfPixels)));
+                }
                 if(idIsSelected) resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThreshold);
             }
 
