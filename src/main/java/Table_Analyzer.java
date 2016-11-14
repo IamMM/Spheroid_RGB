@@ -54,7 +54,7 @@ class Table_Analyzer extends Spheroid_RGB {
                 if(meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
                 if(areaIsSelected) {
                     resultValues.put("area (" + title + ")", calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
-                    resultValues.put("area fraction (" + title + ":total)",
+                    resultValues.put("total area fraction (" + title + ")",
                             calibration.getY(calibration.getX(numberOfPixelsAboveThreshold/(double)totalNumberOfPixels)));
                 }
                 if(idIsSelected) resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThreshold);
