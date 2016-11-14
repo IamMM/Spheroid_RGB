@@ -187,13 +187,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void runAnalyzer() {
-        getCountAndMeanValues();
-
-        if (table_analyzer == null) table_analyzer = new Table_Analyzer();
-
-        roiManager = RoiManager.getInstance();
-        if (roiManager == null) roiManager = new RoiManager();
-
         // check if we got what we need
         if(WindowManager.getCurrentImage() == null || image == null) {
             IJ.showMessage("No images open");
@@ -203,6 +196,14 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             IJ.showMessage("Nothing to do", "No Channel selected.");
             return;
         }
+
+        getCountAndMeanValues();
+
+        if (table_analyzer == null) table_analyzer = new Table_Analyzer();
+
+        roiManager = RoiManager.getInstance();
+        if (roiManager == null) roiManager = new RoiManager();
+
         if (roiManager.getCount() == 0) {
             Roi currRoi = image.getRoi();
             if(currRoi == null) image.setRoi(0,0,image.getWidth()-1,image.getHeight()-1);
@@ -218,6 +219,12 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void runMultiPlot() {
+        // check if we got what we need
+        if(!(takeR || takeG || takeB)) {
+            IJ.showMessage("Nothing to do", "No Channel selected.");
+            return;
+        }
+
         getPlotValues();
 
         if(multiPlot == null) multiPlot = new Multi_Plot();
@@ -225,11 +232,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         roiManager = RoiManager.getInstance();
         if (roiManager == null) roiManager = new RoiManager();
 
-        // check if we got what we need
-        if(!(takeR || takeG || takeB)) {
-            IJ.showMessage("Nothing to do", "No Channel selected.");
-            return;
-        }
 
         if (image.getRoi() == null) {
             if (roiManager.getCount() > 0) {
@@ -750,7 +752,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     private void close() {
         WindowManager.removeWindow(this.frame);
-        this.frame.dispose();
+        frame.dispose();
     }
 
     @Override
@@ -762,8 +764,9 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     @Override
     public void imageClosed(ImagePlus imagePlus) {
-        if(WindowManager.getImageCount() == 0) close();
-        else imgList.removeItem(imagePlus.getTitle());
+        if(imgList.getItemCount() > 1)
+            imgList.removeItem(imagePlus.getTitle());
+        else close();
     }
 
     @Override
