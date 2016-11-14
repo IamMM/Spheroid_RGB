@@ -30,7 +30,7 @@ class Multi_Plot{
     private String plotTitle;
     private ResultsTable table;
 
-    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean radius, int profileLength, String major, int customYMax, boolean[] options) {
+    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean radius, int profileLength, int customYMax, boolean[] options) {
         yMax = 0;
         xMax = 0;
 
@@ -59,7 +59,7 @@ class Multi_Plot{
         if (showChannel) showLines(channel);
         HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel);
         if(!autoScale) yMax = customYMax;
-        plotAverage(listOfAllProfiles, plotAll, major.toLowerCase(), radius);
+        plotAverage(listOfAllProfiles, plotAll, radius);
     }
 
     private Color toColor(String color) {
@@ -82,26 +82,25 @@ class Multi_Plot{
         }
     }
 
-    private void initLines(boolean radius, int profileLength, double angle) {
+    private void initLines(boolean radiusMode, int profileLength, double angle) {
         lines =  new ArrayList<>();
         Rectangle bounds = roi.getBounds();
-        int x1 = (int) (bounds.x - profileLength * bounds.getWidth() / 100);
-        int x2 = (int) (bounds.x + bounds.getWidth() + profileLength * bounds.getWidth() / 100);
-        if(!radius) {
-            Roi horizontal = new Line(x1, yCentroid, x2, yCentroid);
+        double diameter = bounds.getWidth() > bounds.getHeight() ? bounds.getWidth() : bounds.getHeight();
+        int radius = (int) (diameter / 2); // radius
+        radius += profileLength * diameter / 100; // scale
+        if (radiusMode) {
+            double newAngle = 0;
+            for (int i = 0; i <numberOfProfiles;i++) {
+                double deltaX = Math.cos(Math.toRadians(newAngle)) * radius;
+                double deltaY = Math.sin(Math.toRadians(newAngle)) * radius;
+                lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
+                newAngle += angle;
+            }
+        } else {
+            Roi horizontal = new Line(xCentroid - radius, yCentroid, xCentroid + radius, yCentroid);
             for (int i = 0; i <numberOfProfiles;i++) {
                 horizontal = RoiRotator.rotate(horizontal, angle);
                 lines.add(horizontal);
-            }
-        }
-        else {
-            double newAngle = 0;
-            int r = (int) (bounds.getWidth() / 2 + profileLength * bounds.getWidth() / 100);
-            for (int i = 0; i <numberOfProfiles;i++) {
-                double deltaX = Math.cos(Math.toRadians(newAngle)) * r;
-                double deltaY = Math.sin(Math.toRadians(newAngle)) * r;
-                lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
-                newAngle += angle;
             }
         }
     }
@@ -165,7 +164,7 @@ class Multi_Plot{
         return avg;
     }
 
-    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll, String major, boolean radius) {
+    private void plotAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll, boolean radius) {
         // init x values 0 .. xMax
         double[] x = new double[xMax];
         for (int i = 0; i < xMax; i++) {
@@ -173,15 +172,15 @@ class Multi_Plot{
         }
 
         PlotWindow.noGridLines = false; // draw grid lines
-        Plot plot = new Plot(plotTitle,"Distance","Intensity");
+        Plot plot = new Plot(plotTitle,"Distance (pixels)","Intensity (gray value)");
         plot.setLimits(0, xMax, 0, yMax);
 
 
         // avg all profiles of all channels
         LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
-        LinkedHashMap<String, double[]> avgList = new LinkedHashMap<>();
+//        LinkedHashMap<String, double[]> avgList = new LinkedHashMap<>();
 
-        double[] majorBounds = new double[]{xMax, yMax};
+//        double[] majorBounds = new double[]{xMax, yMax};
         for (ImagePlus currChannel :listOfAllProfiles.keySet()){
             // all plots
             ArrayList<double[]> profiles = listOfAllProfiles.get(currChannel);
@@ -199,7 +198,7 @@ class Multi_Plot{
             plot.setColor(avgColor);
             plot.setLineWidth(2);
             plot.addPoints(x, avg, PlotWindow.LINE);
-            avgList.put(currChannel.getTitle(), avg);
+//            avgList.put(currChannel.getTitle(), avg);
 
             if (radius) {
                 double[] max = getMaxCoordinates(avg);
@@ -212,9 +211,12 @@ class Multi_Plot{
                 plot.setColor(Color.darkGray);
                 plot.setLineWidth(1);
                 plot.drawLine(bounds[0], 0, bounds[0], yMax);
-                if (currChannel.getTitle().equalsIgnoreCase(major)) {
-                    majorBounds = bounds;
-                }
+//                if (currChannel.getTitle().equalsIgnoreCase(major)) {
+//                    majorBounds = bounds;
+//                }
+
+                double area = getArea(avg, bounds[0]);
+                resultValues.put(currChannel.getTitle() + " area", area);
 
                 plot.setLineWidth(1);
                 plot.setColor(Color.darkGray);
@@ -223,10 +225,10 @@ class Multi_Plot{
         }
 
         if (radius) {
-            for (String color : avgList.keySet()) {
-                double area = getArea(avgList.get(color), majorBounds[0]);
-                resultValues.put(color + " area (" + major + " bounds)", area);
-            }
+//            for (String color : avgList.keySet()) {
+//                double area = getArea(avgList.get(color), majorBounds[0]);
+//                resultValues.put(color + " area (" + major + " bounds)", area);
+//            }
             addValuesToResultsTable(resultValues);
         }
 
