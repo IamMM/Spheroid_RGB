@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="5" left="5" bottom="5" right="5"/>
     <constraints>
-      <xy x="20" y="20" width="676" height="424"/>
+      <xy x="20" y="20" width="675" height="487"/>
     </constraints>
     <properties>
       <opaque value="true"/>
@@ -97,22 +97,6 @@
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="2b09d" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <component id="dfb44" class="javax.swing.JSeparator">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties/>
-                  </component>
-                </children>
-              </grid>
               <grid id="5d023" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
@@ -140,214 +124,6 @@
                     </constraints>
                     <properties>
                       <text value="Get table output"/>
-                    </properties>
-                  </component>
-                </children>
-              </grid>
-              <grid id="a358e" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="etched"/>
-                <children>
-                  <component id="d2000" class="javax.swing.JLabel">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="Set parameter for automatic nuclei detection"/>
-                    </properties>
-                  </component>
-                  <grid id="b04c3" binding="innerCountPanel" layout-manager="GridLayoutManager" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                    <margin top="0" left="0" bottom="0" right="0"/>
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties/>
-                    <border type="none"/>
-                    <children>
-                      <component id="2082c" class="javax.swing.JLabel">
-                        <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <text value="cell width"/>
-                        </properties>
-                      </component>
-                      <component id="ec0d" class="javax.swing.JTextField" binding="cellWidthField">
-                        <constraints>
-                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                            <minimum-size width="20" height="-1"/>
-                          </grid>
-                        </constraints>
-                        <properties>
-                          <text value="15"/>
-                        </properties>
-                      </component>
-                      <component id="4e0b6" class="javax.swing.JLabel">
-                        <constraints>
-                          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <text value="pixels"/>
-                        </properties>
-                      </component>
-                      <component id="ab7b2" class="javax.swing.JLabel">
-                        <constraints>
-                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <labelFor value="5fe3f"/>
-                          <text value="minimum distance"/>
-                          <toolTipText value="recommended: cell width / 2"/>
-                        </properties>
-                      </component>
-                      <component id="f2965" class="javax.swing.JLabel">
-                        <constraints>
-                          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <text value="pixels"/>
-                        </properties>
-                      </component>
-                      <component id="f5094" class="javax.swing.JButton" binding="lineLengthButtonMinDist" default-binding="true">
-                        <constraints>
-                          <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <text value="line length"/>
-                          <toolTipText value="recommended minimum distance = cell width / 2"/>
-                        </properties>
-                      </component>
-                      <component id="ab173" class="javax.swing.JButton" binding="lineLengthButton" default-binding="true">
-                        <constraints>
-                          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <text value="line length"/>
-                        </properties>
-                      </component>
-                      <component id="5fe3f" class="javax.swing.JTextField" binding="minDistField">
-                        <constraints>
-                          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                            <minimum-size width="20" height="-1"/>
-                          </grid>
-                        </constraints>
-                        <properties>
-                          <text value="7.5"/>
-                        </properties>
-                      </component>
-                    </children>
-                  </grid>
-                  <component id="65f48" class="javax.swing.JCheckBox" binding="darkPeaksCheck">
-                    <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="light background (dark peaks)"/>
-                    </properties>
-                  </component>
-                  <grid id="c4d4a" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                    <margin top="0" left="0" bottom="0" right="0"/>
-                    <constraints>
-                      <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties/>
-                    <border type="none"/>
-                    <children>
-                      <grid id="59982" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                        <margin top="0" left="0" bottom="0" right="0"/>
-                        <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties/>
-                        <border type="none"/>
-                        <children>
-                          <component id="3077" class="javax.swing.JSlider" binding="thresholdSlider" default-binding="true">
-                            <constraints>
-                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                                <preferred-size width="50" height="-1"/>
-                              </grid>
-                            </constraints>
-                            <properties>
-                              <maximum value="255"/>
-                              <value value="0"/>
-                            </properties>
-                          </component>
-                          <component id="dbeb1" class="javax.swing.JLabel">
-                            <constraints>
-                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <text value="threshold"/>
-                            </properties>
-                          </component>
-                          <component id="1e7bb" class="javax.swing.JLabel" binding="thresholdLabel">
-                            <constraints>
-                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                                <minimum-size width="20" height="-1"/>
-                              </grid>
-                            </constraints>
-                            <properties>
-                              <text value="0" noi18n="true"/>
-                            </properties>
-                          </component>
-                        </children>
-                      </grid>
-                      <grid id="458b7" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                        <margin top="0" left="0" bottom="0" right="0"/>
-                        <constraints>
-                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties/>
-                        <border type="none"/>
-                        <children>
-                          <component id="d1bd2" class="javax.swing.JButton" binding="maximumButton" default-binding="true">
-                            <constraints>
-                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <text value="max"/>
-                              <toolTipText value="maximum of area selection"/>
-                            </properties>
-                          </component>
-                          <component id="eb7bf" class="javax.swing.JSeparator">
-                            <constraints>
-                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <orientation value="1"/>
-                            </properties>
-                          </component>
-                          <component id="c580b" class="javax.swing.JComboBox" binding="autoThresholdComboBox" default-binding="true">
-                            <constraints>
-                              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <toolTipText value="automatic threshold of whole image"/>
-                            </properties>
-                          </component>
-                          <component id="712fe" class="javax.swing.JButton" binding="minButton" default-binding="true">
-                            <constraints>
-                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <text value="min"/>
-                              <toolTipText value="minimum of area selection"/>
-                            </properties>
-                          </component>
-                        </children>
-                      </grid>
-                    </children>
-                  </grid>
-                  <component id="f2fe9" class="javax.swing.JSeparator">
-                    <constraints>
-                      <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="0" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <orientation value="1"/>
                     </properties>
                   </component>
                 </children>
@@ -419,6 +195,419 @@
                   </hspacer>
                 </children>
               </toolbar>
+              <grid id="1b9ce" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <grid id="a358e" binding="outerCountPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="1" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                    <border type="etched"/>
+                    <children>
+                      <component id="d2000" class="javax.swing.JLabel">
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text value="Set parameter for automatic nuclei detection"/>
+                        </properties>
+                      </component>
+                      <grid id="b04c3" binding="innerCountPanel" layout-manager="GridLayoutManager" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="2082c" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="cell width"/>
+                            </properties>
+                          </component>
+                          <component id="ec0d" class="javax.swing.JTextField" binding="cellWidthField">
+                            <constraints>
+                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                                <minimum-size width="20" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <text value="15"/>
+                            </properties>
+                          </component>
+                          <component id="4e0b6" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="pixels"/>
+                            </properties>
+                          </component>
+                          <component id="ab7b2" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <labelFor value="5fe3f"/>
+                              <text value="minimum distance"/>
+                              <toolTipText value="recommended: cell width / 2"/>
+                            </properties>
+                          </component>
+                          <component id="f2965" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="pixels"/>
+                            </properties>
+                          </component>
+                          <component id="f5094" class="javax.swing.JButton" binding="lineLengthButtonMinDist" default-binding="true">
+                            <constraints>
+                              <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="line length"/>
+                              <toolTipText value="recommended minimum distance = cell width / 2"/>
+                            </properties>
+                          </component>
+                          <component id="ab173" class="javax.swing.JButton" binding="lineLengthButton" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="line length"/>
+                            </properties>
+                          </component>
+                          <component id="5fe3f" class="javax.swing.JTextField" binding="minDistField">
+                            <constraints>
+                              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                                <minimum-size width="20" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <text value="7.5"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <component id="a80a4" class="javax.swing.JCheckBox" binding="plotCountDistanceFunctionCheckBox" default-binding="true">
+                        <constraints>
+                          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text value="plot count distance function"/>
+                        </properties>
+                      </component>
+                      <component id="47d60" class="javax.swing.JTextField" binding="quantificationTextField">
+                        <constraints>
+                          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                            <preferred-size width="30" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <enabled value="false"/>
+                          <text value="20"/>
+                          <toolTipText value="quantification factor"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </grid>
+                  <grid id="c4d4a" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <grid id="59982" binding="defaultThresholdPanel" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="3077" class="javax.swing.JSlider" binding="thresholdSlider" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                                <preferred-size width="50" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <maximum value="255"/>
+                              <value value="0"/>
+                            </properties>
+                          </component>
+                          <component id="dbeb1" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="threshold"/>
+                            </properties>
+                          </component>
+                          <component id="1e7bb" class="javax.swing.JLabel" binding="thresholdLabel">
+                            <constraints>
+                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                                <minimum-size width="20" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <text value="0" noi18n="true"/>
+                            </properties>
+                          </component>
+                          <component id="d1bd2" class="javax.swing.JButton" binding="maximumButton" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="max"/>
+                              <toolTipText value="maximal noise"/>
+                            </properties>
+                          </component>
+                          <component id="712fe" class="javax.swing.JButton" binding="autoButton" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="auto"/>
+                              <toolTipText value="apply automatic threshold"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <grid id="d60cf" binding="greenThresholdPanel" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <visible value="false"/>
+                        </properties>
+                        <border type="none"/>
+                        <children>
+                          <component id="65b6f" class="javax.swing.JSlider" binding="greenThresholdSlider">
+                            <constraints>
+                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                                <preferred-size width="50" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <maximum value="255"/>
+                              <value value="0"/>
+                            </properties>
+                          </component>
+                          <component id="aac8e" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="G threshold"/>
+                            </properties>
+                          </component>
+                          <component id="301b9" class="javax.swing.JLabel" binding="greenThresholdLabel">
+                            <constraints>
+                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                                <minimum-size width="20" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <text value="0" noi18n="true"/>
+                            </properties>
+                          </component>
+                          <component id="8b5d4" class="javax.swing.JButton" binding="greenMaxButton">
+                            <constraints>
+                              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="max"/>
+                              <toolTipText value="maximal green noise"/>
+                            </properties>
+                          </component>
+                          <component id="456de" class="javax.swing.JButton" binding="greenAutoButton">
+                            <constraints>
+                              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="auto"/>
+                              <toolTipText value="apply automatic threshold on green channel"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <grid id="d6994" binding="blueThresholdPanel" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <visible value="false"/>
+                        </properties>
+                        <border type="none"/>
+                        <children>
+                          <component id="e99bd" class="javax.swing.JSlider" binding="blueThresholdSlider">
+                            <constraints>
+                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                                <preferred-size width="50" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <maximum value="255"/>
+                              <value value="0"/>
+                            </properties>
+                          </component>
+                          <component id="c7e60" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="B threshold"/>
+                            </properties>
+                          </component>
+                          <component id="9ca0f" class="javax.swing.JLabel" binding="blueThresholdLabel">
+                            <constraints>
+                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                                <minimum-size width="20" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <text value="0" noi18n="true"/>
+                            </properties>
+                          </component>
+                          <component id="5a17b" class="javax.swing.JButton" binding="blueMaxButton">
+                            <constraints>
+                              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="max"/>
+                              <toolTipText value="maximal blue noise"/>
+                            </properties>
+                          </component>
+                          <component id="88bba" class="javax.swing.JButton" binding="blueAutoButton">
+                            <constraints>
+                              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="auto"/>
+                              <toolTipText value="apply automatic threshold on blue channel"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <grid id="3bb20" binding="redThresholdPanel" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <visible value="false"/>
+                        </properties>
+                        <border type="none"/>
+                        <children>
+                          <component id="8304f" class="javax.swing.JSlider" binding="redThresholdSlider">
+                            <constraints>
+                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                                <preferred-size width="50" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <maximum value="255"/>
+                              <value value="0"/>
+                            </properties>
+                          </component>
+                          <component id="bba23" class="javax.swing.JLabel">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="R threshold"/>
+                            </properties>
+                          </component>
+                          <component id="bbcb1" class="javax.swing.JLabel" binding="redThresholdLabel">
+                            <constraints>
+                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                                <minimum-size width="20" height="-1"/>
+                              </grid>
+                            </constraints>
+                            <properties>
+                              <text value="0" noi18n="true"/>
+                            </properties>
+                          </component>
+                          <component id="a296c" class="javax.swing.JButton" binding="redMaxButton">
+                            <constraints>
+                              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="max"/>
+                              <toolTipText value="maximal red noise"/>
+                            </properties>
+                          </component>
+                          <component id="ab3ec" class="javax.swing.JButton" binding="redAutoButton">
+                            <constraints>
+                              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="auto"/>
+                              <toolTipText value="apply automatic threshold on red channel"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                      <grid id="7a4a9" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                        <margin top="0" left="0" bottom="0" right="0"/>
+                        <constraints>
+                          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="65f48" class="javax.swing.JCheckBox" binding="darkPeaksCheck">
+                            <constraints>
+                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <text value="light background (dark peaks)"/>
+                            </properties>
+                          </component>
+                          <component id="4b76a" class="javax.swing.JSeparator">
+                            <constraints>
+                              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <orientation value="1"/>
+                            </properties>
+                          </component>
+                          <component id="c580b" class="javax.swing.JComboBox" binding="autoThresholdComboBox" default-binding="true">
+                            <constraints>
+                              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                            </constraints>
+                            <properties>
+                              <toolTipText value="mode for automatic threshold"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </grid>
+                    </children>
+                  </grid>
+                </children>
+              </grid>
+              <component id="e3c25" class="javax.swing.JSeparator">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="2" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
             </children>
           </grid>
           <grid id="385ed" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

@@ -17,13 +17,16 @@ import java.util.Set;
  *
  * @author Maximilian Maske
  */
-class Table_Analyzer extends Spheroid_RGB {
+class Table_Analyzer {
 
+    private Spheroid_RGB main;
     private ResultsTable table;
     private long numberOfPixelsAboveThreshold;
     private long totalNumberOfPixels;
 
-    void run (ImagePlus image, boolean[] options, String major) {
+    void run (Spheroid_RGB main, ImagePlus image, boolean[] options, String major) {
+        this.main = main;
+
         boolean cleanTable = options[0];
         boolean countIsSelected = options[1];
         boolean meanIsSelected = options[2];
@@ -31,8 +34,11 @@ class Table_Analyzer extends Spheroid_RGB {
         boolean idIsSelected = options[4]; //id = integrated density
         boolean ratioMeanIsSelected = options[5];
         boolean ratioValuesIsSelected = options[6];
+        boolean plotIsSelected = options[7];
 
         major = major.toLowerCase();
+
+        int threshold = 0;
 
         if(cleanTable) table = new ResultsTable();
 
@@ -40,30 +46,27 @@ class Table_Analyzer extends Spheroid_RGB {
 
         //image stats
         Calibration calibration = image.getCalibration();
-        for (Roi currRoi : roiManager.getRoisAsArray()) {
+        for (Roi currRoi : main.roiManager.getRoisAsArray()) {
             LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
             for (ImagePlus currChannel : channel.keySet()) {
                 currChannel.setRoi(currRoi);
                 String title = currChannel.getTitle().toLowerCase();
+                threshold = main.getThreshold(title);
                 if(countIsSelected) {
-                    ArrayList<Point> peaks = rumNucleiCounter(currChannel, channel.get(currChannel));
+                    ArrayList<Point> peaks = rumNucleiCounter(currChannel, channel.get(currChannel), threshold);
                     resultValues.put("count (" + title + ")", (double) peaks.size());
 
                     double meanPeak = meanPeak((byte[]) currChannel.getProcessor().getPixels(), peaks);
                     resultValues.put("peaks mean (" + title + ")", meanPeak);
 
-                    countDistanceFunction(peaks, currRoi, 1);
-                    countDistanceFunction(peaks, currRoi, 5);
-                    countDistanceFunction(peaks, currRoi, 10);
-                    countDistanceFunction(peaks, currRoi, 20);
+                    if(plotIsSelected) countDistanceFunction(currChannel.getTitle(), peaks, currRoi);
                 }
 
-                double thresholdMean = roiMean(currChannel);
+                double thresholdMean = roiMean(currChannel, threshold);
                 if(meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
                 if(areaIsSelected) {
                     resultValues.put("area (" + title + ")", calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
-                    resultValues.put("total area fraction (" + title + ")",
-                            calibration.getY(calibration.getX(numberOfPixelsAboveThreshold/(double)totalNumberOfPixels)));
+                    resultValues.put("total area fraction (" + title + ")", numberOfPixelsAboveThreshold/(double)totalNumberOfPixels);
                 }
                 if(idIsSelected) resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThreshold);
             }
@@ -82,7 +85,7 @@ class Table_Analyzer extends Spheroid_RGB {
                 }
                 if (ratioValuesIsSelected && meanIsSelected) resultValues.putAll(ratio(resultValues, "mean", major));
                 if (ratioValuesIsSelected && areaIsSelected) resultValues.putAll(ratio(resultValues, "area", major));
-                if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channel.keySet(), major));
+                if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channel.keySet(), major, threshold));
             }
 
             addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues);
@@ -95,7 +98,7 @@ class Table_Analyzer extends Spheroid_RGB {
             }
         }
 
-        roiManager.runCommand(image, "Show All");
+        main.roiManager.runCommand(image, "Show All");
     }
 
     private LinkedHashMap<String, Double> ratio(LinkedHashMap<String, Double> resultValues, String key, String major) {
@@ -131,29 +134,30 @@ class Table_Analyzer extends Spheroid_RGB {
      */
     private LinkedHashMap<ImagePlus, ImageProcessor> initChannelMap() {
         LinkedHashMap<ImagePlus, ImageProcessor> channel = new LinkedHashMap<>();
-        if(imageIsGray) {
-            ImageProcessor results = (image.getProcessor().duplicate()).convertToRGB();
-            channel.put(image, results);
+        if(main.imageIsGray) {
+            ImageProcessor results = (main.image.getProcessor().duplicate()).convertToRGB();
+            channel.put(main.image, results);
         } else {
-            if (takeR) {
-                ImageProcessor redResults = (rgb[0].getProcessor().duplicate()).convertToRGB();
-                channel.put(rgb[0], redResults);
+            if (main.takeR) {
+                ImageProcessor redResults = (main.rgb[0].getProcessor().duplicate()).convertToRGB();
+                channel.put(main.rgb[0], redResults);
             }
-            if (takeG) {
-                ImageProcessor greenResults = (rgb[1].getProcessor().duplicate()).convertToRGB();
-                channel.put(rgb[1], greenResults);
+            if (main.takeG) {
+                ImageProcessor greenResults = (main.rgb[1].getProcessor().duplicate()).convertToRGB();
+                channel.put(main.rgb[1], greenResults);
             }
-            if (takeB) {
-                ImageProcessor blueResults = (rgb[2].getProcessor().duplicate()).convertToRGB();
-                channel.put(rgb[2], blueResults);
+            if (main.takeB) {
+                ImageProcessor blueResults = (main.rgb[2].getProcessor().duplicate()).convertToRGB();
+                channel.put(main.rgb[2], blueResults);
             }
         }
         return channel;
     }
 
-    private ArrayList<Point> rumNucleiCounter(ImagePlus imp, ImageProcessor ipResults) {
+    private ArrayList<Point> rumNucleiCounter(ImagePlus imp, ImageProcessor ipResults, int threshold) {
         //maskImp = null (ROI)
-        Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, cellWidth, minDist, doubleThreshold , darkPeaks, null);
+        double doubleThreshold = 10 * ((double)threshold /255);
+        Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, main.cellWidth, main.minDist, doubleThreshold , main.darkPeaks, null);
         nucleiCounter.run();
         ArrayList<Point> peaks = nucleiCounter.getPeaks();
 
@@ -163,7 +167,7 @@ class Table_Analyzer extends Spheroid_RGB {
     }
 
     private void drawPeaks(ImagePlus imp, ImageProcessor ipResults, ArrayList<Point> peaks) {
-        ipResults.setColor(PEAKS_COLOR);
+        ipResults.setColor(main.PEAKS_COLOR);
         ipResults.setLineWidth(1);
 
         for (Point p : peaks) {
@@ -171,13 +175,13 @@ class Table_Analyzer extends Spheroid_RGB {
 //            System.out.println("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
         }
 
-        ipResults.setColor(ROI_COLOR);
+        ipResults.setColor(main.ROI_COLOR);
         imp.getRoi().drawPixels(ipResults);
     }
 
     private double meanPeak(byte[] pixels, ArrayList<Point> peaks) {
         double sum = 0;
-        int width = image.getWidth();
+        int width = main.image.getWidth();
         for (Point p : peaks) {
             int pos = p.y * width + p.x;
             sum += pixels[pos] & 0xff;
@@ -209,7 +213,7 @@ class Table_Analyzer extends Spheroid_RGB {
 //        return  sum / (double)numberOfPixelsAboveThreshold;
 //    }
 
-    private double roiMean(ImagePlus imp) {
+    private double roiMean(ImagePlus imp, int threshold) {
         Roi roi = imp.getRoi();
         if (roi!=null && !roi.isArea()) roi = null;
         ImageProcessor ip = imp.getProcessor();
@@ -223,7 +227,7 @@ class Table_Analyzer extends Spheroid_RGB {
         int minThreshold = 0;
         int maxThreshold= 255;
 
-        if(darkPeaks) maxThreshold -= threshold;
+        if(main.darkPeaks) maxThreshold -= threshold;
         else minThreshold = threshold;
 
         for (int y=0; y<r.height; y++) {
@@ -241,7 +245,7 @@ class Table_Analyzer extends Spheroid_RGB {
         return sum/ numberOfPixelsAboveThreshold;
     }
 
-    private double roiMeanRatio(Set<ImagePlus> channels, String majorTitle) {
+    private double roiMeanRatio(Set<ImagePlus> channels, String majorTitle, int threshold) {
         if(channels.size() < 2) return 0;
         ImagePlus[] impArray = new ImagePlus[channels.size()];
         channels.toArray(impArray);
@@ -268,7 +272,7 @@ class Table_Analyzer extends Spheroid_RGB {
         int minThreshold = 1;
         int maxThreshold = 255;
 
-        if(darkPeaks) maxThreshold -= threshold;
+        if(main.darkPeaks) maxThreshold -= threshold;
         else if(threshold > 0) minThreshold = threshold;
 
         for (int y=0; y<r.height; y++) {
@@ -288,7 +292,7 @@ class Table_Analyzer extends Spheroid_RGB {
         return sum/count;
     }
 
-    private void countDistanceFunction(ArrayList<Point> peaks, Roi roi, int quantification) {
+    private void countDistanceFunction(String title, ArrayList<Point> peaks, Roi roi) {
         // find centroid from roi
         ImageStatistics stats = roi.getImage().getStatistics(Measurements.CENTROID);
         double xCentroid = stats.xCentroid;
@@ -309,7 +313,7 @@ class Table_Analyzer extends Spheroid_RGB {
             double a2 = (xCentroid - p.x) *(xCentroid - p.x);
             double b2 = (yCentroid - p.y) * (yCentroid - p.y);
             int distance = (int) Math.round(Math.sqrt(a2 + b2));
-            distance = distance - (distance % quantification);
+            distance = distance - (distance % main.quantification);
             count[distance]++;
         }
 
@@ -337,7 +341,7 @@ class Table_Analyzer extends Spheroid_RGB {
         }
 
         // plot
-        Plot plot = new Plot("Count Distance | Quantification factor: " + quantification,"Distance from Centroid","Count");
+        Plot plot = new Plot("Count Distance " + title + "  | Quantification factor: " + main.quantification,"Distance from centroid (pixels)","Count");
         plot.setLimits(0, bounds / 2, 0, countMax);
         plot.addPoints(x, y, Plot.LINE);
         plot.show();

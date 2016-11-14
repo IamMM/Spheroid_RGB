@@ -62,37 +62,55 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JCheckBox cleanTableCheckBox;
     private JCheckBox ratioMeanCheckBox;
     private JCheckBox valueRatiosCheckBox;
-    private JButton minButton;
+    private JButton autoButton;
+    private JPanel greenThresholdPanel;
+    private JPanel blueThresholdPanel;
+    private JPanel defaultThresholdPanel;
+    private JPanel redThresholdPanel;
+    private JButton redAutoButton;
+    private JButton greenAutoButton;
+    private JButton blueAutoButton;
+    private JLabel redThresholdLabel;
+    private JLabel greenThresholdLabel;
+    private JLabel blueThresholdLabel;
+    private JSlider redThresholdSlider;
+    private JSlider greenThresholdSlider;
+    private JSlider blueThresholdSlider;
+    private JButton redMaxButton;
+    private JButton greenMaxButton;
+    private JButton blueMaxButton;
+    private JCheckBox plotCountDistanceFunctionCheckBox;
+    private JTextField quantificationTextField;
+    private JPanel outerCountPanel;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.6.0 ";
-    static Color PEAKS_COLOR = Color.WHITE;
-    static final Color ROI_COLOR = Color.YELLOW;
+    private static final String VERSION = " v0.7.0 ";
+    Color PEAKS_COLOR = Color.WHITE;
+    final Color ROI_COLOR = Color.YELLOW;
 
    // imageJ components
-    static ImagePlus image;
-    static RoiManager roiManager;
+    ImagePlus image;
+    RoiManager roiManager;
 
     // nuclei counter values
-    static int cellWidth;
-    static double minDist;
-    static int threshold;
-    static double doubleThreshold;
-    static boolean darkPeaks;
+    int cellWidth;
+    double minDist;
+    boolean darkPeaks;
+    int quantification;
 
     // rgb channels
     private Table_Analyzer table_analyzer;
-    static ImagePlus[] rgb;
-    static boolean takeR;
-    static boolean takeG;
-    static boolean takeB;
-    static boolean imageIsGray;
+    ImagePlus[] rgb;
+    boolean takeR;
+    boolean takeG;
+    boolean takeB;
 
+    boolean imageIsGray;
     // magic selection
     private double startTolerance = 128;
-    private int startMode = 1;
 
+    private int startMode = 1;
     // multi plot
     private Multi_Plot multiPlot;
     private boolean radius = true;
@@ -152,10 +170,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 //            }
         }
 
-        if(RoiManager.getInstance() == null) {
-            new RoiManager();
-        }
-
         initComponents();
         initImageList();
         initActionListeners();
@@ -198,9 +212,9 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         boolean[] options = new boolean[]
                 {cleanTableCheckBox.isSelected(), countCellsCheckBox.isSelected(), meanCheckBox.isSelected(), areaCheckBox.isSelected(),
                         integratedDensityCheckBox.isSelected(), ratioMeanCheckBox.isSelected(),
-                        valueRatiosCheckBox.isSelected()};
+                        valueRatiosCheckBox.isSelected(), plotCountDistanceFunctionCheckBox.isSelected()};
 
-        table_analyzer.run(image, options, (String) totalComboBox.getSelectedItem());
+        table_analyzer.run(this, image, options, (String) totalComboBox.getSelectedItem());
     }
 
     private void runMultiPlot() {
@@ -375,43 +389,22 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         }
     }
 
-    private void maximumButtonAction() {
+    private void maximumButtonAction(ImagePlus image, JSlider slider) {
         Roi roi = image.getRoi();
-        int max = 0;
-        if (roi != null)
-        if (roi.isArea()) {
-            ImageStatistics stats = roi.getImage().getStatistics();
-            max = ((int) Math.ceil(stats.max));
-            if (image.getType() == ImagePlus.COLOR_RGB) {
-                ImagePlus[] split = ChannelSplitter.split(image);
-                for (ImagePlus channel : split) {
-                    channel.setRoi(roi);
-                    roi = channel.getRoi();
-                    stats = roi.getImage().getStatistics();
-                    int channelMax = (int) Math.ceil(stats.max);
-                    if (channelMax > max) max = channelMax;
-                }
-            }
-            thresholdSlider.setValue(max);
-        }
+        ImageStatistics stats;
 
+        if (roi != null && roi.isArea()) stats = roi.getImage().getStatistics();
+        else stats = image.getStatistics();
+
+        if(darkPeaks) slider.setValue((int) Math.ceil(stats.min));
+        else slider.setValue((int) Math.ceil(stats.max));
     }
 
-    private void minimumButtonAction() {
-        Roi roi = image.getRoi();
-
-        if (roi != null)
-            if (roi.isArea()) {
-                ImageStatistics stats = roi.getImage().getStatistics();
-                thresholdSlider.setValue((int) Math.ceil(stats.min));
-            }
-    }
-
-    private void autoThresholdAction(String method) {
+    private void autoThresholdAction(String method, ImagePlus image, JSlider slider) {
         if(image != null) {
             AutoThresholder autoThresholder = new AutoThresholder();
             int auto = autoThresholder.getThreshold(method, image.getProcessor().getHistogram());
-            thresholdSlider.setValue(auto);
+            slider.setValue(auto);
         }
     }
 
@@ -444,6 +437,9 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         countCellsCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                for (Component c : outerCountPanel.getComponents()) {
+                    c.setEnabled(countCellsCheckBox.isSelected());
+                }
                 for (Component c : innerCountPanel.getComponents()) {
                     c.setEnabled(countCellsCheckBox.isSelected());
                 }
@@ -480,12 +476,38 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             }
         });
 
+        plotCountDistanceFunctionCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                quantificationTextField.setEnabled(plotCountDistanceFunctionCheckBox.isSelected());
+            }
+        });
+
         thresholdSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                 thresholdLabel.setText(thresholdSlider.getValue() + "");
             }
         });
+        redThresholdSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                redThresholdLabel.setText(redThresholdSlider.getValue() + "");
+            }
+        });
+        greenThresholdSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                greenThresholdLabel.setText(greenThresholdSlider.getValue() + "");
+            }
+        });
+        blueThresholdSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                blueThresholdLabel.setText(blueThresholdSlider.getValue() + "");
+            }
+        });
+
         magicSelectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -501,20 +523,62 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         maximumButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                maximumButtonAction();
+                maximumButtonAction(image, thresholdSlider);
             }
         });
-        minButton.addActionListener(new ActionListener() {
+        redMaxButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                minimumButtonAction();
+                if(checkImageType() && !imageIsGray) {
+                    rgb[0].setRoi(image.getRoi());
+                    maximumButtonAction(rgb[0], redThresholdSlider);
+                }
+            }
+        });
+        greenMaxButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(checkImageType() && !imageIsGray) {
+                    rgb[1].setRoi(image.getRoi());
+                    maximumButtonAction(rgb[1], greenThresholdSlider);
+                }
+            }
+        });
+        blueMaxButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(checkImageType() && !imageIsGray) {
+                    rgb[2].setRoi(image.getRoi());
+                    maximumButtonAction(rgb[2], blueThresholdSlider);
+                }
+            }
+        });
+        autoButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                autoThresholdAction((String) autoThresholdComboBox.getSelectedItem(), image, thresholdSlider);
             }
         });
 
-        autoThresholdComboBox.addActionListener(new ActionListener() {
+        redAutoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                autoThresholdAction((String) autoThresholdComboBox.getSelectedItem());
+                if(checkImageType() && !imageIsGray)
+                    autoThresholdAction((String) autoThresholdComboBox.getSelectedItem(), rgb[0], redThresholdSlider);
+            }
+        });
+        greenAutoButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(checkImageType() && !imageIsGray)
+                    autoThresholdAction((String) autoThresholdComboBox.getSelectedItem(), rgb[1], greenThresholdSlider);
+            }
+        });
+        blueAutoButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(checkImageType() && !imageIsGray)
+                    autoThresholdAction((String) autoThresholdComboBox.getSelectedItem(), rgb[2], blueThresholdSlider);
             }
         });
 
@@ -523,6 +587,9 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             public void actionPerformed(ActionEvent e) {
                 darkPeaks = darkPeaksCheck.isSelected();
                 thresholdSlider.setInverted(darkPeaks);
+                redThresholdSlider.setInverted(darkPeaks);
+                greenThresholdSlider.setInverted(darkPeaks);
+                blueThresholdSlider.setInverted(darkPeaks);
             }
         });
 
@@ -531,6 +598,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             public void actionPerformed(ActionEvent e) {
                 takeR = redCheckBox.isSelected();
                 totalComboBox.setEnabled(takeR ? (takeG || takeB) : (takeG && takeB));
+                redThresholdPanel.setVisible(takeR);
+                defaultThresholdPanel.setVisible(!(takeR || takeG || takeB));
             }
         });
 
@@ -539,6 +608,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             public void actionPerformed(ActionEvent e) {
                 takeG = greenCheckBox.isSelected();
                 totalComboBox.setEnabled(takeR ? (takeG || takeB) : (takeG && takeB));
+                greenThresholdPanel.setVisible(takeG);
+                defaultThresholdPanel.setVisible(!(takeR || takeG || takeB));
             }
         });
 
@@ -547,6 +618,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             public void actionPerformed(ActionEvent e) {
                 takeB = blueCheckBox.isSelected();
                 totalComboBox.setEnabled(takeR ? (takeG || takeB) : (takeG && takeB));
+                blueThresholdPanel.setVisible(takeB);
+                defaultThresholdPanel.setVisible(!(takeR || takeG || takeB));
             }
         });
 
@@ -614,12 +687,20 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private void getCountAndMeanValues() {
         cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
         minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
-        threshold = thresholdSlider.getValue();
-        doubleThreshold = 10 * ((double)threshold /255);
+        quantification = Integer.parseInt(quantificationTextField.getText().replaceAll("[^\\d.]", ""));
     }
 
     private void getPlotValues() {
         if (!autoScaleCheckBox.isSelected()) yMax = Integer.parseInt(yAxisTextField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
+    }
+
+    int getThreshold(String s) {
+        switch (s) {
+            case "red": return redThresholdSlider.getValue();
+            case "green": return greenThresholdSlider.getValue();
+            case "blue": return blueThresholdSlider.getValue();
+            default: return thresholdSlider.getValue();
+        }
     }
 
     private void setLookAndFeel(JFrame frame) {
@@ -659,6 +740,9 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         }
 
         // disable all count related components
+        for (Component c : outerCountPanel.getComponents()) {
+            c.setEnabled(countCellsCheckBox.isSelected());
+        }
         for (Component c : innerCountPanel.getComponents()) {
             c.setEnabled(false);
         }
