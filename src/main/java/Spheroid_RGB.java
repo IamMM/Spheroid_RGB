@@ -192,7 +192,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             IJ.showMessage("No images open");
             return;
         }
-        if(!(takeR || takeG || takeB)) {
+        if(!(takeR || takeG || takeB) && !imageIsGray) {
             IJ.showMessage("Nothing to do", "No Channel selected.");
             return;
         }
@@ -237,7 +237,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             if (roiManager.getCount() > 0) {
                 image.setRoi(roiManager.getRoi(0));
             } else {
-                IJ.showMessage("Nothing to do.", "No active ROI selected");
+                IJ.showMessage("Nothing to do.", "No ROI selected");
                 return;
             }
         }
