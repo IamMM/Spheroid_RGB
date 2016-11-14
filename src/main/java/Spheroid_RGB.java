@@ -117,8 +117,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         new ImageJ();
 
         // open the Spheroid_RGB sample
-        ImagePlus image = IJ.openImage("img/test.png");
-//        ImagePlus image = IJ.openImage("img/SN33267.tif");
+//        ImagePlus image = IJ.openImage("img/test.png");
+        ImagePlus image = IJ.openImage("img/SN33267.tif");
 //        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
@@ -191,13 +191,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         }
         if (roiManager.getCount() == 0) {
             Roi currRoi = image.getRoi();
-            if(currRoi != null) {
-                roiManager.addRoi(currRoi);
-            }
-            else {
-                IJ.showMessage("Nothing to do", "Roi Manager is empty.");
-                return;
-            }
+            if(currRoi == null) image.setRoi(0,0,image.getWidth()-1,image.getHeight()-1);
+            roiManager.addRoi(currRoi);
         }
 
         boolean[] options = new boolean[]
@@ -213,11 +208,24 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
         if(multiPlot == null) multiPlot = new Multi_Plot();
 
+        roiManager = RoiManager.getInstance();
+        if (roiManager == null) roiManager = new RoiManager();
+
         // check if we got what we need
         if(!(takeR || takeG || takeB)) {
             IJ.showMessage("Nothing to do", "No Channel selected.");
             return;
         }
+
+        if (image.getRoi() == null) {
+            if (roiManager.getCount() > 0) {
+                image.setRoi(roiManager.getRoi(0));
+            } else {
+                IJ.showMessage("Nothing to do.", "No active ROI selected");
+                return;
+            }
+        }
+        roiManager.addRoi(image.getRoi());
 
         // check image type (color or not) all supported
         ArrayList<ImagePlus> channel = new ArrayList<>();
@@ -232,7 +240,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         }
         boolean[] options = new boolean[]{cleanTableCheckBox.isSelected(), showLines.isSelected(),
                 showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
-        multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), (String) totalComboBox.getSelectedItem(), yMax, options);
+        multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), yMax, options);
     }
 
     // check if Image is RGB or 8bit
@@ -567,11 +575,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         plotButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(image.getRoi() == null) {
-                    IJ.showMessage("Nothing to do.", "No active ROI selected");
-                } else {
-                    runMultiPlot();
-                }
+               runMultiPlot();
             }
         });
 
