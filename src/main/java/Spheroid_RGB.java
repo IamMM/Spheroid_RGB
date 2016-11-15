@@ -592,6 +592,10 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
                 redThresholdSlider.setInverted(darkPeaks);
                 greenThresholdSlider.setInverted(darkPeaks);
                 blueThresholdSlider.setInverted(darkPeaks);
+                maximumButton.setText(darkPeaks ? "min" : "max");
+                redMaxButton.setText(darkPeaks ? "min" : "max");
+                greenMaxButton.setText(darkPeaks ? "min" : "max");
+                blueMaxButton.setText(darkPeaks ? "min" : "max");
             }
         });
 
@@ -764,7 +768,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     @Override
     public void imageClosed(ImagePlus imagePlus) {
-        if(imgList.getItemCount() > 1)
+        if(WindowManager.getImageCount() > 0)
             imgList.removeItem(imagePlus.getTitle());
         else close();
     }
