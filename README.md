@@ -3,6 +3,9 @@ Spheroid RGB Statistic Plugin for ImageJ
 
 This Plugin is developed for ImageJ or Fiji.
 
+![GUI demo](https://github.com/IamMM/Spheroid_RGB/blob/master/Spheroid_RGBv7.gif)
+
+
 Input:
 ------
 RGB image of double or triple stained confocal image of an cancer spheroid.
