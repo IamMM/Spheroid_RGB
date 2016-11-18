@@ -293,6 +293,8 @@ class Table_Analyzer {
     }
 
     private void countDistanceFunction(String title, ArrayList<Point> peaks, Roi roi) {
+        int quantification = main.quantification;
+
         // find centroid from roi
         ImageStatistics stats = roi.getImage().getStatistics(Measurements.CENTROID);
         double xCentroid = stats.xCentroid;
@@ -307,41 +309,31 @@ class Table_Analyzer {
         int height = (int) (roi.getBounds().getHeight());
         int width = (int) (roi.getBounds().getWidth());
         int bounds = height > width ? height : width;
-        double[] count = new double[bounds];
+        double[] count = new double[bounds / quantification];
 
+        int maxDistance = 0;
         for (Point p : peaks) {
             double a2 = (xCentroid - p.x) *(xCentroid - p.x);
             double b2 = (yCentroid - p.y) * (yCentroid - p.y);
             int distance = (int) Math.round(Math.sqrt(a2 + b2));
-            distance = distance - (distance % main.quantification);
+            distance = distance / quantification;
             count[distance]++;
+            maxDistance = distance > maxDistance ? distance : maxDistance;
         }
 
-        // count max
+        // init x and y coordinates and find count max
+        double[] x = new double[maxDistance];
+        double[] y = new double[maxDistance];
         double countMax = 0;
-        for (double c :count) {
+        for (int i = 0; i < maxDistance; i++) {
+            double c = count[i];
+            x[i] = i * quantification;
+            y[i] = c;
             countMax = c > countMax ?  c : countMax;
         }
 
-        // find values pairs
-        LinkedHashMap<Double, Double> valuePairs = new LinkedHashMap<>();
-        for (int i = 0; i < bounds; i++) {
-            double c = count[i];
-            if (c > 0) valuePairs.put((double) i, c);
-        }
-
-        // init y and x values
-        double[] x = new double[valuePairs.size()];
-        double[] y = new double[valuePairs.size()];
-        int index = 0;
-        for (Double X : valuePairs.keySet()) {
-            x[index] = X;
-            y[index] = valuePairs.get(X);
-            index++;
-        }
-
         // plot
-        Plot plot = new Plot("Count Distance " + title + "  | Quantification factor: " + main.quantification,"Distance from centroid (pixels)","Count");
+        Plot plot = new Plot("Count Distance " + title + " | ROI: " + roi.getName() + "  | Quantification factor: " + quantification,"Distance from centroid (pixels)","Count");
         plot.setLimits(0, bounds / 2, 0, countMax);
         plot.addPoints(x, y, Plot.LINE);
         plot.show();
