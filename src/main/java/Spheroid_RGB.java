@@ -105,12 +105,12 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     boolean takeR;
     boolean takeG;
     boolean takeB;
-
     boolean imageIsGray;
+
     // magic selection
     private double startTolerance = 128;
+    private int startMode = 2; // [0]: "Legacy", [1]: "4-connected", [2]: "8-connected"
 
-    private int startMode = 1;
     // multi plot
     private Multi_Plot multiPlot;
     private boolean radius = true;
