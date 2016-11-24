@@ -82,10 +82,13 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JCheckBox plotCountDistanceFunctionCheckBox;
     private JTextField quantificationTextField;
     private JPanel outerCountPanel;
+    private JRadioButton starPlotRadioButton;
+    private JRadioButton ringPlotRadioButton;
+    private JRadioButton maskPlotRadioButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.7.0 ";
+    private static final String VERSION = " v0.7.5 demo";
     Color PEAKS_COLOR = Color.WHITE;
     final Color ROI_COLOR = Color.YELLOW;
 
@@ -219,12 +222,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void runMultiPlot() {
-        // check if we got what we need
-        if(!(takeR || takeG || takeB)) {
-            IJ.showMessage("Nothing to do", "No Channel selected.");
-            return;
-        }
-
         getPlotValues();
 
         if(multiPlot == null) multiPlot = new Multi_Plot();
@@ -240,12 +237,16 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
                 IJ.showMessage("Nothing to do.", "No ROI selected");
                 return;
             }
-        }
-        roiManager.addRoi(image.getRoi());
+        } else if(roiManager.getCount() == 0) roiManager.addRoi(image.getRoi());
 
         // check image type (color or not) all supported
         ArrayList<ImagePlus> channel = new ArrayList<>();
         if (image.getType() == ImagePlus.COLOR_RGB) {
+            // check if we got what we need
+            if(!(takeR || takeG || takeB)) {
+                IJ.showMessage("Nothing to do", "No Channel selected.");
+                return;
+            }
             ImagePlus[] rgb = ChannelSplitter.split(image);
             setChannelLut(rgb);
             if (takeR) channel.add(rgb[0]);
@@ -256,7 +257,11 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         }
         boolean[] options = new boolean[]{cleanTableCheckBox.isSelected(), showLines.isSelected(),
                 showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
-        multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), yMax, options);
+
+        if (starPlotRadioButton.isSelected())
+            multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), yMax, options);
+        if(ringPlotRadioButton.isSelected())
+            multiPlot.runRingPlot(channel, image, yMax, options, profileLengthSlider.getValue());
     }
 
     // check if Image is RGB or 8bit
@@ -285,41 +290,42 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void showMagicSelectDialog() {
-        IJ.setTool("Point");
-        if(image.getRoi() == null) {
+        if(image.getRoi() == null || image.getRoi().isArea() || image.getRoi().isLine()) {
             IJ.showMessage("Please select a seed with the point tool");
+            IJ.setTool("Point");
             return;
         }
-        try {
-            final PointRoi p = (PointRoi) image.getRoi();
-            final Polygon polygon = p.getPolygon();
-            final String[] modes = {"Legacy", "4-connected", "8-connected"};
 
-            DialogListener listener = new DialogListener() {
-                double tolerance;
+        final PointRoi p = (PointRoi) image.getRoi();
+        final Polygon polygon = p.getPolygon();
+        final String[] modes = {"Legacy", "4-connected", "8-connected"};
 
-                @Override
-                public boolean dialogItemChanged(GenericDialog genericDialog, AWTEvent awtEvent) {
-                    tolerance = genericDialog.getNextNumber();
-                    startTolerance = tolerance;
-                    startMode = genericDialog.getNextChoiceIndex();
-                    IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], tolerance, modes[startMode]);
+        DialogListener listener = new DialogListener() {
+            double tolerance;
 
-                    return true;
-                }
-            };
+            @Override
+            public boolean dialogItemChanged(GenericDialog genericDialog, AWTEvent awtEvent) {
+                tolerance = genericDialog.getNextNumber();
+                startTolerance = tolerance;
+                startMode = genericDialog.getNextChoiceIndex();
+                IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], tolerance, modes[startMode]);
 
-            GenericDialog wandDialog = new GenericDialog(TITLE + " magic select");
-            wandDialog.addSlider("Tolerance ", 0.0, 255.0, startTolerance);
-            wandDialog.addChoice("Mode:", modes, modes[startMode]);
-            wandDialog.addDialogListener(listener);
-            wandDialog.setOKLabel("Add to Roi Manager");
-            wandDialog.setCancelLabel("Exit");
-            IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], startTolerance, modes[startMode]);
-            wandDialog.showDialog();
-            if (wandDialog.wasOKed()) RoiManager.getInstance().addRoi(image.getRoi());
-        }catch (Exception e){
-            IJ.showMessage("Selection must be a point selection");
+                return true;
+            }
+        };
+
+        GenericDialog wandDialog = new GenericDialog(TITLE + " magic select");
+        wandDialog.addSlider("Tolerance ", 0.0, 255.0, startTolerance);
+        wandDialog.addChoice("Mode:", modes, modes[startMode]);
+        wandDialog.addDialogListener(listener);
+        wandDialog.setOKLabel("Add to Roi Manager");
+        wandDialog.setCancelLabel("Exit");
+        IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], startTolerance, modes[startMode]);
+        wandDialog.showDialog();
+        if (wandDialog.wasOKed()) {
+            RoiManager roiManager = RoiManager.getInstance();
+            if(roiManager == null) roiManager = new RoiManager();
+            roiManager.addRoi(image.getRoi());
         }
     }
 

@@ -308,7 +308,7 @@ class Table_Analyzer {
         // measure distances from each point to centroid
         int height = (int) (roi.getBounds().getHeight());
         int width = (int) (roi.getBounds().getWidth());
-        int bounds = height > width ? height : width;
+        int bounds = (int) (Math.sqrt(height*height + width*width) + 1);
         double[] count = new double[bounds / quantification];
 
         int maxDistance = 0;
@@ -334,7 +334,7 @@ class Table_Analyzer {
 
         // plot
         Plot plot = new Plot("Count Distance " + title + " | ROI: " + roi.getName() + "  | Quantification factor: " + quantification,"Distance from centroid (pixels)","Count");
-        plot.setLimits(0, bounds / 2, 0, countMax);
+        plot.setLimits(0, maxDistance*quantification, 0, countMax);
         plot.addPoints(x, y, Plot.LINE);
         plot.show();
     }
