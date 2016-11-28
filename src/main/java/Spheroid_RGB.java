@@ -84,7 +84,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JPanel outerCountPanel;
     private JRadioButton starPlotRadioButton;
     private JRadioButton ringPlotRadioButton;
-    private JRadioButton maskPlotRadioButton;
+    private JRadioButton convexHullPlotRadioButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -139,8 +139,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
         // open the Spheroid_RGB sample
 //        ImagePlus image = IJ.openImage("img/test.png");
-//        ImagePlus image = IJ.openImage("img/SN33267.tif");
-        ImagePlus image = IJ.openImage("img/EdU.tif");
+        ImagePlus image = IJ.openImage("img/SN33267.tif");
+//        ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
         // run the plugin
@@ -262,6 +262,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), yMax, options);
         if(ringPlotRadioButton.isSelected())
             multiPlot.runRingPlot(channel, image, yMax, options, profileLengthSlider.getValue());
+        if (convexHullPlotRadioButton.isSelected())
+            multiPlot.runConvexHullPlot(channel, image, yMax, options, profileLengthSlider.getValue());
     }
 
     // check if Image is RGB or 8bit

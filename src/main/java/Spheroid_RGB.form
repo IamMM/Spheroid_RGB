@@ -838,6 +838,10 @@
                 </properties>
                 <border type="none"/>
                 <children>
+                  <component id="640d3" class="javax.swing.JToolBar$Separator">
+                    <constraints/>
+                    <properties/>
+                  </component>
                   <component id="77f03" class="javax.swing.JRadioButton" binding="starPlotRadioButton" default-binding="true">
                     <constraints/>
                     <properties>
@@ -848,13 +852,13 @@
                   <component id="84cbf" class="javax.swing.JRadioButton" binding="ringPlotRadioButton" default-binding="true">
                     <constraints/>
                     <properties>
-                      <text value="ring plot"/>
+                      <text value="ring plot (distrance from centroid)"/>
                     </properties>
                   </component>
-                  <component id="598f2" class="javax.swing.JRadioButton" binding="maskPlotRadioButton" default-binding="true">
+                  <component id="598f2" class="javax.swing.JRadioButton" binding="convexHullPlotRadioButton" default-binding="true">
                     <constraints/>
                     <properties>
-                      <text value="mask plot"/>
+                      <text value="convex hull plot (distance from edge)"/>
                     </properties>
                   </component>
                 </children>

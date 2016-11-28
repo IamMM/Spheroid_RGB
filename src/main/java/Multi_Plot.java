@@ -4,14 +4,14 @@ import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
+import ij.plugin.RoiEnlarger;
 import ij.plugin.RoiRotator;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 /**
  * Created on 14/10/2016.
@@ -82,6 +82,28 @@ class Multi_Plot{
         int radius = getRadius(roi, profileLength);
         plotRing(channel, radius, showChannel);
         if(showRings) showOuterRingAndCentroid(mask, radius);
+
+    }
+
+    void runConvexHullPlot(ArrayList<ImagePlus> channel, ImagePlus mask, int customYMax, boolean[] options, int profileLength) {
+        yMax = 0;
+        xMax = 0;
+
+        Roi roi = mask.getRoi();
+
+        plotTitle = "Convex hull plot " + mask.getTitle();
+
+        // options
+        boolean cleanTable = options[0];
+        boolean showRings = options[1];
+        boolean showChannel = options[2];
+        boolean autoScale = options[4];
+
+        if(cleanTable) table = new ResultsTable();
+        if(!autoScale) yMax = customYMax;
+
+        plotConvexHull(channel, roi, profileLength);
+        if (showRings) mask.setOverlay(new Overlay(new PolygonRoi(roi.getConvexHull(),Roi.POLYGON)));
 
     }
 
@@ -252,15 +274,15 @@ class Multi_Plot{
         }
 
         PlotWindow.noGridLines = false; // draw grid lines
-        Plot plot = new Plot(plotTitle,"Distance (pixels)","Intensity (gray value)");
+        Plot plot = new Plot(plotTitle,"Distance from centroid (pixels)","Intensity (gray value)");
         plot.setLimits(0, radius, 0, 255);
-        plot.setLineWidth(2);
 
         // ring plot
         LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
         for (ImagePlus currChannel : channel) {
             double[] y = getRingValues(currChannel, radius, showChannel);
             plot.setColor(toColor(currChannel.getTitle()));
+            plot.setLineWidth(2);
             plot.addPoints(x, y,PlotWindow.LINE);
 
             double[] max = getMaxCoordinates(y);
@@ -322,6 +344,107 @@ class Multi_Plot{
             avgRingValues[i] = sum / currRing.size();
         }
         return avgRingValues;
+    }
+
+    private void plotConvexHull(ArrayList<ImagePlus> channel, Roi roi, int profileLength) {
+        // shrink and save convex hull
+        Roi convexHullRoi = new PolygonRoi(roi.getConvexHull(),Roi.POLYGON);
+//        Roi convexHullRoi = roi.;
+        ImageProcessor mask;
+        LinkedHashMap<ImageProcessor, Rectangle> outlineMasks = new LinkedHashMap<>();
+        boolean noError = true;
+        int n = 0;
+        while(noError) {
+            mask = convexHullRoi.getMask().duplicate();
+            mask.invert();
+            try {
+                ((ByteProcessor) mask).outline();
+                if(n%30==0) new ImagePlus("outline" + n, mask).show(); // check
+                outlineMasks.put(mask, convexHullRoi.getBounds());
+                convexHullRoi = RoiEnlarger.enlarge(convexHullRoi, -1);
+                n++;
+            } catch (Exception e) {
+                noError = false;
+            }
+        }
+
+        // plot
+        PlotWindow.noGridLines = false; // draw grid lines
+        Plot plot = new Plot(plotTitle,"Distance from edge (pixels)","Intensity (gray value)");
+        plot.setLimits(0, outlineMasks.size(), 0, 255);
+        plot.setLineWidth(2);
+        // init x values 0 .. xMax
+        double[] x = new double[outlineMasks.size()];
+        for (int i = 0; i < x.length; i++) {
+            x[i] = (double) i;
+        }
+//        Collections.reverse(Arrays.asList(x)); // inverse?
+
+
+        for (ImagePlus currChannel : channel) {
+            double[] y = getConvexHullValuesByOutlinesFirst(currChannel, outlineMasks);
+            plot.setColor(toColor(currChannel.getTitle()));
+            plot.addPoints(x, y,PlotWindow.LINE);
+        }
+
+        plot.show();
+
+    }
+
+    private double[] getConvexHullValues(ImagePlus src, LinkedList<ImageProcessor> outlineMasks, Rectangle r) {
+        ArrayList<ArrayList<Float>> allOutlineValues = new ArrayList<>();
+        for (int i=0; i <= outlineMasks.size(); i++) {
+            allOutlineValues.add(new ArrayList<Float>());
+        }
+        ImageProcessor imp = src.getProcessor();
+        for (int y = 0; y < r.height; y++) {
+            for (int x = 0; x < r.width; x++) {
+                int index = 0;
+                for (ImageProcessor outline : outlineMasks) {
+                    if (outline.getPixel(x, y) == 0) {
+                        allOutlineValues.get(index).add(imp.getPixelValue(x, y));
+                        break;
+                    } else {
+                        index++;
+                    }
+
+                }
+            }
+        }
+
+        double[] avgOutlineValues = new double[outlineMasks.size()];
+        for (int i=0; i<allOutlineValues.size(); i++){
+            ArrayList<Float> currOutline = allOutlineValues.get(i);
+            long sum = 0;
+            for (float intensity : currOutline) {
+                sum += intensity;
+            }
+            avgOutlineValues[i] = sum; // / currOutline.size();
+        }
+        return avgOutlineValues;
+    }
+
+    private double[] getConvexHullValuesByOutlinesFirst(ImagePlus src, LinkedHashMap<ImageProcessor, Rectangle> outlineMasks) {
+        ImageProcessor imp = src.getProcessor();
+        double[] avgOutlineValues = new double[outlineMasks.size()];
+        int i = 0;
+        for (ImageProcessor outline : outlineMasks.keySet()) {
+            Rectangle r = outlineMasks.get(outline);
+            long sum = 0;
+            int count = 0;
+            for (int y = 0; y < outline.getHeight(); y++) {
+                for (int x = 0; x < outline.getWidth(); x++) {
+                    if (outline.getPixel(x, y) == 0) {
+                        sum += imp.getPixelValue(r.x + x, r.y + y);
+                        count++;
+                    }
+                }
+            }
+            avgOutlineValues[i] = sum / count;
+            i++;
+        }
+
+        return avgOutlineValues;
     }
 
 
