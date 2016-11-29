@@ -1,9 +1,9 @@
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
+import ij.plugin.RoiEnlarger;
 import ij.plugin.RoiRotator;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -246,7 +246,7 @@ class Multi_Plot{
                 resultValues.put(currChannel.getTitle() + " max x", max[0]);
                 resultValues.put(currChannel.getTitle() + " max y", max[1]);
 
-                double[] bounds = getRightGradientChange(avg);
+                double[] bounds = getGradientChange(avg);
                 resultValues.put(currChannel.getTitle() + " bounds x", bounds[0]);
                 resultValues.put(currChannel.getTitle() + " bounds y", bounds[1]);
                 plot.setColor(Color.darkGray);
@@ -294,7 +294,7 @@ class Multi_Plot{
             resultValues.put(currChannel.getTitle() + " max x", max[0]);
             resultValues.put(currChannel.getTitle() + " max y", max[1]);
 
-            double[] bounds = getRightGradientChange(y);
+            double[] bounds = getGradientChange(y);
             resultValues.put(currChannel.getTitle() + " bounds x", bounds[0]);
             resultValues.put(currChannel.getTitle() + " bounds y", bounds[1]);
             plot.setColor(Color.darkGray);
@@ -358,7 +358,7 @@ class Multi_Plot{
 
         Rectangle r = roi.getBounds();
         ArrayList<ArrayList<Float>> allConvexHullValues = new ArrayList<>();
-        for (int i=0; i <= radius; i++) {
+        for (int i=0; i <= radius+1; i++) {
             allConvexHullValues.add(new ArrayList<Float>());
         }
 
@@ -369,9 +369,25 @@ class Multi_Plot{
                     double angle = Math.atan2(y - yCentroid, x - xCentroid);
                     double cos = Math.cos(angle);
                     double sin = Math.sin(angle);
-                    for(int i=0; i < radius;i++) {
-                        int x2 = (int) Math.round(cos * i) + x;
-                        int y2 = (int) Math.round(sin * i) + y;
+
+                    // binary search
+                    int low = 0, mid = 0, high = radius;
+                    int x2, y2;
+                    while (low <= high) {
+                        mid = (low + high) / 2;
+                        x2 = (int) Math.round(cos * mid) + x;
+                        y2 = (int) Math.round(sin * mid) + y;
+                        if (mask.getPixel(x2, y2) == 0) {
+                            high = mid - 1;
+                        } else {
+                            low = mid + 1;
+                        }
+                    }
+
+                    // go from here step by step
+                    for(int length=mid-1; length <= radius;length++) {
+                        x2 = (int) Math.round(cos * length) + x;
+                        y2 = (int) Math.round(sin * length) + y;
                         if (mask.getPixel(x2, y2) == 0) {
                             double xDiff = x - x2;
                             double yDiff = y - y2;
@@ -384,7 +400,7 @@ class Multi_Plot{
             }
         }
 
-        double[] avgRingValues = new double[radius+1];
+        double[] avgValues = new double[allConvexHullValues.size()];
         for (int i=0; i<allConvexHullValues.size(); i++){
             ArrayList<Float> currRing = allConvexHullValues.get(i);
             if(currRing.size() >0) {
@@ -392,10 +408,10 @@ class Multi_Plot{
                 for (float intensity : currRing) {
                     sum += intensity;
                 }
-                avgRingValues[i] = sum / currRing.size();
+                avgValues[i] = sum / currRing.size();
             }
         }
-        return avgRingValues;
+        return avgValues;
     }
 
     private void addValuesToResultsTable(LinkedHashMap<String, Double> results) {
@@ -423,7 +439,7 @@ class Multi_Plot{
         return new double[]{x, y};
     }
 
-    private double[] getRightGradientChange(double[] values) {
+    private double[] getGradientChange(double[] values) {
         double gradient;
         int deltaX = values.length / 16; // span dependent from profile line length
         double precision = 0.1;
@@ -458,6 +474,8 @@ class Multi_Plot{
         double diameter = bounds.getWidth() > bounds.getHeight() ? bounds.getWidth() : bounds.getHeight();
         int radius = (int) (diameter / 2);
         radius += variance * diameter / 100; // scale
+
+        this.roi = RoiEnlarger.enlarge(roi, variance * diameter / 100);
 
         return radius;
     }
