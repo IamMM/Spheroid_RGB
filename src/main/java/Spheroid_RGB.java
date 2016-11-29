@@ -258,12 +258,11 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         boolean[] options = new boolean[]{cleanTableCheckBox.isSelected(), showLines.isSelected(),
                 showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
 
-        if (starPlotRadioButton.isSelected())
-            multiPlot.runStarPlot(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), yMax, options);
-        if(ringPlotRadioButton.isSelected())
-            multiPlot.runRingPlot(channel, image, yMax, options, profileLengthSlider.getValue());
-        if (convexHullPlotRadioButton.isSelected())
-            multiPlot.runConvexHullPlot(channel, image, yMax, options, profileLengthSlider.getValue());
+        int mode = Multi_Plot.STAR_PLOT;
+        if(ringPlotRadioButton.isSelected()) mode = Multi_Plot.RING_PLOT;
+        if (convexHullPlotRadioButton.isSelected()) mode = Multi_Plot.CONVEX_HULL;
+
+        multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), yMax, options, mode);
     }
 
     // check if Image is RGB or 8bit

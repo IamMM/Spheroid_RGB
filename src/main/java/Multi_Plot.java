@@ -22,85 +22,63 @@ class Multi_Plot{
 
     private double yCentroid;
     private double xCentroid;
-    private ArrayList<Roi> lines;
     private double yMax;
     private int xMax;
     private String plotTitle;
     private ResultsTable table;
+    static final int STAR_PLOT = 0;
+    static final int RING_PLOT = 1;
+    static final int CONVEX_HULL = 2;
 
-    void runStarPlot(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean radius, int profileLength, int customYMax, boolean[] options) {
+    void run(ArrayList<ImagePlus> channel, ImagePlus mask, int numberOfProfiles, boolean radiusMode, int variance, int customYMax, boolean[] options, int mode) {
         yMax = 0;
         xMax = 0;
 
         Roi roi = mask.getRoi();
 
-        plotTitle = "Star plot " + mask.getTitle();
-
         // options
         boolean cleanTable = options[0];
-        boolean showLines = options[1];
+        boolean showOverlay = options[1];
         boolean showChannel = options[2];
         boolean plotAll = options[3];
         boolean autoScale = options[4];
 
         if(cleanTable) table = new ResultsTable();
-
-        initCentroid(roi);
-        initLines(radius, getRadius(roi, profileLength), numberOfProfiles);
-        if (showLines) showLines(mask);
-        else mask.setOverlay(null);
-        if (showChannel) showLines(channel);
-        HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllPlots(channel, roi);
-        if(!autoScale) yMax = customYMax;
-        plotStarAverage(listOfAllProfiles, plotAll, radius);
-    }
-
-    void runRingPlot(ArrayList<ImagePlus> channel, ImagePlus mask, int customYMax, boolean[] options, int profileLength) {
-        yMax = 0;
-        xMax = 0;
-
-        Roi roi = mask.getRoi();
-
-        plotTitle = "Ring plot " + mask.getTitle();
-
-        // options
-        boolean cleanTable = options[0];
-        boolean showRings = options[1];
-        boolean showChannel = options[2];
-        boolean autoScale = options[4];
-
-        if(cleanTable) table = new ResultsTable();
-        if(!autoScale) yMax = customYMax;
-
-        initCentroid(roi);
-        int radius = getRadius(roi, profileLength);
-        plotDistance(channel, roi, radius, showChannel, true);
-        if(showRings) showOuterRingAndCentroid(mask, radius);
-        mask.setRoi(roi);
-    }
-
-    void runConvexHullPlot(ArrayList<ImagePlus> channel, ImagePlus mask, int customYMax, boolean[] options, int variance) {
-        yMax = 0;
-        xMax = 0;
-
-        Roi roi = mask.getRoi();
-
-        plotTitle = "Convex hull plot " + mask.getTitle();
-
-        // options
-        boolean cleanTable = options[0];
-        boolean showConvexHull = options[1];
-        boolean showChannel = options[2];
-        boolean autoScale = options[4];
-
-        if(cleanTable) table = new ResultsTable();
-        if(!autoScale) yMax = customYMax;
-
         initCentroid(roi);
         int radius = getRadius(roi, variance);
-        roi = enlargeRoi(roi, variance);
-        plotDistance(channel, roi, radius, showChannel, false);
-        if (showConvexHull) showHullAndCentroid(mask, roi);
+        String xLabel;
+        LinkedHashMap<String, double[]> intensityValues;
+
+        switch (mode) {
+            case STAR_PLOT:
+                plotTitle = "Star plot " + mask.getTitle();
+                ArrayList<Roi> lines = initLines(radiusMode, radius, numberOfProfiles);
+                if (showOverlay) showLines(mask, lines);
+                else mask.setOverlay(null);
+                if (showChannel) showLines(channel, lines);
+                HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllProfiles(channel, roi, lines);
+                if(!autoScale) yMax = customYMax;
+                plotStarAverage(listOfAllProfiles, plotAll, radiusMode);
+                break;
+            case RING_PLOT:
+                plotTitle = "Ring plot " + mask.getTitle();
+                xLabel = "Distance from centroid (pixels)";
+                intensityValues = collectRingValues(channel, radius);
+                if(!autoScale) yMax = customYMax;
+                plot(intensityValues, xLabel);
+                if(showOverlay) showOuterRingAndCentroid(mask, radius);
+                mask.setRoi(roi);
+                break;
+            case CONVEX_HULL:
+                roi = enlargeRoi(roi, variance);
+                plotTitle = "Convex hull plot " + mask.getTitle();
+                xLabel = "Distance from surface edge (pixels)";
+                intensityValues = collectConvexHullValues(channel, roi, radius);
+                if(!autoScale) yMax = customYMax;
+                plot(intensityValues, xLabel);
+                if (showOverlay) showHullAndCentroid(mask, roi);
+                break;
+        }
 
     }
 
@@ -124,8 +102,8 @@ class Multi_Plot{
         }
     }
 
-    private void initLines(boolean radiusMode, int radius, int numberOfProfiles) {
-        lines =  new ArrayList<>();
+    private ArrayList<Roi> initLines(boolean radiusMode, int radius, int numberOfProfiles) {
+        ArrayList<Roi> lines =  new ArrayList<>();
         double angle;
         if (radiusMode) {
             double newAngle = 0;
@@ -144,9 +122,11 @@ class Multi_Plot{
                 lines.add(horizontal);
             }
         }
+
+        return lines;
     }
 
-    private void showLines(ImagePlus image) {
+    private void showLines(ImagePlus image, ArrayList<Roi> lines) {
         Overlay overlay = new Overlay();
         for (Roi l : lines) {
             overlay.add(l);
@@ -156,7 +136,7 @@ class Multi_Plot{
         image.show();
     }
 
-    private void showLines(ArrayList<ImagePlus> channel) {
+    private void showLines(ArrayList<ImagePlus> channel, ArrayList<Roi> lines) {
         for (ImagePlus currChannel : channel) {
             Overlay overlay = new Overlay();
             for (Roi l : lines) {
@@ -168,7 +148,7 @@ class Multi_Plot{
         }
     }
 
-    private HashMap<ImagePlus , ArrayList<double[]>> createAllPlots(ArrayList<ImagePlus> channel, Roi roi) {
+    private HashMap<ImagePlus , ArrayList<double[]>> createAllProfiles(ArrayList<ImagePlus> channel, Roi roi, ArrayList<Roi> lines) {
         HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = new HashMap<>();
         for (ImagePlus currChannel : channel) {
             ArrayList<double[]> profiles = new ArrayList<>();
@@ -260,29 +240,43 @@ class Multi_Plot{
         plot.show();
     }
 
-    private void plotDistance(ArrayList<ImagePlus> channel, Roi roi, int radius, boolean showChannel, boolean ring) {
-         // init x values 0 .. xMax
-        double[] x = new double[radius];
-        for (int i = 0; i < radius; i++) {
-            x[i] = (double) i;
-        }
-
-        String xLabel = ring ? "Distance from centroid (pixels)": "Distance from surface edge (pixels)";
-
-        // collect all intensity values to find yMax
+    private LinkedHashMap<String, double[]> collectRingValues (ArrayList<ImagePlus> channel, int radius) {
+        // collect all intensity values to find yMax and xMax
         LinkedHashMap<String, double[]> intensityValues = new LinkedHashMap<>();
         for (ImagePlus currChannel : channel) {
-            double[] y = ring ?
-                    getRingValues(currChannel, radius, showChannel) : getConvexHullValues(currChannel, roi, radius);
+            double[] y = getRingValues(currChannel, radius);
             intensityValues.put(currChannel.getTitle(), y);
             double yMaxNew = getMaxCoordinates(y)[1];
             yMax = yMaxNew > yMax ? yMaxNew : yMax;
+            xMax = y.length > xMax ? y.length : xMax;
+        }
+        return intensityValues;
+    }
+
+    private LinkedHashMap<String, double[]> collectConvexHullValues (ArrayList<ImagePlus> channel, Roi roi, int radius) {
+        // collect all intensity values to find yMax and xMax
+        LinkedHashMap<String, double[]> intensityValues = new LinkedHashMap<>();
+        for (ImagePlus currChannel : channel) {
+            double[] y = getConvexHullValues(currChannel, roi, radius);
+            intensityValues.put(currChannel.getTitle(), y);
+            double yMaxNew = getMaxCoordinates(y)[1];
+            yMax = yMaxNew > yMax ? yMaxNew : yMax;
+            xMax = y.length > xMax ? y.length : xMax;
+        }
+        return intensityValues;
+    }
+
+    private void plot(LinkedHashMap<String, double[]> intensityValues, String xLabel) {
+        // init x values 0 .. xMax
+        double[] x = new double[xMax];
+        for (int i = 0; i < xMax; i++) {
+            x[i] = (double) i;
         }
 
         // plot
         PlotWindow.noGridLines = false; // draw grid lines
         Plot plot = new Plot(plotTitle,xLabel,"Intensity (gray value)");
-        plot.setLimits(0, radius, 0, yMax + 1);
+        plot.setLimits(0, xMax, 0, yMax + 1);
         plot.setLineWidth(1);
 
         LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
@@ -324,26 +318,23 @@ class Multi_Plot{
         mask.setOverlay(overlay);
     }
 
-    private double[] getRingValues(ImagePlus src, int radius, boolean showChannel) {
+    private double[] getRingValues(ImagePlus src, int radius) {
         ArrayList<ArrayList<Float>> allRingValues = new ArrayList<>();
         for (int i=0; i <= radius; i++) {
             allRingValues.add(new ArrayList<Float>());
         }
         ImageProcessor imp = src.getProcessor();
-        imp.setColor(Color.white);
         for (int r = -radius; r <= radius; r++) {
             for (int c = -radius; c <= radius; c++) {
-                int distance = (int) Math.round(Math.sqrt(r * r + c * c));
+                int distance = (int) Math.round(Math.sqrt(r*r + c*c));
                 if (distance <= radius) {
                     int x = (int) xCentroid + r;
                     int y = (int) yCentroid + c;
                     allRingValues.get(distance).add(imp.getPixelValue(x, y));
-                    if(distance%2==0) imp.drawDot(x,y);
                 }
             }
         }
 
-        if(showChannel) src.show();
         double[] avgRingValues = new double[radius+1];
         for (int i=0; i<allRingValues.size(); i++){
             ArrayList<Float> currRing = allRingValues.get(i);
@@ -359,7 +350,6 @@ class Multi_Plot{
     private double[] getConvexHullValues(ImagePlus src, Roi roi, int radius) {
         Roi convexHullRoi = new PolygonRoi(roi.getConvexHull(),Roi.POLYGON);
         ImageProcessor mask = convexHullRoi.getMask();
-//        new ImagePlus("mask", mask).show();
 
         Rectangle r = roi.getBounds();
         ArrayList<ArrayList<Float>> allConvexHullValues = new ArrayList<>();
