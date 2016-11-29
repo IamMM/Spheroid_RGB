@@ -189,30 +189,6 @@ class Table_Analyzer {
         return sum / peaks.size();
     }
 
-
-    // mean of all pixels in image
-//    private double meanWithThreshold (ImageProcessor ip) {
-//        int[] histogram = ip.getHistogram();
-//        numberOfPixelsAboveThreshold = 0;
-//        double sum = 0;
-//        int minThreshold = 0;
-//        int maxThreshold= 255;
-//
-//        if(darkPeaks) maxThreshold -= threshold;
-//        else minThreshold = threshold;
-//
-//        for(int i = minThreshold; i <= maxThreshold; i++) {
-//            sum += (double)i * (double)histogram[i];
-//            numberOfPixelsAboveThreshold += (long)histogram[i];
-//        }
-//
-//        for (int count : histogram) {
-//            totalNumberOfPixels += count;
-//        }
-//
-//        return  sum / (double)numberOfPixelsAboveThreshold;
-//    }
-
     private double roiMean(ImagePlus imp, int threshold) {
         Roi roi = imp.getRoi();
         if (roi!=null && !roi.isArea()) roi = null;

@@ -88,7 +88,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.7.5 demo";
+    private static final String VERSION = " v0.7.9";
     Color PEAKS_COLOR = Color.WHITE;
     final Color ROI_COLOR = Color.YELLOW;
 
@@ -143,7 +143,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         ImagePlus image = IJ.openImage("img/EdU.tif");
         image.show();
 
-        // run the plugin
+        // runStarPlot the plugin
         IJ.runPlugIn(clazz.getName(), "");
     }
 
@@ -259,7 +259,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
                 showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
 
         if (starPlotRadioButton.isSelected())
-            multiPlot.run(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), yMax, options);
+            multiPlot.runStarPlot(channel, image, profileSlider.getValue(), radius, profileLengthSlider.getValue(), yMax, options);
         if(ringPlotRadioButton.isSelected())
             multiPlot.runRingPlot(channel, image, yMax, options, profileLengthSlider.getValue());
         if (convexHullPlotRadioButton.isSelected())
@@ -685,6 +685,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
                 int value = profileLengthSlider.getValue();
                 if (value > 0) lineLengthLabel.setText("+" + value + " %");
                 else lineLengthLabel.setText(value + " %");
+
             }
         });
 
