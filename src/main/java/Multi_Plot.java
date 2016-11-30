@@ -53,9 +53,8 @@ class Multi_Plot{
             case STAR_PLOT:
                 plotTitle = "Star plot " + mask.getTitle();
                 ArrayList<Roi> lines = initLines(radiusMode, radius, numberOfProfiles);
-                if (showOverlay) showLines(mask, lines);
-                else mask.setOverlay(null);
                 if (showChannel) showLines(channel, lines);
+                showLines(mask, lines, !showOverlay);
                 HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllProfiles(channel, roi, lines);
                 if(!autoScale) yMax = customYMax;
                 plotStarAverage(listOfAllProfiles, plotAll, radiusMode);
@@ -63,20 +62,21 @@ class Multi_Plot{
             case RING_PLOT:
                 plotTitle = "Ring plot " + mask.getTitle();
                 xLabel = "Distance from centroid (pixels)";
+                showOuterRingAndCentroid(mask, radius, !showOverlay);
+                if(showChannel) showOuterRingAndCentroid(channel, radius);
                 intensityValues = collectRingValues(channel, radius);
                 if(!autoScale) yMax = customYMax;
                 plot(intensityValues, xLabel);
-                if(showOverlay) showOuterRingAndCentroid(mask, radius);
-                mask.setRoi(roi);
                 break;
             case CONVEX_HULL:
-                roi = enlargeRoi(roi, variance);
                 plotTitle = "Convex hull plot " + mask.getTitle();
+                roi = enlargeRoi(roi, variance);
                 xLabel = "Distance from surface edge (pixels)";
+                showHullAndCentroid(mask, roi, !showOverlay);
+                if(showChannel) showHullAndCentroid(channel, roi);
                 intensityValues = collectConvexHullValues(channel, roi, radius);
                 if(!autoScale) yMax = customYMax;
                 plot(intensityValues, xLabel);
-                if (showOverlay) showHullAndCentroid(mask, roi);
                 break;
         }
 
@@ -126,13 +126,14 @@ class Multi_Plot{
         return lines;
     }
 
-    private void showLines(ImagePlus image, ArrayList<Roi> lines) {
+    private void showLines(ImagePlus image, ArrayList<Roi> lines, boolean hide) {
         Overlay overlay = new Overlay();
         for (Roi l : lines) {
             overlay.add(l);
         }
 
         image.setOverlay(overlay);
+        image.setHideOverlay(hide);
         image.show();
     }
 
@@ -304,18 +305,40 @@ class Multi_Plot{
         plot.show();
     }
 
-    private void showOuterRingAndCentroid(ImagePlus src, int radius) {
+    private void showOuterRingAndCentroid(ImagePlus src, int radius, boolean hide) {
         Overlay overlay= new Overlay();
         overlay.add(new PointRoi(xCentroid,yCentroid));
         overlay.add(new OvalRoi(xCentroid - radius,yCentroid-radius,radius<<1,radius<<1));
         src.setOverlay(overlay);
+        src.setHideOverlay(hide);
     }
 
-    private void showHullAndCentroid(ImagePlus mask, Roi roi) {
+    private void showOuterRingAndCentroid(ArrayList<ImagePlus> channels, int radius) {
+        for (ImagePlus channel : channels) {
+            Overlay overlay= new Overlay();
+            overlay.add(new PointRoi(xCentroid,yCentroid));
+            overlay.add(new OvalRoi(xCentroid - radius,yCentroid-radius,radius<<1,radius<<1));
+            channel.setOverlay(overlay);
+            channel.show();
+        }
+    }
+
+    private void showHullAndCentroid(ImagePlus src, Roi roi, boolean hide) {
         Overlay overlay= new Overlay();
         overlay.add(new PointRoi(xCentroid,yCentroid));
         overlay.add(new PolygonRoi(roi.getConvexHull(),Roi.POLYGON));
-        mask.setOverlay(overlay);
+        src.setOverlay(overlay);
+        src.setHideOverlay(hide);
+    }
+
+    private void showHullAndCentroid(ArrayList<ImagePlus> channels, Roi roi) {
+        for (ImagePlus channel : channels) {
+            Overlay overlay= new Overlay();
+            overlay.add(new PointRoi(xCentroid,yCentroid));
+            overlay.add(new PolygonRoi(roi.getConvexHull(),Roi.POLYGON));
+            channel.setOverlay(overlay);
+            channel.show();
+        }
     }
 
     private double[] getRingValues(ImagePlus src, int radius) {
