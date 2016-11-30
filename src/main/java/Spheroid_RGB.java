@@ -82,15 +82,12 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JCheckBox plotCountDistanceFunctionCheckBox;
     private JTextField quantificationTextField;
     private JPanel outerCountPanel;
-    private JRadioButton starPlotRadioButton;
     private JRadioButton ringPlotRadioButton;
     private JRadioButton convexHullPlotRadioButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.7.9";
-    Color PEAKS_COLOR = Color.WHITE;
-    final Color ROI_COLOR = Color.YELLOW;
+    private static final String VERSION = " v0.8";
 
    // imageJ components
     ImagePlus image;
@@ -118,7 +115,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private Multi_Plot multiPlot;
     private boolean radius = true;
     private int yMax;
-
 
     /**
      * Main method for debugging.
@@ -157,20 +153,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         if(WindowManager.getImageCount() == 0) {
             IJ.showMessage("no image open");
             return;
-
-//            URL url = null; //todo open example image
-//            try {
-//                url = getClass().getClassLoader().getResource("img/EdU.tif");
-//                Image image = Toolkit.getDefaultToolkit().getImage(url);
-//                ImagePlus imp = new ImagePlus("/img/EdU.jpg", image);
-//                imp.show();
-//            }catch (Exception e) {
-//                String msg = e.getMessage();
-//                if (msg==null || msg.equals(""))
-//                    msg = "" + e;
-//                IJ.showMessage("Spheroid RGB", msg + "\n \n" + url);
-//                return;
-//            }
         }
 
         initComponents();
@@ -184,7 +166,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         frame.pack();
         frame.setLocationRelativeTo(null); //center the frame on screen
         setLookAndFeel(frame);
-        setIcon();
         frame.setVisible(true);
         WindowManager.addWindow(frame);
     }
@@ -272,7 +253,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         switch (type){
             case ImagePlus.GRAY8:
                 imageIsGray = true;
-                PEAKS_COLOR = Color.RED;
                 return true;
             case ImagePlus.GRAY16:
                 IJ.showMessage("16-bit gray scale image not supported");
@@ -429,17 +409,17 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
      ********************************************************/
 
     private void initActionListeners(){
-        openButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openButtonAction();
-            }
-        });
-
         imgList.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setImage();
+            }
+        });
+
+        openButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openButtonAction();
             }
         });
 
@@ -725,11 +705,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private void setIcon() {
-        ImageIcon img = new ImageIcon("icon/icon_SN33267.png");
-        frame.setIconImage(img.getImage());
     }
 
     private void initImageList() {
