@@ -1,5 +1,7 @@
 import ij.ImagePlus;
+import ij.gui.Overlay;
 import ij.gui.Plot;
+import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
@@ -10,7 +12,6 @@ import ij.process.ImageStatistics;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.Set;
 
 /**
  * Created on 17/10/2016.
@@ -42,18 +43,18 @@ class Table_Analyzer {
 
         if(cleanTable) table = new ResultsTable();
 
-        LinkedHashMap<ImagePlus, ImageProcessor> channel = initChannelMap();
+        ArrayList<ImagePlus> channels = initChannels();
 
         //image stats
         Calibration calibration = image.getCalibration();
         for (Roi currRoi : main.roiManager.getRoisAsArray()) {
             LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
-            for (ImagePlus currChannel : channel.keySet()) {
+            for (ImagePlus currChannel : channels) {
                 currChannel.setRoi(currRoi);
                 String title = currChannel.getTitle().toLowerCase();
                 threshold = main.getThreshold(title);
                 if(countIsSelected) {
-                    ArrayList<Point> peaks = rumNucleiCounter(currChannel, channel.get(currChannel), threshold);
+                    ArrayList<Point> peaks = rumNucleiCounter(currChannel, threshold);
                     resultValues.put("count (" + title + ")", (double) peaks.size());
 
                     double meanPeak = meanPeak((byte[]) currChannel.getProcessor().getPixels(), peaks);
@@ -78,27 +79,36 @@ class Table_Analyzer {
             }
 
             // ratio values
-            if(channel.size() >= 2) {
+            if(channels.size() >= 2) {
                 if (ratioValuesIsSelected && countIsSelected) {
                     resultValues.putAll(ratio(resultValues, "count", major));
                     resultValues.putAll(ratio(resultValues, "peaks mean", major));
                 }
                 if (ratioValuesIsSelected && meanIsSelected) resultValues.putAll(ratio(resultValues, "mean", major));
                 if (ratioValuesIsSelected && areaIsSelected) resultValues.putAll(ratio(resultValues, "area", major));
-                if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channel.keySet(), major, threshold));
+                if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channels, major, threshold));
             }
 
             addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues);
         }
 
-        // show count result images
-        if(countIsSelected) {
-            for (ImagePlus currChannel : channel.keySet()) {
-                new ImagePlus("Results " + currChannel.getTitle(), channel.get(currChannel)).show();
-            }
+        for (ImagePlus channel : channels) {
+            channel.setTitle("Results " + channel.getTitle());
+            channel.show("show results");
         }
 
         main.roiManager.runCommand(image, "Show All");
+    }
+
+    private ArrayList<ImagePlus> initChannels() {
+        ArrayList<ImagePlus> channels = new ArrayList<>();
+        if (main.imageIsGray) channels.add(main.image);
+        else {
+            if (main.takeR) channels.add(main.rgb[0]);
+            if (main.takeG) channels.add(main.rgb[1]);
+            if (main.takeB) channels.add(main.rgb[2]);
+        }
+        return channels;
     }
 
     private LinkedHashMap<String, Double> ratio(LinkedHashMap<String, Double> resultValues, String key, String major) {
@@ -129,54 +139,29 @@ class Table_Analyzer {
         table.show("Count and Mean Results");
     }
 
-    /**
-     * Every Channel = 8bit ImagePlus and points to an RGB ImageProcessor for the result image
-     */
-    private LinkedHashMap<ImagePlus, ImageProcessor> initChannelMap() {
-        LinkedHashMap<ImagePlus, ImageProcessor> channel = new LinkedHashMap<>();
-        if(main.imageIsGray) {
-            ImageProcessor results = (main.image.getProcessor().duplicate()).convertToRGB();
-            channel.put(main.image, results);
-        } else {
-            if (main.takeR) {
-                ImageProcessor redResults = (main.rgb[0].getProcessor().duplicate()).convertToRGB();
-                channel.put(main.rgb[0], redResults);
-            }
-            if (main.takeG) {
-                ImageProcessor greenResults = (main.rgb[1].getProcessor().duplicate()).convertToRGB();
-                channel.put(main.rgb[1], greenResults);
-            }
-            if (main.takeB) {
-                ImageProcessor blueResults = (main.rgb[2].getProcessor().duplicate()).convertToRGB();
-                channel.put(main.rgb[2], blueResults);
-            }
-        }
-        return channel;
-    }
-
-    private ArrayList<Point> rumNucleiCounter(ImagePlus imp, ImageProcessor ipResults, int threshold) {
+    private ArrayList<Point> rumNucleiCounter(ImagePlus imp, int threshold) {
         //maskImp = null (ROI)
         double doubleThreshold = 10 * ((double)threshold /255);
         Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, main.cellWidth, main.minDist, doubleThreshold , main.darkPeaks, null);
         nucleiCounter.run();
         ArrayList<Point> peaks = nucleiCounter.getPeaks();
 
-        drawPeaks(imp, ipResults, peaks);
+        drawPeaks(imp, peaks);
 
         return peaks;
     }
 
-    private void drawPeaks(ImagePlus imp, ImageProcessor ipResults, ArrayList<Point> peaks) {
-        ipResults.setColor(main.PEAKS_COLOR);
-        ipResults.setLineWidth(1);
+    private void drawPeaks(ImagePlus imp, ArrayList<Point> peaks) {
+        Overlay overlay = imp.getOverlay();
+        if(overlay == null) overlay = new Overlay();
 
         for (Point p : peaks) {
-            ipResults.drawDot(p.x, p.y);
-//            System.out.println("Peak at: "+(pt.x+r.x)+" "+(pt.y+r.y)+" "+image[pt.x+r.x][pt.y+r.y]);
+            overlay.add(new PointRoi(p.x, p.y));
         }
 
-        ipResults.setColor(main.ROI_COLOR);
-        imp.getRoi().drawPixels(ipResults);
+        overlay.add(imp.getRoi());
+        imp.killRoi();
+        imp.setOverlay(overlay);
     }
 
     private double meanPeak(byte[] pixels, ArrayList<Point> peaks) {
@@ -221,7 +206,7 @@ class Table_Analyzer {
         return sum/ numberOfPixelsAboveThreshold;
     }
 
-    private double roiMeanRatio(Set<ImagePlus> channels, String majorTitle, int threshold) {
+    private double roiMeanRatio(ArrayList<ImagePlus> channels, String majorTitle, int threshold) {
         if(channels.size() < 2) return 0;
         ImagePlus[] impArray = new ImagePlus[channels.size()];
         channels.toArray(impArray);
