@@ -164,10 +164,19 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         frame.setContentPane(this.mainPanel);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.pack();
-        frame.setLocationRelativeTo(null); //center the frame on screen
+//        frame.setLocationRelativeTo(ImageJ.getFrames()[0]); //center the frame on screen
+        setLocationRelatedtoImageJFrame();
         setLookAndFeel(frame);
         frame.setVisible(true);
         WindowManager.addWindow(frame);
+    }
+
+    private void setLocationRelatedtoImageJFrame() {
+        Frame imageJFrame = ImageJ.getFrames()[0];
+        Point p = imageJFrame.getLocation();
+
+        p.move(p.x, p.y + imageJFrame.getHeight());
+        frame.setLocation(p);
     }
 
     private void runAnalyzer() {
