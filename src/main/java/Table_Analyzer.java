@@ -1,8 +1,5 @@
 import ij.ImagePlus;
-import ij.gui.Overlay;
-import ij.gui.Plot;
-import ij.gui.PointRoi;
-import ij.gui.Roi;
+import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
@@ -47,57 +44,70 @@ class Table_Analyzer {
 
         //image stats
         Calibration calibration = image.getCalibration();
-        for (Roi currRoi : main.roiManager.getRoisAsArray()) {
-            LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
-            for (ImagePlus currChannel : channels) {
-                currChannel.setRoi(currRoi);
-                String title = currChannel.getTitle().toLowerCase();
-                threshold = main.getThreshold(title);
-                if(countIsSelected) {
-                    ArrayList<Point> peaks = rumNucleiCounter(currChannel, threshold);
-                    resultValues.put("count (" + title + ")", (double) peaks.size());
-
-                    double meanPeak = meanPeak((byte[]) currChannel.getProcessor().getPixels(), peaks);
-                    resultValues.put("peaks mean (" + title + ")", meanPeak);
-
-                    if(plotIsSelected) countDistanceFunction(currChannel.getTitle(), peaks, currRoi);
-                }
-
-                double thresholdMean = roiMean(currChannel, threshold);
-                if(meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
-                if(areaIsSelected) {
-                    resultValues.put("area (" + title + ")", calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
-                    resultValues.put("total area fraction (" + title + ")", numberOfPixelsAboveThreshold/(double)totalNumberOfPixels);
-                }
-                if(idIsSelected) resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThreshold);
-            }
-
-            if(areaIsSelected) {
-                if(calibration.scaled()) resultValues.put("total area (" + calibration.getUnit() + "²)",
-                        calibration.getY(calibration.getX(totalNumberOfPixels)));
-                else resultValues.put("total area (number of pixels)", (double) totalNumberOfPixels);
-            }
-
-            // ratio values
-            if(channels.size() >= 2) {
-                if (ratioValuesIsSelected && countIsSelected) {
-                    resultValues.putAll(ratio(resultValues, "count", major));
-                    resultValues.putAll(ratio(resultValues, "peaks mean", major));
-                }
-                if (ratioValuesIsSelected && meanIsSelected) resultValues.putAll(ratio(resultValues, "mean", major));
-                if (ratioValuesIsSelected && areaIsSelected) resultValues.putAll(ratio(resultValues, "area", major));
-                if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channels, major, threshold));
-            }
-
-            addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues);
+        Roi[] roiArray = main.roiManager.getRoisAsArray();
+        GenericDialog warning = new GenericDialog("More than 10 items in ROI Manager");
+        warning.addMessage("Are you sure you want to analyze all Regions?");
+        warning.setOKLabel("yes");
+        warning.setCancelLabel("no");
+        if(roiArray.length > 10) {
+            warning.showDialog();
         }
+        if(warning.wasOKed() || roiArray.length < 10) {
+            for (Roi currRoi : main.roiManager.getRoisAsArray()) {
+                LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
+                for (ImagePlus currChannel : channels) {
+                    currChannel.setRoi(currRoi);
+                    String title = currChannel.getTitle().toLowerCase();
+                    threshold = main.getThreshold(title);
+                    if (countIsSelected) {
+                        ArrayList<Point> peaks = rumNucleiCounter(currChannel, threshold);
+                        resultValues.put("count (" + title + ")", (double) peaks.size());
 
-        for (ImagePlus channel : channels) {
-            channel.setTitle("Results " + channel.getTitle());
-            channel.show("show results");
+                        double meanPeak = meanPeak((byte[]) currChannel.getProcessor().getPixels(), peaks);
+                        resultValues.put("peaks mean (" + title + ")", meanPeak);
+
+                        if (plotIsSelected) countDistanceFunction(currChannel.getTitle(), peaks, currRoi);
+                    }
+
+                    double thresholdMean = roiMean(currChannel, threshold);
+                    if (meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
+                    if (areaIsSelected) {
+                        resultValues.put("area (" + title + ")", calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
+                        resultValues.put("total area fraction (" + title + ")", numberOfPixelsAboveThreshold / (double) totalNumberOfPixels);
+                    }
+                    if (idIsSelected)
+                        resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThreshold);
+                }
+
+                if (areaIsSelected) {
+                    if (calibration.scaled()) resultValues.put("total area (" + calibration.getUnit() + "²)",
+                            calibration.getY(calibration.getX(totalNumberOfPixels)));
+                    else resultValues.put("total area (number of pixels)", (double) totalNumberOfPixels);
+                }
+
+                // ratio values
+                if (channels.size() >= 2) {
+                    if (ratioValuesIsSelected && countIsSelected) {
+                        resultValues.putAll(ratio(resultValues, "count", major));
+                        resultValues.putAll(ratio(resultValues, "peaks mean", major));
+                    }
+                    if (ratioValuesIsSelected && meanIsSelected)
+                        resultValues.putAll(ratio(resultValues, "mean", major));
+                    if (ratioValuesIsSelected && areaIsSelected)
+                        resultValues.putAll(ratio(resultValues, "area", major));
+                    if (ratioMeanIsSelected) resultValues.put("ratio mean", roiMeanRatio(channels, major, threshold));
+                }
+
+                addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues);
+            }
+
+            for (ImagePlus channel : channels) {
+                channel.setTitle("Results " + channel.getTitle());
+                channel.show("show results");
+            }
+
+            main.roiManager.runCommand(image, "Show All");
         }
-
-        main.roiManager.runCommand(image, "Show All");
     }
 
     private ArrayList<ImagePlus> initChannels() {
