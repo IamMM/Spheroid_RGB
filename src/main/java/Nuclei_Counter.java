@@ -9,7 +9,7 @@ import java.util.ArrayList;
 /**
  * Created on January 17, 2006, 10:11 AM
  * Edited by Maximilian M. on 27 October, 2016
- * @author Thomas Kuo
+ * @author Thomas Kuo, Maximilian Maske
  *
  */
 class Nuclei_Counter {
@@ -18,7 +18,6 @@ class Nuclei_Counter {
     private double min_dist;               // Min distance
     private double threshold;              // Threshold
     private boolean darkPeaks;             // Select dark or light peaks
-    private double variance;               // Variance
     private ImageProcessor ip;             // ImageProcessor for current image
     private ImageProcessor ipMask;
 
@@ -38,27 +37,20 @@ class Nuclei_Counter {
         this.min_dist = min_dist;
         this.threshold = threshold;
         this.darkPeaks = darkPeaks;
-
-        double sigma = ((double) width - 1.0) / 3.0;
-        variance = sigma * sigma;
     }
 
     void run() {
-        //ImagePlus impl;
         double image[][];
 
         // Set ROI
-//        if (maskImp != null) {
-//        ip.resetRoi();
-//        }
         Rectangle r = ip.getRoi();
 
-        // 2 Compute kernel
+        // Compute kernel
         double[] kernel;
         IJ.showStatus("Finding Kernel");
         kernel = findKernel();
 
-        // 3 Convolution
+        // Convolution
         IJ.showStatus("Convolution");
 
         image = filter2(ip, kernel, width, width);
@@ -70,26 +62,17 @@ class Nuclei_Counter {
             }
         }
 
-        // 4 Find Maximum
+        // Find Maximum
         IJ.showStatus("Finding Maximums");
-
-        // Create Mask
-        int border = 1;
-        boolean[][] mask = new boolean[r.width][r.height];
-
-// if (maskImp != null) {
-//            ImageProcessor ipMask2 = maskImp.getProcessor();
-//            ipMask = ipMask2.duplicate();
-//        } else {
-//            if (inputImage.getMask() != null) {
-//                ipMask = (inputImage.getMask()).duplicate();
-//            }
-//        }
 
         // Get area if ROI selected.
         if (ipMask != null) {
             ipMask.dilate();
         }
+
+        // Create Mask
+        int border = 1;
+        boolean[][] mask = new boolean[r.width][r.height];
 
         for (int i = 0; i < r.width; i++) {
             for (int j = 0; j < r.height; j++) {
@@ -100,7 +83,7 @@ class Nuclei_Counter {
         // Local Maximum
         peaks = find_local_max(image, r, Math.floor((double) width / 3.0), min_dist, mask);
 
-        //transform roi related coordinates to image based coordinates
+        // transform roi related coordinates to image based coordinates
         int numberOfCells = peaks.size();
         for (int i = 0; i < numberOfCells; i++) {
             Point pt = peaks.get(i);
@@ -119,6 +102,8 @@ class Nuclei_Counter {
         int index;
 
         index = 0;
+        double sigma = ((double) width - 1.0) / 3.0;
+        double variance = sigma * sigma;
         for (double n1 = -bounds; n1 <= bounds; n1++) {
             for (double n2 = -bounds; n2 <= bounds; n2++) {
                 hg[index] = Math.exp(-(n1 * n1 + n2 * n2) / (2 * variance));
