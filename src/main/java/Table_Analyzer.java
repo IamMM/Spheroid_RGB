@@ -156,7 +156,7 @@ class Table_Analyzer {
     private ArrayList<Point> rumNucleiCounter(ImagePlus imp, int threshold) {
         //maskImp = null (ROI)
         double doubleThreshold = 10 * ((double)threshold /255);
-        Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, main.cellWidth, main.minDist, doubleThreshold , main.darkPeaks, null);
+        Nuclei_Counter nucleiCounter = new Nuclei_Counter(imp, main.cellWidth, main.minDist, doubleThreshold , main.darkPeaks);
         nucleiCounter.run();
         ArrayList<Point> peaks = nucleiCounter.getPeaks();
 

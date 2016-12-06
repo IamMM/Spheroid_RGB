@@ -1,5 +1,6 @@
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
@@ -18,18 +19,20 @@ class Nuclei_Counter {
     private double threshold;              // Threshold
     private boolean darkPeaks;             // Select dark or light peaks
     private double variance;               // Variance
-    private ImagePlus inputImage;          // ImagePlus for current image
     private ImageProcessor ip;             // ImageProcessor for current image
-    private ImagePlus maskImp;             // ImagePlus for mask image (null if does not exist)
+    private ImageProcessor ipMask;
 
     //output fields
     private ArrayList<Point> peaks;
 
-    Nuclei_Counter(ImagePlus imp, int width, double min_dist, double threshold, boolean darkPeaks, ImagePlus maskImp) {
-        this.inputImage = imp;
-        this.ip = imp.getProcessor();
-
-        this.maskImp = maskImp;
+    Nuclei_Counter(ImagePlus imp, int width, double min_dist, double threshold, boolean darkPeaks) {
+        Roi roi = imp.getRoi();
+        int roiPosition = roi.getPosition();
+        if(imp.getStackSize() > 1 && roiPosition > 1) {
+            ip = imp.getStack().getProcessor(roiPosition);
+        } else ip = imp.getProcessor();
+        ip.setRoi(roi);
+        if(imp.getMask() != null ) ipMask = imp.getMask().duplicate();
 
         this.width = width;
         this.min_dist = min_dist;
@@ -45,9 +48,9 @@ class Nuclei_Counter {
         double image[][];
 
         // Set ROI
-        if (maskImp != null) {
-            ip.resetRoi();
-        }
+//        if (maskImp != null) {
+//        ip.resetRoi();
+//        }
         Rectangle r = ip.getRoi();
 
         // 2 Compute kernel
@@ -71,18 +74,17 @@ class Nuclei_Counter {
         IJ.showStatus("Finding Maximums");
 
         // Create Mask
-        ImageProcessor ipMask = null;
         int border = 1;
         boolean[][] mask = new boolean[r.width][r.height];
 
-        if (maskImp != null) {
-            ImageProcessor ipMask2 = maskImp.getProcessor();
-            ipMask = ipMask2.duplicate();
-        } else {
-            if (inputImage.getMask() != null) {
-                ipMask = (inputImage.getMask()).duplicate();
-            }
-        }
+// if (maskImp != null) {
+//            ImageProcessor ipMask2 = maskImp.getProcessor();
+//            ipMask = ipMask2.duplicate();
+//        } else {
+//            if (inputImage.getMask() != null) {
+//                ipMask = (inputImage.getMask()).duplicate();
+//            }
+//        }
 
         // Get area if ROI selected.
         if (ipMask != null) {
