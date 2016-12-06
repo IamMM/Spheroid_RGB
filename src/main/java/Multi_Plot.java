@@ -301,6 +301,7 @@ class Multi_Plot{
 //            double area = getArea(y, bounds[0]);
 //            resultValues.put(title + " area", area);
         }
+        resultValues.put("radius (x max)", (double) xMax);
         addValuesToResultsTable(resultValues);
         plot.show();
     }
