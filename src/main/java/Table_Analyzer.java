@@ -59,6 +59,7 @@ class Table_Analyzer {
                     currChannel.setRoi(currRoi);
                     String title = currChannel.getTitle().toLowerCase();
                     threshold = main.getThreshold(title);
+                    double thresholdMean = roiMean(currChannel, threshold);
                     if (countIsSelected) {
                         ArrayList<Point> peaks = rumNucleiCounter(currChannel, threshold);
                         resultValues.put("count (" + title + ")", (double) peaks.size());
@@ -66,10 +67,13 @@ class Table_Analyzer {
                         double meanPeak = meanPeak((byte[]) currChannel.getProcessor().getPixels(), peaks);
                         resultValues.put("peaks mean (" + title + ")", meanPeak);
 
+                        // "Density: cells per square (calibration.getUnit())
+                        double density = (double) peaks.size()/calibration.getY(calibration.getX(totalNumberOfPixels));
+                        resultValues.put("nuclei density (" + title + ")", density);
+
                         if (plotIsSelected) countDistanceFunction(currChannel.getTitle(), peaks, currRoi);
                     }
 
-                    double thresholdMean = roiMean(currChannel, threshold);
                     if (meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
                     if (areaIsSelected) {
                         resultValues.put("area (" + title + ")", calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
