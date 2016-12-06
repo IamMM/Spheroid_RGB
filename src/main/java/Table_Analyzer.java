@@ -44,7 +44,8 @@ class Table_Analyzer {
 
         //image stats
         Calibration calibration = image.getCalibration();
-        Roi[] roiArray = main.roiManager.getRoisAsArray();
+        Roi[] roiArray = main.roiManager.getSelectedRoisAsArray();
+        if(roiArray == null) roiArray = main.roiManager.getRoisAsArray();
         GenericDialog warning = new GenericDialog("More than 10 items in ROI Manager");
         warning.addMessage("Are you sure you want to analyze all Regions?");
         warning.setOKLabel("yes");
@@ -53,9 +54,10 @@ class Table_Analyzer {
             warning.showDialog();
         }
         if(warning.wasOKed() || roiArray.length < 10) {
-            for (Roi currRoi : main.roiManager.getRoisAsArray()) {
+            for (Roi currRoi : roiArray) {
                 LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
                 for (ImagePlus currChannel : channels) {
+//                    ImageProcessor currIp = currChannel.getStack().getProcessor(currRoi.getPosition());
                     currChannel.setRoi(currRoi);
                     String title = currChannel.getTitle().toLowerCase();
                     threshold = main.getThreshold(title);
