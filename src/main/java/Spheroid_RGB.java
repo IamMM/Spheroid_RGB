@@ -6,6 +6,7 @@ import ij.plugin.ChannelSplitter;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.RoiManager;
 import ij.process.AutoThresholder;
+import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
 
@@ -280,14 +281,13 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void showMagicSelectDialog() {
-        if(image.getRoi() == null || image.getRoi().isArea() || image.getRoi().isLine()) {
-            IJ.showMessage("Please select a seed with the point tool");
-            IJ.setTool("Point");
-            return;
-        }
 
-        final PointRoi p = (PointRoi) image.getRoi();
-        final Polygon polygon = p.getPolygon();
+        final PointRoi p =
+                (image.getRoi() == null || image.getRoi().isArea() || image.getRoi().isLine()) ?
+                findSeed(image):(PointRoi) image.getRoi();
+
+        final int x = (int) p.getXBase();
+        final int y = (int) p.getYBase();
         final String[] modes = {"Legacy", "4-connected", "8-connected"};
 
         DialogListener listener = new DialogListener() {
@@ -298,7 +298,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
                 tolerance = genericDialog.getNextNumber();
                 startTolerance = tolerance;
                 startMode = genericDialog.getNextChoiceIndex();
-                IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], tolerance, modes[startMode]);
+                IJ.doWand(x, y, tolerance, modes[startMode]);
 
                 return true;
             }
@@ -310,13 +310,37 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         wandDialog.addDialogListener(listener);
         wandDialog.setOKLabel("Add to Roi Manager");
         wandDialog.setCancelLabel("Exit");
-        IJ.doWand(polygon.xpoints[0], polygon.ypoints[0], startTolerance, modes[startMode]);
+        IJ.doWand(x, y, startTolerance, modes[startMode]);
         wandDialog.showDialog();
         if (wandDialog.wasOKed()) {
             RoiManager roiManager = RoiManager.getInstance();
             if(roiManager == null) roiManager = new RoiManager();
             roiManager.addRoi(image.getRoi());
         }
+    }
+
+    private PointRoi findSeed(ImagePlus image) {
+        int xSeed = 0, ySeed = 0;
+        float maxValue = 0;
+        Roi roi = image.getRoi();
+        if (roi!=null && !roi.isArea()) roi = null;
+        ImageProcessor ip = image.getProcessor();
+        ImageProcessor mask = roi!=null?roi.getMask():null;
+        Rectangle r = roi!=null ? roi.getBounds() : new Rectangle(0,0,ip.getWidth(),ip.getHeight());
+
+        for (int y=0; y<r.height; y++) {
+            for (int x=0; x<r.width; x++) {
+                if (mask==null||mask.getPixel(x,y)!=0) {
+                    float value = ip.getPixelValue(x+r.x, y+r.y);
+                    if(value > maxValue) {
+                        xSeed = x+r.x;
+                        ySeed = y+r.y;
+                        maxValue = value;
+                    }
+                }
+            }
+        }
+        return new PointRoi(xSeed, ySeed);
     }
 
     // set suitable look up table for 8bit channel (pseudo color)
