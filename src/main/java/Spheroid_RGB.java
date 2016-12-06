@@ -88,7 +88,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.8";
+    private static final String VERSION = " v0.8.5";
 
    // imageJ components
     ImagePlus image;

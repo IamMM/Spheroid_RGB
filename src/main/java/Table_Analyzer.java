@@ -57,7 +57,6 @@ class Table_Analyzer {
             for (Roi currRoi : roiArray) {
                 LinkedHashMap<String, Double> resultValues = new LinkedHashMap<>();
                 for (ImagePlus currChannel : channels) {
-//                    ImageProcessor currIp = currChannel.getStack().getProcessor(currRoi.getPosition());
                     currChannel.setRoi(currRoi);
                     String title = currChannel.getTitle().toLowerCase();
                     threshold = main.getThreshold(title);
@@ -107,9 +106,11 @@ class Table_Analyzer {
                 addValuesToResultsTable(image.getTitle(), currRoi.getName(), resultValues);
             }
 
-            for (ImagePlus channel : channels) {
-                channel.setTitle("Results " + channel.getTitle());
-                channel.show("show results");
+            if(countIsSelected) {
+                for (ImagePlus channel : channels) {
+                    channel.setTitle("Results " + channel.getTitle());
+                    channel.show("show results");
+                }
             }
 
             main.roiManager.runCommand(image, "Show All");
@@ -193,7 +194,11 @@ class Table_Analyzer {
     private double roiMean(ImagePlus imp, int threshold) {
         Roi roi = imp.getRoi();
         if (roi!=null && !roi.isArea()) roi = null;
-        ImageProcessor ip = imp.getProcessor();
+        ImageProcessor ip;
+        int roiPosition = roi!=null?roi.getPosition():0;
+        if(imp.getStackSize() > 1 && roiPosition > 1) {
+            ip = imp.getStack().getProcessor(roiPosition);
+        } else ip = imp.getProcessor();
         ImageProcessor mask = roi!=null?roi.getMask():null;
         Rectangle r = roi!=null ? roi.getBounds() : new Rectangle(0,0,ip.getWidth(),ip.getHeight());
 
