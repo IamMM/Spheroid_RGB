@@ -26,6 +26,7 @@ class Multi_Plot{
     private int xMax;
     private String plotTitle;
     private ResultsTable table;
+    private int roiPosition;
     static final int STAR_PLOT = 0;
     static final int RING_PLOT = 1;
     static final int CONVEX_HULL = 2;
@@ -35,6 +36,7 @@ class Multi_Plot{
         xMax = 0;
 
         Roi roi = mask.getRoi();
+        roiPosition = roi.getPosition() == 0? 1:roi.getPosition();
 
         // options
         boolean cleanTable = options[0];
@@ -64,7 +66,7 @@ class Multi_Plot{
                 plotTitle = "Ring plot" + imgAndRoiTitle;
                 xLabel = "Distance from centroid (pixels)";
                 showOuterRingAndCentroid(mask, radius, !showOverlay, roi.getPosition());
-                if(showChannel) showOuterRingAndCentroid(channel, radius, roi.getPosition());
+                if(showChannel) showOuterRingAndCentroid(channel, radius);
                 intensityValues = collectRingValues(channel, radius);
                 if(!autoScale) yMax = customYMax;
                 plot(intensityValues, xLabel);
@@ -112,12 +114,15 @@ class Multi_Plot{
             for (int i = 0; i <numberOfProfiles;i++) {
                 double deltaX = Math.cos(Math.toRadians(newAngle)) * radius;
                 double deltaY = Math.sin(Math.toRadians(newAngle)) * radius;
-                lines.add(new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY));
+                Line line = new Line(xCentroid, yCentroid, xCentroid + deltaX, yCentroid + deltaY);
+                line.setPosition(roiPosition);
+                lines.add(line);
                 newAngle += angle;
             }
         } else {
             angle = 180 / (double) numberOfProfiles;
             Roi horizontal = new Line(xCentroid - radius, yCentroid, xCentroid + radius, yCentroid);
+            horizontal.setPosition(roiPosition);
             for (int i = 0; i <numberOfProfiles;i++) {
                 horizontal = RoiRotator.rotate(horizontal, angle);
                 lines.add(horizontal);
@@ -319,7 +324,7 @@ class Multi_Plot{
         src.setHideOverlay(hide);
     }
 
-    private void showOuterRingAndCentroid(ArrayList<ImagePlus> channels, int radius, int roiPosition) {
+    private void showOuterRingAndCentroid(ArrayList<ImagePlus> channels, int radius) {
         for (ImagePlus channel : channels) {
             Overlay overlay= new Overlay();
             PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
@@ -335,7 +340,6 @@ class Multi_Plot{
 
     private void showHullAndCentroid(ImagePlus src, Roi roi, boolean hide) {
         Overlay overlay= new Overlay();
-        int roiPosition = roi.getPosition();
         PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
         pointRoi.setPosition(roiPosition);
         overlay.add(pointRoi);
@@ -349,7 +353,6 @@ class Multi_Plot{
     private void showHullAndCentroid(ArrayList<ImagePlus> channels, Roi roi) {
         for (ImagePlus channel : channels) {
             Overlay overlay= new Overlay();
-            int roiPosition = roi.getPosition();
             PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
             pointRoi.setPosition(roiPosition);
             overlay.add(pointRoi);
@@ -366,7 +369,7 @@ class Multi_Plot{
         for (int i=0; i <= radius; i++) {
             allRingValues.add(new ArrayList<Float>());
         }
-        ImageProcessor imp = src.getProcessor();
+        ImageProcessor imp = src.getStack().getProcessor(roiPosition);
         for (int r = -radius; r <= radius; r++) {
             for (int c = -radius; c <= radius; c++) {
                 int distance = (int) Math.round(Math.sqrt(r*r + c*c));
@@ -400,7 +403,7 @@ class Multi_Plot{
             allConvexHullValues.add(new ArrayList<Float>());
         }
 
-        ImageProcessor imp = src.getProcessor();
+        ImageProcessor imp = src.getStack().getProcessor(roiPosition);
         for (int y = 0; y <= r.width; y++) {
             for (int x = 0; x <= r.height; x++) {
                 if (mask.getPixel(x,y)!=0) {
