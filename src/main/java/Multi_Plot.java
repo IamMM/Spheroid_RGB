@@ -48,10 +48,11 @@ class Multi_Plot{
         int radius = getRadius(roi, variance);
         String xLabel;
         LinkedHashMap<String, double[]> intensityValues;
+        String imgAndRoiTitle = " (" + mask.getTitle() + " | " + roi.getName() + ")";
 
         switch (mode) {
             case STAR_PLOT:
-                plotTitle = "Star plot " + mask.getTitle();
+                plotTitle = "Star plot" + imgAndRoiTitle;
                 ArrayList<Roi> lines = initLines(radiusMode, radius, numberOfProfiles);
                 if (showChannel) showLines(channel, lines);
                 showLines(mask, lines, !showOverlay);
@@ -60,16 +61,16 @@ class Multi_Plot{
                 plotStarAverage(listOfAllProfiles, plotAll, radiusMode);
                 break;
             case RING_PLOT:
-                plotTitle = "Ring plot " + mask.getTitle();
+                plotTitle = "Ring plot" + imgAndRoiTitle;
                 xLabel = "Distance from centroid (pixels)";
-                showOuterRingAndCentroid(mask, radius, !showOverlay);
-                if(showChannel) showOuterRingAndCentroid(channel, radius);
+                showOuterRingAndCentroid(mask, radius, !showOverlay, roi.getPosition());
+                if(showChannel) showOuterRingAndCentroid(channel, radius, roi.getPosition());
                 intensityValues = collectRingValues(channel, radius);
                 if(!autoScale) yMax = customYMax;
                 plot(intensityValues, xLabel);
                 break;
             case CONVEX_HULL:
-                plotTitle = "Convex hull plot " + mask.getTitle();
+                plotTitle = "Convex hull plot" + imgAndRoiTitle;
                 roi = enlargeRoi(roi, variance);
                 xLabel = "Distance from surface edge (pixels)";
                 showHullAndCentroid(mask, roi, !showOverlay);
@@ -306,19 +307,27 @@ class Multi_Plot{
         plot.show();
     }
 
-    private void showOuterRingAndCentroid(ImagePlus src, int radius, boolean hide) {
+    private void showOuterRingAndCentroid(ImagePlus src, int radius, boolean hide, int roiPosition) {
         Overlay overlay= new Overlay();
-        overlay.add(new PointRoi(xCentroid,yCentroid));
-        overlay.add(new OvalRoi(xCentroid - radius,yCentroid-radius,radius<<1,radius<<1));
+        PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
+        pointRoi.setPosition(roiPosition);
+        overlay.add(pointRoi);
+        OvalRoi outerRing =new OvalRoi(xCentroid - radius,yCentroid-radius,radius<<1,radius<<1);
+        outerRing.setPosition(roiPosition);
+        overlay.add(outerRing);
         src.setOverlay(overlay);
         src.setHideOverlay(hide);
     }
 
-    private void showOuterRingAndCentroid(ArrayList<ImagePlus> channels, int radius) {
+    private void showOuterRingAndCentroid(ArrayList<ImagePlus> channels, int radius, int roiPosition) {
         for (ImagePlus channel : channels) {
             Overlay overlay= new Overlay();
-            overlay.add(new PointRoi(xCentroid,yCentroid));
-            overlay.add(new OvalRoi(xCentroid - radius,yCentroid-radius,radius<<1,radius<<1));
+            PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
+            pointRoi.setPosition(roiPosition);
+            overlay.add(pointRoi);
+            OvalRoi outerRing =new OvalRoi(xCentroid - radius,yCentroid-radius,radius<<1,radius<<1);
+            outerRing.setPosition(roiPosition);
+            overlay.add(outerRing);
             channel.setOverlay(overlay);
             channel.show();
         }
@@ -326,8 +335,13 @@ class Multi_Plot{
 
     private void showHullAndCentroid(ImagePlus src, Roi roi, boolean hide) {
         Overlay overlay= new Overlay();
-        overlay.add(new PointRoi(xCentroid,yCentroid));
-        overlay.add(new PolygonRoi(roi.getConvexHull(),Roi.POLYGON));
+        int roiPosition = roi.getPosition();
+        PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
+        pointRoi.setPosition(roiPosition);
+        overlay.add(pointRoi);
+        PolygonRoi convexHull = new PolygonRoi(roi.getConvexHull(),Roi.POLYGON);
+        convexHull.setPosition(roiPosition);
+        overlay.add(convexHull);
         src.setOverlay(overlay);
         src.setHideOverlay(hide);
     }
@@ -335,8 +349,13 @@ class Multi_Plot{
     private void showHullAndCentroid(ArrayList<ImagePlus> channels, Roi roi) {
         for (ImagePlus channel : channels) {
             Overlay overlay= new Overlay();
-            overlay.add(new PointRoi(xCentroid,yCentroid));
-            overlay.add(new PolygonRoi(roi.getConvexHull(),Roi.POLYGON));
+            int roiPosition = roi.getPosition();
+            PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
+            pointRoi.setPosition(roiPosition);
+            overlay.add(pointRoi);
+            PolygonRoi convexHull = new PolygonRoi(roi.getConvexHull(),Roi.POLYGON);
+            convexHull.setPosition(roiPosition);
+            overlay.add(convexHull);
             channel.setOverlay(overlay);
             channel.show();
         }
