@@ -169,14 +169,18 @@ class Table_Analyzer {
     }
 
     private void drawPeaks(ImagePlus imp, ArrayList<Point> peaks) {
+        Roi roi = imp.getRoi();
+        int roiPosition = roi.getPosition();
         Overlay overlay = imp.getOverlay();
         if(overlay == null) overlay = new Overlay();
 
         for (Point p : peaks) {
-            overlay.add(new PointRoi(p.x, p.y));
+            PointRoi pointRoi = new PointRoi(p.x, p.y);
+            pointRoi.setPosition(roiPosition);
+            overlay.add(pointRoi);
         }
 
-        overlay.add(imp.getRoi());
+        overlay.add(roi);
         imp.killRoi();
         imp.setOverlay(overlay);
     }
