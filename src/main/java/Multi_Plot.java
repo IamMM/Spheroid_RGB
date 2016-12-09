@@ -73,7 +73,7 @@ class Multi_Plot{
                 break;
             case CONVEX_HULL:
                 plotTitle = "Convex hull plot" + imgAndRoiTitle;
-                roi = enlargeRoi(roi, variance);
+                roi = roiToConvexHull(roi, variance);
                 xLabel = "Distance from surface edge (pixels)";
                 showHullAndCentroid(mask, roi, !showOverlay);
                 if(showChannel) showHullAndCentroid(channel, roi);
@@ -343,9 +343,8 @@ class Multi_Plot{
         PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
         pointRoi.setPosition(roiPosition);
         overlay.add(pointRoi);
-        PolygonRoi convexHull = new PolygonRoi(roi.getConvexHull(),Roi.POLYGON);
-        convexHull.setPosition(roiPosition);
-        overlay.add(convexHull);
+        roi.setPosition(roiPosition);
+        overlay.add(roi);
         src.setOverlay(overlay);
         src.setHideOverlay(hide);
     }
@@ -356,9 +355,8 @@ class Multi_Plot{
             PointRoi pointRoi = new PointRoi(xCentroid,yCentroid);
             pointRoi.setPosition(roiPosition);
             overlay.add(pointRoi);
-            PolygonRoi convexHull = new PolygonRoi(roi.getConvexHull(),Roi.POLYGON);
-            convexHull.setPosition(roiPosition);
-            overlay.add(convexHull);
+            roi.setPosition(roiPosition);
+            overlay.add(roi);
             channel.setOverlay(overlay);
             channel.show();
         }
@@ -394,8 +392,7 @@ class Multi_Plot{
     }
 
     private double[] getConvexHullValues(ImagePlus src, Roi roi, int radius) {
-        Roi convexHullRoi = new PolygonRoi(roi.getConvexHull(),Roi.POLYGON);
-        ImageProcessor mask = convexHullRoi.getMask();
+        ImageProcessor mask = roi.getMask();
 
         Rectangle r = roi.getBounds();
         ArrayList<ArrayList<Float>> allConvexHullValues = new ArrayList<>();
@@ -518,9 +515,10 @@ class Multi_Plot{
 
         return radius;
     }
-    private Roi enlargeRoi(Roi roi, int variance) {
+    private Roi roiToConvexHull(Roi roi, int variance) {
         Rectangle bounds = roi.getBounds();
         double diameter = bounds.getWidth() > bounds.getHeight() ? bounds.getWidth() : bounds.getHeight();
+        roi = new PolygonRoi(roi.getConvexHull(),Roi.POLYGON);
         return  RoiEnlarger.enlarge(roi, variance * diameter / 100);
     }
 }
