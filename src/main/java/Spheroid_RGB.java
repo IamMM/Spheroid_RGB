@@ -88,7 +88,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.8.5";
+    private static final String VERSION = " v0.8.6";
 
    // imageJ components
     ImagePlus image;
@@ -381,6 +381,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         Opener opener = new Opener();
         image = opener.openImage(directory, name);
         image.show();
+        imgList.setSelectedIndex(imgList.getItemCount() - 1);
     }
 
     private void showSelectedChannels() {
@@ -778,8 +779,6 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     @Override
     public void imageOpened(ImagePlus imagePlus) {
         imgList.addItem(imagePlus.getTitle());
-        imgList.setSelectedIndex(imgList.getItemCount() - 1);
-        image = imagePlus;
     }
 
     @Override
