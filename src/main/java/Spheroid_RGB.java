@@ -281,6 +281,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void showMagicSelectDialog() {
+        ImagePlus image = WindowManager.getCurrentImage();
 
         final PointRoi p =
                 (image.getRoi() == null || image.getRoi().isArea() || image.getRoi().isLine()) ?
