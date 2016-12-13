@@ -5,6 +5,7 @@ import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.RoiEnlarger;
 import ij.plugin.RoiRotator;
+import ij.plugin.filter.Analyzer;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
@@ -460,7 +461,8 @@ class Multi_Plot{
             table.addValue(s, results.get(s));
         }
 
-        table.show("Plot Results");
+        Analyzer.setResultsTable(table);
+        table.show("Results");
     }
 
     private double[] getMaxCoordinates(double[] values) {

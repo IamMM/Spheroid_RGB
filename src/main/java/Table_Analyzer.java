@@ -3,6 +3,7 @@ import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
+import ij.plugin.filter.Analyzer;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 
@@ -60,28 +61,29 @@ class Table_Analyzer {
                     currChannel.setRoi(currRoi);
                     String title = currChannel.getTitle().toLowerCase();
                     threshold = main.getThreshold(title);
+                    String channelName = title.equals("red")||title.equals("green")||title.equals("blue")?" ("+title+")":"";
                     double thresholdMean = roiMean(currChannel, threshold);
                     if (countIsSelected) {
                         ArrayList<Point> peaks = rumNucleiCounter(currChannel, threshold);
-                        resultValues.put("count (" + title + ")", (double) peaks.size());
+                        resultValues.put("count" + channelName, (double) peaks.size());
 
                         double meanPeak = meanPeak((byte[]) currChannel.getProcessor().getPixels(), peaks);
-                        resultValues.put("peaks mean (" + title + ")", meanPeak);
+                        resultValues.put("peaks mean" + channelName, meanPeak);
 
                         // "Density: cells per square (calibration.getUnit())
                         double density = (double) peaks.size()/calibration.getY(calibration.getX(totalNumberOfPixels));
-                        resultValues.put("nuclei density (" + title + ")", density);
+                        resultValues.put("nuclei density" + channelName, density);
 
                         if (plotIsSelected) countDistanceFunction(currChannel.getTitle(), peaks, currRoi);
                     }
 
-                    if (meanIsSelected) resultValues.put("mean (" + title + ")", thresholdMean);
+                    if (meanIsSelected) resultValues.put("mean" + channelName, thresholdMean);
                     if (areaIsSelected) {
-                        resultValues.put("area (" + title + ")", calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
-                        resultValues.put("total area fraction (" + title + ")", numberOfPixelsAboveThreshold / (double) totalNumberOfPixels);
+                        resultValues.put("area" + channelName, calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
+                        resultValues.put("total area fraction" + channelName, numberOfPixelsAboveThreshold / (double) totalNumberOfPixels);
                     }
                     if (idIsSelected)
-                        resultValues.put("integrated density (" + title + ")", thresholdMean * numberOfPixelsAboveThreshold);
+                        resultValues.put("integrated density" + channelName, thresholdMean * numberOfPixelsAboveThreshold);
                 }
 
                 if (areaIsSelected) {
@@ -153,7 +155,8 @@ class Table_Analyzer {
             table.addValue(s, results.get(s));
         }
 
-        table.show("Count and Mean Results");
+        Analyzer.setResultsTable(table);
+        table.show("Results");
     }
 
     private ArrayList<Point> rumNucleiCounter(ImagePlus imp, int threshold) {
