@@ -220,26 +220,28 @@ class Multi_Plot{
 
             //average plot
             double[] avg = avgProfile(profiles);
-            Color avgColor = toColor(currChannel.getTitle());
+            String title = currChannel.getTitle();
+            Color avgColor = toColor(title);
             plot.setColor(avgColor);
             plot.addPoints(x, avg, PlotWindow.LINE);
 
             if (radius) {
                 double[] max = getMaxCoordinates(avg);
-                resultValues.put(currChannel.getTitle() + " max x", max[0]);
-                resultValues.put(currChannel.getTitle() + " max y", max[1]);
+                String channelName = title.equals("red")||title.equals("green")||title.equals("blue")?title:"";
+                resultValues.put(channelName + " max x", max[0]);
+                resultValues.put(channelName + " max y", max[1]);
                 plot.setLineWidth(1);
                 plot.setColor(Color.darkGray);
                 plot.drawDottedLine(0, max[1], max[0], max[1], 2);
 
                 double[] bounds = getGradientChange(avg);
-                resultValues.put(currChannel.getTitle() + " bounds x", bounds[0]);
-                resultValues.put(currChannel.getTitle() + " bounds y", bounds[1]);
+                resultValues.put(channelName + " bounds x", bounds[0]);
+                resultValues.put(channelName + " bounds y", bounds[1]);
                 plot.setColor(Color.darkGray);
                 plot.drawLine(bounds[0], 0, bounds[0], yMax);
 
                 double area = getArea(avg, bounds[0]);
-                resultValues.put(currChannel.getTitle() + " area", area);
+                resultValues.put(channelName + " area", area);
             }
         }
 
@@ -294,8 +296,9 @@ class Multi_Plot{
             plot.addPoints(x, y,PlotWindow.LINE);
 
             double[] max = getMaxCoordinates(y);
-            resultValues.put(title + " max x", max[0]);
-            resultValues.put(title + " max y", max[1]);
+            String channelName = title.equals("red")||title.equals("green")||title.equals("blue")?title:"";
+            resultValues.put(channelName + " max x", max[0]);
+            resultValues.put(channelName + " max y", max[1]);
             plot.setColor(Color.darkGray);
             plot.drawDottedLine(0, max[1], max[0], max[1], 2);
 
