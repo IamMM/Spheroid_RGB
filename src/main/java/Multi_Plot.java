@@ -234,7 +234,7 @@ class Multi_Plot{
                 plot.setColor(Color.darkGray);
                 plot.drawDottedLine(0, max[1], max[0], max[1], 2);
 
-                double[] bounds = getGradientChange(avg);
+                double[] bounds = getGradientFromLeft(avg);
                 resultValues.put(channelName + " bounds x", bounds[0]);
                 resultValues.put(channelName + " bounds y", bounds[1]);
                 plot.setColor(Color.darkGray);
@@ -302,14 +302,14 @@ class Multi_Plot{
             plot.setColor(Color.darkGray);
             plot.drawDottedLine(0, max[1], max[0], max[1], 2);
 
-//            double[] bounds = getGradientChange(y);
-//            resultValues.put(title + " bounds x", bounds[0]);
-//            resultValues.put(title + " bounds y", bounds[1]);
-//            plot.setColor(Color.darkGray);
-//            plot.drawLine(bounds[0], 0, bounds[0], 255);
-//
-//            double area = getArea(y, bounds[0]);
-//            resultValues.put(title + " area", area);
+            double[] bounds = getBounds(y);
+            resultValues.put(title + " bounds x", bounds[0]);
+            resultValues.put(title + " bounds y", bounds[1]);
+            plot.setColor(Color.darkGray);
+            plot.drawLine(bounds[0], 0, bounds[0], 255);
+
+            double area = getArea(y, bounds[0]);
+            resultValues.put(title + " area", area);
         }
         resultValues.put("radius (x max)", (double) xMax);
         addValuesToResultsTable(resultValues);
@@ -390,7 +390,7 @@ class Multi_Plot{
             for (float intensity : currRing) {
                 sum += intensity;
             }
-            avgRingValues[i] = sum / currRing.size();
+            avgRingValues[i] = sum / (double) currRing.size();
         }
         return avgRingValues;
     }
@@ -450,7 +450,7 @@ class Multi_Plot{
                 for (float intensity : currRing) {
                     sum += intensity;
                 }
-                avgValues[i] = sum / currRing.size();
+                avgValues[i] = sum / (double) currRing.size();
             }
         }
         return avgValues;
@@ -482,23 +482,52 @@ class Multi_Plot{
         return new double[]{x, y};
     }
 
-    private double[] getGradientChange(double[] values) {
+    private double[] getBounds(double[] values) {
+        values = smooth(values);
+
+        int length = values.length;
+        double left = (values[0] + values[1] + values[2]) / 3;
+        double right = (values[length-3] + values[length-2] + values[length-1]) / 3;
+        boolean fromLeft = left < right;
+
+        return fromLeft? getGradientFromLeft(values):getGradientFromRight(values);
+    }
+
+    private double[] smooth(double[] values) {
+        double[] smooth = new double[values.length];
+        for (int i=1; i < values.length-1; i++){
+            smooth[i] = (values[i-1] + values[i] + values[i+1]) / 3;
+        }
+        return smooth;
+    }
+
+    private double[] getGradientFromLeft(double[] values) {
+        double gradient;
+        int deltaX = values.length / 16; // span dependent from profile line length
+        double precision = 0.1;
+
+        for (int i = 0; i < values.length - deltaX; i++) {
+            gradient = (values[i] - values[i+deltaX]) / deltaX; // deltaY / deltaX
+            if (gradient < -precision || gradient > precision) {
+                double x = i + deltaX;
+                double y = values[i + deltaX];
+                return new double[]{x, y};
+            }
+        }
+        return new double[]{0,0};
+    }
+
+    private double[] getGradientFromRight(double[] values) {
         double gradient;
         int deltaX = values.length / 16; // span dependent from profile line length
         double precision = 0.1;
 
         for (int i = values.length - 1; i > deltaX; i--) {
             gradient = (values[i] - values[i-deltaX]) / deltaX; // deltaY / deltaX
-//            System.out.println(i - span + ": " + gradient);
             if (gradient < -precision || gradient > precision) {
-                if(i == values.length - 1) {
-//                    IJ.showMessage("No Bounds", "The gradient on the very edge is not 0\nTry to vary the length of the profile lines or a different plot mode.");
-                    break;
-                } else {
-                    double x = i - deltaX;
-                    double y = values[i - deltaX];
-                    return new double[]{x, y};
-                }
+                double x = i - deltaX;
+                double y = values[i - deltaX];
+                return new double[]{x, y};
             }
         }
         return new double[]{values.length - 1, values[values.length-1]};
