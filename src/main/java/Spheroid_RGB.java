@@ -85,6 +85,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JPanel outerCountPanel;
     private JRadioButton ringPlotRadioButton;
     private JRadioButton convexHullPlotRadioButton;
+    private JRadioButton startPlotRadioButton;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -652,6 +653,24 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         });
 
         //Multi plot
+        startPlotRadioButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enableStarPlotComponents(true);
+            }
+        });
+        ringPlotRadioButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enableStarPlotComponents(false);
+            }
+        });
+        convexHullPlotRadioButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                enableStarPlotComponents(false);
+            }
+        });
         profileSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -711,6 +730,13 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             }
         });
 
+    }
+
+    private void enableStarPlotComponents(boolean b) {
+        radiusButton.setEnabled(b);
+        profileSlider.setEnabled(b);
+        profileLabel.setEnabled(b);
+        showAllGrayPlots.setEnabled(b);
     }
 
     private void getCountAndMeanValues() {

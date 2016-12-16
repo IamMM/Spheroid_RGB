@@ -835,7 +835,7 @@
                     <constraints/>
                     <properties/>
                   </component>
-                  <component id="77f03" class="javax.swing.JRadioButton" default-binding="true">
+                  <component id="77f03" class="javax.swing.JRadioButton" binding="startPlotRadioButton">
                     <constraints/>
                     <properties>
                       <selected value="true"/>
