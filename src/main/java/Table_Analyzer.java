@@ -110,8 +110,9 @@ class Table_Analyzer {
 
             if(countIsSelected) {
                 for (ImagePlus channel : channels) {
-                    channel.setTitle("Results " + channel.getTitle());
-                    channel.show("show results");
+                    ImagePlus result = channel.duplicate();
+                    result.setTitle("Results " + channel.getTitle());
+                    result.show("show results");
                 }
             }
 
