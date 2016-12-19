@@ -90,7 +90,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.8.6";
+    private static final String VERSION = " v0.8.7";
 
    // imageJ components
     ImagePlus image;
@@ -286,9 +286,12 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private void showMagicSelectDialog() {
         ImagePlus image = WindowManager.getCurrentImage();
 
-        final PointRoi p =
-                (image.getRoi() == null || image.getRoi().isArea() || image.getRoi().isLine()) ?
-                findSeed(image):(PointRoi) image.getRoi();
+        final PointRoi p;
+        if(image.getRoi() == null || image.getRoi().isArea() || image.getRoi().isLine()) {
+            p = darkPeaks ? findMinSeed(image) : findMaxSeed(image);
+        } else {
+            p = (PointRoi) image.getRoi();
+        }
 
         final int x = (int) p.getXBase();
         final int y = (int) p.getYBase();
@@ -323,7 +326,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         }
     }
 
-    private PointRoi findSeed(ImagePlus image) {
+    private PointRoi findMaxSeed(ImagePlus image) {
         int xSeed = 0, ySeed = 0;
         float maxValue = 0;
         Roi roi = image.getRoi();
@@ -347,6 +350,29 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         return new PointRoi(xSeed, ySeed);
     }
 
+    private PointRoi findMinSeed(ImagePlus image) {
+        int xSeed = 0, ySeed = 0;
+        float minValue = 0xff;
+        Roi roi = image.getRoi();
+        if (roi!=null && !roi.isArea()) roi = null;
+        ImageProcessor ip = image.getProcessor();
+        ImageProcessor mask = roi!=null?roi.getMask():null;
+        Rectangle r = roi!=null ? roi.getBounds() : new Rectangle(0,0,ip.getWidth(),ip.getHeight());
+
+        for (int y=0; y<r.height; y++) {
+            for (int x=0; x<r.width; x++) {
+                if (mask==null||mask.getPixel(x,y)!=0) {
+                    float value = ip.getPixelValue(x+r.x, y+r.y);
+                    if(value < minValue) {
+                        xSeed = x+r.x;
+                        ySeed = y+r.y;
+                        minValue = value;
+                    }
+                }
+            }
+        }
+        return new PointRoi(xSeed, ySeed);
+    }
     // set suitable look up table for 8bit channel (pseudo color)
     private void setChannelLut(ImagePlus[] rgb) {
         rgb[0].setLut(LUT.createLutFromColor(Color.RED));
