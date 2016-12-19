@@ -701,11 +701,6 @@
                       <toolTipText value="click to reset"/>
                     </properties>
                   </component>
-                  <hspacer id="e4650">
-                    <constraints>
-                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                  </hspacer>
                   <component id="df231" class="javax.swing.JButton" binding="radiusButton" default-binding="true">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
@@ -745,6 +740,15 @@
                     </constraints>
                     <properties>
                       <text value="show all plots (gray)"/>
+                    </properties>
+                  </component>
+                  <component id="ecc20" class="javax.swing.JCheckBox" binding="autoBoundsCheckBox" default-binding="true">
+                    <constraints>
+                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="auto bounds"/>
+                      <toolTipText value="find the edge automaticly by gradient change"/>
                     </properties>
                   </component>
                 </children>

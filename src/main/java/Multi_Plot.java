@@ -45,6 +45,7 @@ class Multi_Plot{
         boolean showChannel = options[2];
         boolean plotAll = options[3];
         boolean autoScale = options[4];
+        boolean autoBounds = options[5];
 
         if(cleanTable) table = new ResultsTable();
         initCentroid(roi);
@@ -61,7 +62,7 @@ class Multi_Plot{
                 showLines(mask, lines, !showOverlay);
                 HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles = createAllProfiles(channel, roi, lines);
                 if(!autoScale) yMax = customYMax;
-                plotStarAverage(listOfAllProfiles, plotAll, radiusMode);
+                plotStarAverage(listOfAllProfiles, plotAll, radiusMode, autoBounds);
                 break;
             case RING_PLOT:
                 plotTitle = "Ring plot" + imgAndRoiTitle;
@@ -70,7 +71,7 @@ class Multi_Plot{
                 if(showChannel) showOuterRingAndCentroid(channel, radius);
                 intensityValues = collectRingValues(channel, radius);
                 if(!autoScale) yMax = customYMax;
-                plot(intensityValues, xLabel);
+                plot(intensityValues, xLabel, autoBounds);
                 break;
             case CONVEX_HULL:
                 plotTitle = "Convex hull plot" + imgAndRoiTitle;
@@ -80,7 +81,7 @@ class Multi_Plot{
                 if(showChannel) showHullAndCentroid(channel, roi);
                 intensityValues = collectConvexHullValues(channel, roi, radius);
                 if(!autoScale) yMax = customYMax;
-                plot(intensityValues, xLabel);
+                plot(intensityValues, xLabel, autoBounds);
                 break;
         }
 
@@ -192,7 +193,7 @@ class Multi_Plot{
         return avg;
     }
 
-    private void plotStarAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll, boolean radius) {
+    private void plotStarAverage(HashMap<ImagePlus, ArrayList<double[]>> listOfAllProfiles, boolean plotAll, boolean radius, boolean autoBounds) {
         // init x values 0 .. xMax
         double[] x = new double[xMax];
         for (int i = 0; i < xMax; i++) {
@@ -234,18 +235,23 @@ class Multi_Plot{
                 plot.setColor(Color.darkGray);
                 plot.drawDottedLine(0, max[1], max[0], max[1], 2);
 
-                double[] bounds = getGradientFromLeft(avg);
-                resultValues.put(channelName + " bounds x", bounds[0]);
-                resultValues.put(channelName + " bounds y", bounds[1]);
-                plot.setColor(Color.darkGray);
-                plot.drawLine(bounds[0], 0, bounds[0], yMax);
+                if (autoBounds) {
+                    double[] bounds = getGradientFromLeft(avg);
+                    resultValues.put(channelName + " bounds x", bounds[0]);
+                    resultValues.put(channelName + " bounds y", bounds[1]);
+                    plot.setColor(Color.darkGray);
+                    plot.drawLine(bounds[0], 0, bounds[0], yMax);
 
-                double area = getArea(avg, bounds[0]);
-                resultValues.put(channelName + " area", area);
+                    double area = getArea(avg, bounds[0]);
+                    resultValues.put(channelName + " area", area);
+                }
             }
         }
 
-        if (radius) addValuesToResultsTable(resultValues);
+        if (radius) {
+            resultValues.put("radius (x max)", (double) xMax);
+            addValuesToResultsTable(resultValues);
+        }
 
         plot.show();
     }
@@ -276,7 +282,7 @@ class Multi_Plot{
         return intensityValues;
     }
 
-    private void plot(LinkedHashMap<String, double[]> intensityValues, String xLabel) {
+    private void plot(LinkedHashMap<String, double[]> intensityValues, String xLabel, boolean autoBounds) {
         // init x values 0 .. xMax
         double[] x = new double[xMax];
         for (int i = 0; i < xMax; i++) {
@@ -302,14 +308,16 @@ class Multi_Plot{
             plot.setColor(Color.darkGray);
             plot.drawDottedLine(0, max[1], max[0], max[1], 2);
 
-            double[] bounds = getBounds(y);
-            resultValues.put(title + " bounds x", bounds[0]);
-            resultValues.put(title + " bounds y", bounds[1]);
-            plot.setColor(Color.darkGray);
-            plot.drawLine(bounds[0], 0, bounds[0], 255);
+            if(autoBounds) {
+                double[] bounds = getBounds(y);
+                resultValues.put(title + " bounds x", bounds[0]);
+                resultValues.put(title + " bounds y", bounds[1]);
+                plot.setColor(Color.darkGray);
+                plot.drawLine(bounds[0], 0, bounds[0], 255);
+                double area = getArea(y, bounds[0]);
+                resultValues.put(title + " area", area);
+            }
 
-            double area = getArea(y, bounds[0]);
-            resultValues.put(title + " area", area);
         }
         resultValues.put("radius (x max)", (double) xMax);
         addValuesToResultsTable(resultValues);
@@ -400,7 +408,7 @@ class Multi_Plot{
 
         Rectangle r = roi.getBounds();
         ArrayList<ArrayList<Float>> allConvexHullValues = new ArrayList<>();
-        for (int i=0; i <= radius+1; i++) {
+        for (int i=0; i <= radius; i++) {
             allConvexHullValues.add(new ArrayList<Float>());
         }
 
@@ -428,8 +436,8 @@ class Multi_Plot{
 
                     // go back from here step by step until in selection again
                     for(int length=high; length >=0;length--) {
-                        x2 = (int) Math.round(cos * length) + x;
-                        y2 = (int) Math.round(sin * length) + y;
+                        x2 = (int) (cos * length) + x;
+                        y2 = (int) (sin * length) + y;
                         if (mask.getPixel(x2, y2) != 0) {
                             double xDiff = x - x2;
                             double yDiff = y - y2;

@@ -86,6 +86,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     private JRadioButton ringPlotRadioButton;
     private JRadioButton convexHullPlotRadioButton;
     private JRadioButton startPlotRadioButton;
+    private JCheckBox autoBoundsCheckBox;
 
     // constants
     private static final String TITLE = "Spheroid RGB";
@@ -248,7 +249,8 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             channel.add(image);
         }
         boolean[] options = new boolean[]{cleanTableCheckBox.isSelected(), showLines.isSelected(),
-                showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected()};
+                showSelectedChannel.isSelected(), showAllGrayPlots.isSelected(), autoScaleCheckBox.isSelected(),
+                autoBoundsCheckBox.isSelected()};
 
         int mode = Multi_Plot.STAR_PLOT;
         if(ringPlotRadioButton.isSelected()) mode = Multi_Plot.RING_PLOT;
