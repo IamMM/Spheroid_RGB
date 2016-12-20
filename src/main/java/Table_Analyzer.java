@@ -20,8 +20,8 @@ class Table_Analyzer {
 
     private Spheroid_RGB main;
     private ResultsTable table;
-    private long numberOfPixelsAboveThreshold;
-    private long totalNumberOfPixels;
+    private double numberOfPixelsAboveThreshold;
+    private double totalNumberOfPixels;
 
     void run (Spheroid_RGB main, ImagePlus image, boolean[] options, String major) {
         this.main = main;
@@ -80,7 +80,7 @@ class Table_Analyzer {
                     if (meanIsSelected) resultValues.put("mean" + channelName, thresholdMean);
                     if (areaIsSelected) {
                         resultValues.put("area" + channelName, calibration.getY(calibration.getX(numberOfPixelsAboveThreshold)));
-                        resultValues.put("total area fraction" + channelName, numberOfPixelsAboveThreshold / (double) totalNumberOfPixels);
+                        resultValues.put("total area fraction" + channelName, numberOfPixelsAboveThreshold / totalNumberOfPixels);
                     }
                     if (idIsSelected)
                         resultValues.put("integrated density" + channelName, thresholdMean * numberOfPixelsAboveThreshold);
@@ -89,7 +89,7 @@ class Table_Analyzer {
                 if (areaIsSelected) {
                     if (calibration.scaled()) resultValues.put("total area (" + calibration.getUnit() + "²)",
                             calibration.getY(calibration.getX(totalNumberOfPixels)));
-                    else resultValues.put("total area (number of pixels)", (double) totalNumberOfPixels);
+                    else resultValues.put("total area (number of pixels)", totalNumberOfPixels);
                 }
 
                 // ratio values
