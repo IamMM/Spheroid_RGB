@@ -10,11 +10,14 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.net.URL;
 import java.util.ArrayList;
 
 /**
@@ -90,7 +93,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
 
     // constants
     private static final String TITLE = "Spheroid RGB";
-    private static final String VERSION = " v0.8.9";
+    private static final String VERSION = " v0.9.0";
 
    // imageJ components
     ImagePlus image;
@@ -154,8 +157,20 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         ImagePlus.addImageListener(this);
 
         if(WindowManager.getImageCount() == 0) {
-            IJ.showMessage("no image open");
-            return;
+//            IJ.showMessage("no image open");
+//            return;
+            URL url = null;
+            try {
+                url = getClass().getResource("/img/EdU.png");
+                BufferedImage img = ImageIO.read(url);
+                ImagePlus imp = new ImagePlus("Example Spheroid EdU", img);
+                imp.show();
+            }catch (Exception e) {
+                String msg = e.getMessage();
+                if (msg == null || msg.equals("")) msg = "" + e;
+                IJ.showMessage("Spheroid RGB", msg + "\n \n" + url);
+                return;
+            }
         }
 
         initComponents();
@@ -167,14 +182,14 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         frame.setContentPane(this.mainPanel);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.pack();
-//        frame.setLocationRelativeTo(ImageJ.getFrames()[0]); //center the frame on screen
-        setLocationRelatedToImageJFrame();
+//        frame.setLocationRelativeTo(null); //center the frame on screen
+        setLocationRelativeToImageJFrame();
         setLookAndFeel(frame);
         frame.setVisible(true);
         WindowManager.addWindow(frame);
     }
 
-    private void setLocationRelatedToImageJFrame() {
+    private void setLocationRelativeToImageJFrame() {
         Frame imageJFrame = ImageJ.getFrames()[0];
         Point p = imageJFrame.getLocation();
 
@@ -193,7 +208,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
             return;
         }
 
-        getCountAndMeanValues();
+        updateCountAndMeanValues();
 
         if (table_analyzer == null) table_analyzer = new Table_Analyzer();
 
@@ -215,7 +230,7 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
     }
 
     private void runMultiPlot() {
-        getPlotValues();
+        updatePlotValues();
 
         if(multiPlot == null) multiPlot = new Multi_Plot();
 
@@ -767,13 +782,13 @@ public class Spheroid_RGB implements PlugIn, ImageListener {
         showAllGrayPlots.setEnabled(b);
     }
 
-    private void getCountAndMeanValues() {
+    private void updateCountAndMeanValues() {
         cellWidth = Integer.parseInt(cellWidthField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
         minDist = Double.parseDouble(minDistField.getText().replace("[^\\d.]", "")); //.replaceAll("\\D", "")
         quantification = Integer.parseInt(quantificationTextField.getText().replaceAll("[^\\d.]", ""));
     }
 
-    private void getPlotValues() {
+    private void updatePlotValues() {
         if (!autoScaleCheckBox.isSelected()) yMax = Integer.parseInt(yAxisTextField.getText().replaceAll("[^\\d.]", "")); //make sure there are only digits
     }
 
