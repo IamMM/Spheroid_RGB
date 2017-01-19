@@ -241,9 +241,8 @@ class Multi_Plot{
                     resultValues.put(channelName + " bounds y", bounds[1]);
                     plot.setColor(Color.darkGray);
                     plot.drawLine(bounds[0], 0, bounds[0], yMax);
-
-                    double area = getArea(avg, bounds[0]);
-                    resultValues.put(channelName + " area", area);
+//                    double area = getArea(avg, bounds[0]);
+//                    resultValues.put(channelName + " area", area);
                 }
             }
         }
@@ -314,8 +313,8 @@ class Multi_Plot{
                 resultValues.put(title + " bounds y", bounds[1]);
                 plot.setColor(Color.darkGray);
                 plot.drawLine(bounds[0], 0, bounds[0], 255);
-                double area = getArea(y, bounds[0]);
-                resultValues.put(title + " area", area);
+//                double area = getArea(y, bounds[0]);
+//                resultValues.put(title + " area", area);
             }
 
         }
