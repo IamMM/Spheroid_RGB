@@ -23,6 +23,8 @@ import java.util.ArrayList;
 /**
  * Created on october 2016
  *
+ * v1.0: first version 20/01/2017
+ *
  * @author Maximlian Maske
  */
 public class Spheroid_RGB implements PlugIn, ImageListener {
