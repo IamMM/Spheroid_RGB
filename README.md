@@ -52,7 +52,7 @@ Example output "Multi Plot" with the red and blue channel selected (major channe
 
 ---
 
-Started from template [minimal Maven project](https://github.com/imagej/minimal-ij1-plugin/archive/master.zip) implementing an ImageJ 1.x plugin.
+Started from template [minimal Maven project](https://github.com/imagej/minimal-ij1-plugin) implementing an ImageJ 1.x plugin.
 
 Cell counting based on the algorithm from the [ITCN Plugin](https://imagej.nih.gov/ij/plugins/itcn.html), which is looking for local intensity peaks in 8-bit images.
 [Center for Bio-Image Informatics, University of California](http://bioimage.ucsb.edu/automatic-nuclei-counter-plug-in-for-imagej)
